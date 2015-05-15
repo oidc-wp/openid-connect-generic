@@ -145,7 +145,7 @@ class OpenID_Connect_Generic {
       global $pagenow;
       
       // avoid redirect loop
-      if ( $pagenow != 'wp-login.php' && ! isset( $_GET['loggedout'] ) ) {
+      if ( $pagenow != 'wp-login.php' && ! isset( $_GET['loggedout'] ) && ! isset( $_GET['login-error'] ) ) {
         wp_redirect( wp_login_url() );
         exit;
       }

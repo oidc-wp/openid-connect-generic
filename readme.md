@@ -9,7 +9,7 @@ A simple client that provides SSO or opt-in authentication against a generic OAu
 
 This plugin allows to authenticate users against OpenID Connect OAuth2 API with Authorization Code Flow.
 Once installed, it can be configured to automatically authenticate users (SSO), or provide a "Login with OpenID Connect"
-button on the login form. After consent has been obtained, an exiting user is automatically logged into WordPress, while 
+button on the login form. After consent has been obtained, an existing user is automatically logged into WordPress, while 
 new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
