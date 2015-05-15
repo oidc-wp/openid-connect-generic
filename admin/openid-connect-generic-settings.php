@@ -33,9 +33,9 @@ class OpenID_Connect_Generic_Settings {
      * 
      * - title
      * - description
-     * - type ( checkbox | text )
-     * - section ( settings/option page section )
-     * - example (optional)
+     * - type ( checkbox | text | select )
+     * - section - settings/option page section ( client_settings | authorization_settings )
+     * - example (optional example will appear beneath description and be wrapped in <code>)
      */
     $this->settings_fields = array(
       'login_type' => array(
