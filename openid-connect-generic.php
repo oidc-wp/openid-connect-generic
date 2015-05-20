@@ -14,9 +14,14 @@ Notes
   Spec Doc - http://openid.net/specs/openid-connect-basic-1_0-32.html
 
   Filters
-  - openid-connect-generic-alter-request     - 3 args: request array, plugin settings, specific request op
-  - openid-connect-generic-settings-fields   - modify the fields provided on the settings page
-  - openid-connect-generic-login-button-text - modify the login button text 
+  - openid-connect-generic-alter-request      - 3 args: request array, plugin settings, specific request op
+  - openid-connect-generic-settings-fields    - modify the fields provided on the settings page
+  - openid-connect-generic-login-button-text  - modify the login button text 
+  - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
+  - openid-connect-generic-user-creation-test - (bool) should the user be created based on their claim
+
+  Actions
+  - openid-connect-generic-user-create - 2 args: fires when a new user is created by this plugin
 
   User Meta
   - openid-connect-generic-user                - (bool) if the user was created by this plugin
@@ -26,13 +31,8 @@ Notes
   
   Options
   - openid_connect_generic_settings     - plugin settings
-  - openid-connect-generic-valid-states - locally stored generated states 
-
+  - openid-connect-generic-valid-states - locally stored generated states
 */
-// - authentication is identifying the user
-// - authorization is providing access & permission
-// The id_token is used to identify the authenticated user, e.g. for SSO.
-// The access_token must be used to prove access rights to protected resources, e.g. for the userinfo endpoint in OpenId Connect.
 
 define( 'OPENID_CONNECT_GENERIC_DIR', dirname( __FILE__ ) );
 define( 'OPENID_CONNECT_GENERIC_SETTINGS_NAME', 'openid_connect_generic_settings' );
@@ -77,6 +77,8 @@ class OpenID_Connect_Generic {
       5  => __('Cannot get user key'),
       6  => __('Cannot create authorized user'),
       7  => __('User not found'),
+      8  => __('You do not have access to this site'),
+      9  => __('Cannot get authorization to join this site'),
       99 => __('Unknown error')
     );
   }
@@ -247,13 +249,20 @@ class OpenID_Connect_Generic {
     if ( $id_token_claim['sub'] !== $user_claim['sub'] ) {
       $this->error_redirect( 4 );
     }
-    
+
+    // retrieve the identity from the id_token
     $user_identity = $id_token_claim[ $settings['identity_key'] ];
-    $oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', true );
-    setcookie( $this->cookie_id_key, $user_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, true );
 
     // - end authorization
     // - start user handling
+    
+    // allow plugins / themes to halt the login process early
+    // based on the user_claim 
+    $login_user = apply_filters( 'openid-connect-generic-user-login-test', true, $user_claim );
+    
+    if ( ! $login_user ){
+      $this->error_redirect( 8 );
+    }
     
     // look for user by their openid-connect-generic-user-identity value
     $user_query = new WP_User_Query( array(
@@ -301,19 +310,30 @@ class OpenID_Connect_Generic {
         }
       }
       
+      // allow other plugins / themes to determine authorization 
+      // of new accounts based on the returned user claim
+      $create_user = apply_filters( 'openid-connect-generic-user-creation-test', true, $user_claim );
+      
+      if ( ! $create_user ) {
+        $this->error_redirect( 9 );
+      }
+      
       // create the new user
       $uid = wp_create_user( $username, wp_generate_password( 32, true, true ), $email );
-      
+
       // make sure we didn't fail in creating the user
       if ( is_wp_error( $uid ) ) {
         $this->error_redirect( 6 );
       }
-      
+
       $user = get_user_by( 'id', $uid );
 
       // save some meta data about this new user for the future
       add_user_meta( $user->ID, 'openid-connect-generic-user', true, true );
       add_user_meta( $user->ID, 'openid-connect-generic-user-identity', (string) $user_identity, true );
+      
+      // allow plugins / themes to take action on new user creation
+      do_action( 'openid-connect-generic-user-create', $user, $user_claim );
     }
     
     // ensure our found user is a real WP_User
@@ -323,8 +343,13 @@ class OpenID_Connect_Generic {
     
     // hey, we made it!
     // let's remember the tokens for future reference
+    update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
     update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
     update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+
+    // save our authorization cookie for the response expiration
+    $oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', true );
+    setcookie( $this->cookie_id_key, $user_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, true );
     
     // get a cookie and go home!
     wp_set_auth_cookie( $user->ID, false );
