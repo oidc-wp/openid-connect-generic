@@ -277,7 +277,8 @@ class OpenID_Connect_Generic {
     
     // if we found an existing users, grab the first one returned
     if ( $user_query->get_total() > 0 ) {
-      $user = $user_query->get_results()[0];  
+      $users = $user_query->get_results();
+      $user = $users[0];  
     }
     // otherwise, user does not exist and we'll need to create it
     else {
