@@ -94,7 +94,8 @@ class OpenID_Connect_Generic {
       return $this->settings;
     }
 
-    return wp_parse_args( get_option( OPENID_CONNECT_GENERIC_SETTINGS_NAME, array() ), $this->default_settings );
+    $this->settings = wp_parse_args( get_option( OPENID_CONNECT_GENERIC_SETTINGS_NAME, array() ), $this->default_settings );
+    return $this->settings;
   }
   
   /**

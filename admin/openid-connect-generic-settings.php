@@ -37,7 +37,7 @@ class OpenID_Connect_Generic_Settings {
      * - section - settings/option page section ( client_settings | authorization_settings )
      * - example (optional example will appear beneath description and be wrapped in <code>)
      */
-    $this->settings_fields = array(
+    $fields = array(
       'login_type' => array(
         'title' => __('Login Type'),
         'description' => __('Select how the client (login form) should provide login options.'),
@@ -116,8 +116,16 @@ class OpenID_Connect_Generic_Settings {
       ),
     );
     
+    $fields = apply_filters( 'openid-connect-generic-settings-fields', $this->settings_fields );
+    
+    // some simple pre-processing
+    foreach ( $fields as $key => &$field ) {
+      $field['key'] = $key;
+      $field['name'] = OPENID_CONNECT_GENERIC_SETTINGS_NAME . '[' . $key . ']';
+    }
+    
     // allow alterations of the fields
-    $this->settings_fields = apply_filters( 'openid-connect-generic-settings-fields', $this->settings_fields );
+    $this->settings_fields = $fields;
   }
 
   /**
@@ -153,9 +161,6 @@ class OpenID_Connect_Generic_Settings {
 
     // preprocess fields and add them to the page
     foreach ( $this->settings_fields as $key => $field ) {
-      $field['key'] = $key;
-      $field['name'] = OPENID_CONNECT_GENERIC_SETTINGS_NAME . '[' . $key . ']';
-
       // make sure each key exists in the settings array
       if ( ! isset( $this->settings[ $key ] ) ){
         $this->settings[ $key ] = null;
@@ -251,7 +256,7 @@ class OpenID_Connect_Generic_Settings {
    */
   public function do_checkbox( $field ) {
     ?>
-    <input type="hidden" name="settings[<?php print esc_attr( $field['key'] ); ?>]" value="0">
+    <input type="hidden" name="<?php print esc_attr( $field['name'] ); ?>" value="0">
     <input type="checkbox"
            id="<?php print esc_attr( $field['key'] ); ?>"
            name="<?php print esc_attr( $field['name'] ); ?>"
