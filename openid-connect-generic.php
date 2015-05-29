@@ -247,7 +247,7 @@ class OpenID_Connect_Generic {
     $user_claim = json_decode( $user_claim_result['body'], true );
     
     // make sure the id_token sub === user_claim sub, according to spec
-    if ( $id_token_claim['sub'] !== $user_claim['sub'] ) {
+    if ( $id_token_claim[ $settings['identity_key'] ] !== $user_claim['sub'] ) {
       $this->error_redirect( 4 );
     }
 
