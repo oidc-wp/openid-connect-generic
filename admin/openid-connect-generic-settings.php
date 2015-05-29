@@ -116,7 +116,7 @@ class OpenID_Connect_Generic_Settings {
       ),
     );
     
-    $fields = apply_filters( 'openid-connect-generic-settings-fields', $this->settings_fields );
+    $fields = apply_filters( 'openid-connect-generic-settings-fields', $fields );
     
     // some simple pre-processing
     foreach ( $fields as $key => &$field ) {
@@ -228,6 +228,10 @@ class OpenID_Connect_Generic_Settings {
         submit_button();
         ?>
       </form>
+      <h4><?php _e('Notes'); ?></h4>
+      <p class="description">
+        <strong><?php _e('Redirect URI'); ?></strong> <code><?php print admin_url( 'admin-ajax.php?action=openid-connect-authorize' ); ?></code>
+      </p>
     </div>
     <?php
   }
