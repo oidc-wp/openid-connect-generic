@@ -270,7 +270,7 @@ class OpenID_Connect_Generic {
       'meta_query' => array(
         array(
           'key' => 'openid-connect-generic-user-identity',
-          'value' => 746,
+          'value' => $user_identity,
         )
       )
     ));
