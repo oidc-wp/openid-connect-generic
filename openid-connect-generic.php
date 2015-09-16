@@ -3,7 +3,7 @@
 Plugin Name: OpenID Connect - Generic Client
 Plugin URI: https://github.com/daggerhart/openid-connect-generic
 Description:  Connect to an OpenID Connect identity provider with Authorization Code Flow
-Version: 2.0
+Version: 2.1
 Author: daggerhart
 Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
@@ -288,9 +288,9 @@ class OpenID_Connect_Generic {
       $email = $user_identity;
       
       // allow claim details to determine username
-      if ( isset( $user_claim['name'] ) && isset( $user_claim['email'] ) ) {
-        $username = $user_claim['name'];
+      if ( isset( $user_claim['email'] ) ) {
         $email = $user_claim['email'];
+        $username = $this->get_username_from_claim( $user_claim );
       }
       // if no name exists, attempt another request for userinfo
       else if ( isset( $token_response['access_token'] ) ) {
@@ -302,13 +302,10 @@ class OpenID_Connect_Generic {
         }
 
         $user_claim = json_decode( $user_claim_result['body'], true );
-        
-        if ( isset( $user_claim['name'] ) ) {
-          $username = $user_claim['name'];
-        }
-        
+
         if ( isset( $user_claim['email'] ) ) {
           $email = $user_claim['email'];
+          $username = $this->get_username_from_claim( $user_claim );
         }
       }
       
@@ -575,6 +572,46 @@ class OpenID_Connect_Generic {
    */
   function wp_logout(){
     setcookie( $this->cookie_id_key , '1', 0, COOKIEPATH, COOKIE_DOMAIN, true );
+  }
+
+  /**
+   * Avoid user_login collisions by incrementing
+   * 
+   * @param $user_claim array
+   * @return string
+   */
+  function get_username_from_claim( $user_claim ){
+    if ( isset( $user_claim['preferred_username'] ) && !empty( $user_claim['preferred_username'] ) ) {
+      $desired_username = $user_claim['preferred_username'];
+    }
+    else if ( isset( $user_claim['name'] ) && !empty( $user_claim['name'] ) ) {
+      $desired_username = $user_claim['name'];
+    }
+    else if ( isset( $user_claim['email'] ) && !empty( $user_claim['email'] ) ) {
+      $tmp = explode( '@', $user_claim['email'] );
+      $desired_username = $tmp[0];
+    }
+    else {
+      // nothing to build a name from
+      return false;
+    }
+    
+    // normalize the data a bit
+    $desired_username = strtolower( preg_replace( '/[^a-zA-Z\_0-9]/', '', $desired_username ) );
+    
+    // copy the username for incrementing
+    $username = $desired_username;
+    
+    // original user gets "name"
+    // second user gets "name2"
+    // etc
+    $count = 1;
+    while ( username_exists( $username ) ) {
+      $count++;
+      $username = $desired_name . $count; 
+    }
+    
+    return $username;
   }
 }
 

@@ -40,6 +40,11 @@ Replace `example.com` with your domain name and path to WordPress.
 
 == Changelog ==
 
+= 2.1 =
+
+* Possible breaking change.  Now checking for preferred_username as priority.
+* New username determination to avoid collisions
+
 = 2.0 =
 
 Complete rewrite of another plugin

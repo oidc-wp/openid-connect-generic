@@ -32,11 +32,14 @@ by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=
 
 Replace `example.com` with your domain name and path to WordPress.
 
-
 ### Changelog
+
+**2.1**
+
+* Working my way closer to spec. Possible breaking change.  Now checking for preferred_username as priority.
+* New username determination to avoid collisions
 
 **2.0**
 
 Complete rewrite
-
 
