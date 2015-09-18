@@ -109,10 +109,22 @@ class OpenID_Connect_Generic_Settings {
         'section' => 'authorization_settings',
       ),
       'enforce_privacy' => array(
-        'title' => __('Enforce Privacy'),
-        'description' => __('Require users be logged in to see the site.'),
-        'type' => 'checkbox',
-        'section' => 'authorization_settings',
+          'title' => __('Enforce Privacy'),
+          'description' => __('Require users be logged in to see the site.'),
+          'type' => 'checkbox',
+          'section' => 'authorization_settings',
+      ),
+      'enable_logging' => array(
+          'title' => __('Enable Logging'),
+          'description' => __('Very simple log messages for debugging purposes.'),
+          'type' => 'checkbox',
+          'section' => 'log_settings',
+      ),
+      'log_limit' => array(
+          'title' => __('Log Limit'),
+          'description' => __('Number of items to keep in the log. These logs are stored as an option in the database, so space is limited.'),
+          'type' => 'number',
+          'section' => 'log_settings',
       ),
     );
     
@@ -153,10 +165,16 @@ class OpenID_Connect_Generic_Settings {
       $this->options_page_name
     );
 
-    add_settings_section( 'authorization_settings', 
-      __('Authorization Settings'),
-      array( $this, 'authorization_settings_description' ),
-      $this->options_page_name
+    add_settings_section( 'authorization_settings',
+        __('Authorization Settings'),
+        array( $this, 'authorization_settings_description' ),
+        $this->options_page_name
+    );
+
+    add_settings_section( 'log_settings',
+        __('Log Settings'),
+        array( $this, 'log_settings_description' ),
+        $this->options_page_name
     );
 
     // preprocess fields and add them to the page
@@ -228,10 +246,39 @@ class OpenID_Connect_Generic_Settings {
         submit_button();
         ?>
       </form>
+      
       <h4><?php _e('Notes'); ?></h4>
       <p class="description">
         <strong><?php _e('Redirect URI'); ?></strong> <code><?php print admin_url( 'admin-ajax.php?action=openid-connect-authorize' ); ?></code>
       </p>
+      
+      <?php
+        $logs = get_option( 'openid_connect_generic_logs', array() );
+        
+        if ( !empty( $logs ) ) {
+          ?>
+          <h4><?php _e('Logs'); ?></h4>
+          <table class="wp-list-table widefat fixed striped posts">
+            <thead>
+            <th>Type</th>
+            <th>Date</th>
+            <th>User</th>
+            <th style="width: 65%;">Data</th>
+            </thead>
+            <tbody>
+            <?php foreach( $logs as $log ){ ?>
+                <tr>
+                  <td><?php print $log['type']; ?></td>
+                  <td><?php print date( 'Y-m-d H:i:s', $log['time'] ); ?></td>
+                  <td><?php print ( $log['user_ID'] ) ? get_userdata( $log['user_ID'] )->user_login : 'anonymous'; ?></td>
+                  <td><?php print '<pre style="margin:0;">' . print_r( $log['data'], 1 ) . '</pre>'; ?></td>
+                </tr>
+            <?php } ?>
+            </tbody>
+          </table>
+          <?php
+        }
+      ?>
     </div>
     <?php
   }
@@ -243,7 +290,7 @@ class OpenID_Connect_Generic_Settings {
    */
   public function do_text_field( $field ) {
     ?>
-    <input type="text"
+    <input type="<?php print esc_attr( $field['type'] ); ?>"
            id="<?php print esc_attr( $field['key'] ); ?>"
            class="large-text"
            name="<?php print esc_attr( $field['name'] ); ?>"
@@ -307,6 +354,10 @@ class OpenID_Connect_Generic_Settings {
 
   public function authorization_settings_description() {
     _e('Control the authorization mechanics of the site');
+  }
+  
+  public function log_settings_description() {
+    _e('Log information about login attempts through OpenID Connect Generic');
   }
 }
  
