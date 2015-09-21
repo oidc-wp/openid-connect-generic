@@ -1,9 +1,9 @@
 <?php
 
-class OpenID_Connect_Generic_Settings {
+class OpenID_Connect_Generic_Settings_Page {
 
 	// local copy of the settings provided by the base plugin
-	private $settings = array();
+	private $settings;
 
 	// The controlled list of settings & associated
 	// defined during construction for i18n reasons
@@ -13,21 +13,17 @@ class OpenID_Connect_Generic_Settings {
 	private $options_page_name = 'openid-connect-generic-settings';
 
 	// options page settings group name
-	private $settings_field_group = '';
+	private $settings_field_group;
 
 	/**
-	 * @param $settings
+	 * @param \WP_Option_Settings $settings
+	 * @param \WP_Option_Logger $logger
 	 */
-	function __construct( $settings ) {
+	function __construct( WP_Option_Settings $settings, WP_Option_Logger $logger ) {
 		$this->settings             = $settings;
-		$this->settings_field_group = OPENID_CONNECT_GENERIC_SETTINGS_NAME . '-group';
-
-		// add our options page the the admin menu
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-
-		// register our settings
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
-
+		$this->logger               = $logger;
+		$this->settings_field_group = $this->settings->get_option_name() . '-group';
+		
 		/*
 		 * Simple settings fields simply have:
 		 * 
@@ -133,11 +129,29 @@ class OpenID_Connect_Generic_Settings {
 		// some simple pre-processing
 		foreach ( $fields as $key => &$field ) {
 			$field['key']  = $key;
-			$field['name'] = OPENID_CONNECT_GENERIC_SETTINGS_NAME . '[' . $key . ']';
+			$field['name'] = $this->settings->get_option_name() . '[' . $key . ']';
 		}
 
 		// allow alterations of the fields
 		$this->settings_fields = $fields;
+	}
+
+	/**
+	 * @param \WP_Option_Settings $settings
+	 * @param \WP_Option_Logger $logger
+	 *
+	 * @return \OpenID_Connect_Generic_Settings_Page
+	 */
+	static public function register( WP_Option_Settings $settings, WP_Option_Logger $logger ){
+		$settings_page = new self( $settings, $logger );
+
+		// add our options page the the admin menu
+		add_action( 'admin_menu', array( $settings_page, 'admin_menu' ) );
+
+		// register our settings
+		add_action( 'admin_init', array( $settings_page, 'admin_init' ) );
+		
+		return $settings_page;
 	}
 
 	/**
@@ -157,7 +171,7 @@ class OpenID_Connect_Generic_Settings {
 	 * Implements hook admin_init to register our settings
 	 */
 	public function admin_init() {
-		register_setting( $this->settings_field_group, OPENID_CONNECT_GENERIC_SETTINGS_NAME, array(
+		register_setting( $this->settings_field_group, $this->settings->get_option_name(), array(
 			$this,
 			'sanitize_settings'
 		) );
@@ -183,8 +197,8 @@ class OpenID_Connect_Generic_Settings {
 		// preprocess fields and add them to the page
 		foreach ( $this->settings_fields as $key => $field ) {
 			// make sure each key exists in the settings array
-			if ( ! isset( $this->settings[ $key ] ) ) {
-				$this->settings[ $key ] = NULL;
+			if ( ! isset( $this->settings->{ $key } ) ) {
+				$this->settings->{ $key } = NULL;
 			}
 
 			// determine appropriate output callback
@@ -260,31 +274,7 @@ class OpenID_Connect_Generic_Settings {
 			</p>
 
 			<?php
-			$logs = get_option( 'openid_connect_generic_logs', array() );
-
-			if ( ! empty( $logs ) ) {
-				?>
-				<h4><?php _e( 'Logs' ); ?></h4>
-				<table class="wp-list-table widefat fixed striped posts">
-					<thead>
-					<th>Type</th>
-					<th>Date</th>
-					<th>User</th>
-					<th style="width: 65%;">Data</th>
-					</thead>
-					<tbody>
-					<?php foreach ( $logs as $log ) { ?>
-						<tr>
-							<td><?php print $log['type']; ?></td>
-							<td><?php print date( 'Y-m-d H:i:s', $log['time'] ); ?></td>
-							<td><?php print ( $log['user_ID'] ) ? get_userdata( $log['user_ID'] )->user_login : 'anonymous'; ?></td>
-							<td><?php print '<pre style="margin:0;">' . print_r( $log['data'], 1 ) . '</pre>'; ?></td>
-						</tr>
-					<?php } ?>
-					</tbody>
-				</table>
-				<?php
-			}
+				//$this->show_logs();
 			?>
 		</div>
 		<?php
@@ -301,7 +291,7 @@ class OpenID_Connect_Generic_Settings {
 		       id="<?php print esc_attr( $field['key'] ); ?>"
 		       class="large-text"
 		       name="<?php print esc_attr( $field['name'] ); ?>"
-		       value="<?php print esc_attr( $this->settings[ $field['key'] ] ); ?>">
+		       value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php
 		$this->do_field_description( $field );
 	}
@@ -319,7 +309,7 @@ class OpenID_Connect_Generic_Settings {
 		       id="<?php print esc_attr( $field['key'] ); ?>"
 		       name="<?php print esc_attr( $field['name'] ); ?>"
 		       value="1"
-			<?php checked( $this->settings[ $field['key'] ], 1 ); ?>>
+			<?php checked( $this->settings->{ $field['key'] }, 1 ); ?>>
 		<?php
 		$this->do_field_description( $field );
 	}
@@ -328,7 +318,7 @@ class OpenID_Connect_Generic_Settings {
 	 * @param $field
 	 */
 	function do_select( $field ) {
-		$current_value = ( $this->settings[ $field['key'] ] ? $this->settings[ $field['key'] ] : '' );
+		$current_value = isset( $this->settings->{ $field['key'] } ) ? $this->settings->{ $field['key'] } : '';
 		?>
 		<select name="<?php print esc_attr( $field['name'] ); ?>">
 			<?php foreach ( $field['options'] as $value => $text ): ?>
