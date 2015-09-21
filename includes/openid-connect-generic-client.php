@@ -52,7 +52,7 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * 
+	 * Validate the request for login authentication
 	 * 
 	 * @param $request
 	 * 
@@ -116,7 +116,7 @@ class OpenID_Connect_Generic_Client {
 
 
 	/**
-	 *
+	 * Extract and decode the token body of a token response
 	 *
 	 * @param $token_result
 	 * @return array|mixed|object
@@ -134,7 +134,7 @@ class OpenID_Connect_Generic_Client {
 
 	
 	/**
-	 * Using an access_token, request the userinfo from the idp
+	 * Exchange an access_token for a user_claim from the userinfo endpoint
 	 *
 	 * @param $access_token
 	 * 
@@ -221,11 +221,11 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * 
+	 * Extract the id_token_claim from the token_response
 	 * 
 	 * @param $token_response
 	 *
-	 * @return array|mixed|object|\WP_Error
+	 * @return array|\WP_Error
 	 */
 	function get_id_token_claim( $token_response ){
 		// name sure we have an id_token
@@ -237,23 +237,27 @@ class OpenID_Connect_Generic_Client {
 		$tmp = explode( '.', $token_response['id_token'] );
 
 		if ( ! isset( $tmp[1] ) ) {
-			return new WP_Error( 'no-identity-token', __( 'No identity token' ), $token_response );
+			return new WP_Error( 'missing-identity-token', __( 'Missing identity token' ), $token_response );
 		}
 
 		// Extract the id_token's claims from the token
 		$id_token_claim = json_decode( base64_decode( $tmp[1] ), TRUE );
-
+		
 		return $id_token_claim;
 	}
 
 	/**
-	 * 
+	 * Ensure the id_token_claim contains the required values
 	 * 
 	 * @param $id_token_claim
 	 *
 	 * @return bool|\WP_Error
 	 */
 	function validate_id_token_claim( $id_token_claim ){
+		if ( ! is_array( $id_token_claim ) ) {
+			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim' ), $id_token_claim );
+		}
+		
 		// make sure we can find our identification data and that it has a value
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity' ), $id_token_claim );
@@ -263,7 +267,7 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * 
+	 * Attempt to exchange the access_token for a user_claim
 	 * 
 	 * @param $token_response
 	 * 
@@ -284,7 +288,8 @@ class OpenID_Connect_Generic_Client {
 	}
 	
 	/**
-	 * 
+	 * Make sure the user_claim has all required values, and that the subject
+	 * identity matches of the id_token matches that of the user_claim.
 	 * 
 	 * @param $user_claim
 	 * @param $id_token_claim
@@ -299,21 +304,21 @@ class OpenID_Connect_Generic_Client {
 		
 		// make sure the id_token sub === user_claim sub, according to spec
 		if ( $id_token_claim['sub' ] !== $user_claim['sub'] ) {
-			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim' ), func_get_args() );
+			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim' ), func_get_args() );
 		}
 
 		// allow for other plugins to alter the login success
 		$login_user = apply_filters( 'openid-connect-generic-user-login-test', TRUE, $user_claim );
 		
 		if ( ! $login_user ) {
-			return new WP_Error( 'unauthorized', __( 'Unauthorized' ), $login_user );
+			return new WP_Error( 'unauthorized', __( 'Unauthorized access' ), $login_user );
 		}
 		
 		return true;
 	}
 
 	/**
-	 * 
+	 * Retrieve the subject identity from the id_token
 	 * 
 	 * @return mixed
 	 */
