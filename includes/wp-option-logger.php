@@ -208,7 +208,7 @@ class WP_Option_Logger {
 						</div>
 						<div>
 							<label><?php _e( 'User' ); ?>: </label>
-							<?php print ( $log['user_ID'] ) ? get_userdata( $log['user_ID'] )->user_login : '0'; ?>
+							<?php print ( get_userdata( $log['user_ID'] ) ) ? get_userdata( $log['user_ID'] )->user_login : '0'; ?>
 						</div>
 						<div>
 							<label><?php _e( 'URI ' ); ?>: </label>
