@@ -55,21 +55,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 		}
 		
-		$client_wrapper->startup();
-		
-		return $client_wrapper;
-	}
-
-	/**
-	 * Handle the initial validation that should occur on each page load
-	 */
-	function startup(){
-		$this->handle_privacy();
-
 		// verify token for any logged in user
 		if ( is_user_logged_in() ) {
-			$this->check_user_token();
+			$client_wrapper->check_user_token();
 		}
+		
+		return $client_wrapper;
 	}
 
 	/**
@@ -79,26 +70,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function get_authentication_url(){
 		return $this->client->make_authentication_url();
-	}
-	
-	/**
-	 * Handle the privacy settings
-	 */
-	function handle_privacy() {
-		// check if privacy enforcement is enabled
-		if ( $this->settings->enforce_privacy &&
-		     ! is_user_logged_in() &&
-		     // avoid redirects on cron or ajax
-		     ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) &&
-		     ( ! defined( 'DOING_CRON' ) || ! DOING_CRON )
-		) {
-			global $pagenow;
-
-			// avoid redirect loop
-			if ( $pagenow != 'wp-login.php' && ! isset( $_GET['loggedout'] ) && ! isset( $_GET['login-error'] ) ) {
-				$this->error_redirect( new WP_Error( 'privacy', __( 'This site requires login.' ), $_GET ) );
-			}
-		}
 	}
 
 	/**
@@ -146,7 +117,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Remove cookies
 	 */
 	function wp_logout() {
-		setcookie( $this->cookie_id_key, '1', 0, COOKIEPATH, COOKIE_DOMAIN, TRUE );
+		setcookie( $this->cookie_id_key, false, 0, COOKIEPATH, COOKIE_DOMAIN, TRUE );
 	}
 
 	/**
@@ -173,7 +144,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$settings = $this->settings;
 		$client = $this->client;
 		
-		// 
+		// start the authentication flow
 		$authentication_request = $client->validate_authentication_request( $_GET );
 		
 		if ( is_wp_error( $authentication_request ) ){
@@ -207,79 +178,69 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );
 		}
-		
-		// - end authentication
-		
-		// - start authorization
 
+		/**
+		 * End authentication
+		 * -
+		 * Start Authorization
+		 */
 		// The id_token is used to identify the authenticated user, e.g. for SSO.
 		// The access_token must be used to prove access rights to protected resources
 		// e.g. for the userinfo endpoint
-		
-		//
 		$id_token_claim = $client->get_id_token_claim( $token_response );
 		
 		if ( is_wp_error( $id_token_claim ) ){
 			$this->error_redirect( $id_token_claim );
 		}
 		
-		//
+		// validate our id_token has required values
 		$valid = $client->validate_id_token_claim( $id_token_claim );
 		
 		if ( is_wp_error( $valid ) ){
 			$this->error_redirect( $valid );
 		}
-
-
-//
-//		// if desired, admins can use regex to determine if the identity value is valid
-//		// according to their own standards expectations  
-//		if ( ! empty( $settings->allowed_regex ) &&
-//		     preg_match( $settings->allowed_regex, $id_token_claim[ $settings->identity_key ] ) !== 1
-//		) {
-//	    	return new WP_Error( 'no-subject-identity', __( 'No subject identity' ), $id_token_claim );
-//		}
-
 		
-		//
+		// exchange the token_response for a user_claim
 		$user_claim = $client->get_user_claim( $token_response );
 		
 		if ( is_wp_error( $user_claim ) ){
 			$this->error_redirect( $user_claim );
 		}
 		
-		//
+		// validate our user_claim has required values
 		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
 		
 		if ( is_wp_error( $valid ) ){
 			$this->error_redirect( $valid );
 		}
 
-		// - end authorization
-		
-		
-		
-		// request is authenticated and authorized
-		// - start user handling
-		$user_identity = $client->get_user_identity( $id_token_claim );
-		$user = $this->get_user_by_identity( $user_identity );
+		/**
+		 * End authorization
+		 * -
+		 * Request is authenticated and authorized - start user handling
+		 */
+		$subject_identity = $client->get_subject_identity( $id_token_claim );
+		$user = $this->get_user_by_identity( $subject_identity );
 
 		// if we didn't find an existing user, we'll need to create it
 		if ( ! $user ) {
-			$user = $this->create_new_user( $user_identity, $user_claim );
+			$user = $this->create_new_user( $subject_identity, $user_claim );
 		}
 
-		//
+		// validate the found / created user
 		$valid = $this->validate_user( $user );
 		
 		if ( is_wp_error( $valid ) ){
 			$this->error_redirect( $valid );
 		}
 
-		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $user_identity  );
+		// login the found / created user
+		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
 		
+		// log our success
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
+		// go home!
 		wp_redirect( home_url() );
 	}
 
@@ -300,11 +261,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
-	 * 
+	 * Record user meta data, and provide an authorization cookie
 	 * 
 	 * @param $user
 	 */
-	function login_user( $user, $token_response, $id_token_claim, $user_claim, $user_identity ){
+	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ){
 		// hey, we made it!
 		// let's remember the tokens for future reference
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
@@ -313,26 +274,26 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// save our authorization cookie for the response expiration
 		$oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', TRUE );
-		setcookie( $this->cookie_id_key, $user_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, TRUE );
+		setcookie( $this->cookie_id_key, $subject_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, TRUE );
 
-		// get a cookie and go home!
+		// you did great, have a cookie!
 		wp_set_auth_cookie( $user->ID, FALSE );
 	}
 	
 	/**
+	 * Get the user that has meta data matching a 
 	 * 
-	 * 
-	 * @param $user_identity
+	 * @param $subject_identity
 	 *
 	 * @return false|\WP_User
 	 */
-	function get_user_by_identity( $user_identity ){
-		// look for user by their openid-connect-generic-user-identity value
+	function get_user_by_identity( $subject_identity ){
+		// look for user by their openid-connect-generic-subject-identity value
 		$user_query = new WP_User_Query( array(
 			'meta_query' => array(
 				array(
-					'key'   => 'openid-connect-generic-user-identity',
-					'value' => $user_identity,
+					'key'   => 'openid-connect-generic-subject-identity',
+					'value' => $subject_identity,
 				)
 			)
 		) );
@@ -354,7 +315,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	private function get_username_from_claim( $user_claim ) {
-		if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
+		// allow settings to take first stab at username
+		if ( !empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
+			$desired_username =  $user_claim[ $this->settings->identity_key ];
+		}
+		else if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
 			$desired_username = $user_claim['preferred_username'];
 		}
 		else if ( isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
@@ -388,25 +353,28 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 	
 	/**
+	 * Create a new user from details in a user_claim
 	 * 
-	 * 
-	 * @param $user_identity
+	 * @param $subject_identity
 	 * @param $user_claim
 	 *
 	 * @return \WP_Error | \WP_User
 	 */
-	function create_new_user( $user_identity, $user_claim){
-		// default username & email to the user identity, since that is the only
-		// thing we can be sure to have 
-		$username = $user_identity;
-		$email    = $user_identity;
+	function create_new_user( $subject_identity, $user_claim){
+		// default username & email to the subject identity
+		$username = $subject_identity;
+		$email    = $subject_identity;
 
 		// allow claim details to determine username
 		if ( isset( $user_claim['email'] ) ) {
 			$email    = $user_claim['email'];
 			$username = $this->get_username_from_claim( $user_claim );
+			
+			if ( is_wp_error( $username ) ){
+				return $username;
+			}
 		}
-		// if no name exists, attempt another request for userinfo
+		// if no email exists, attempt another request for userinfo
 		else if ( isset( $token_response['access_token'] ) ) {
 			$user_claim_result = $this->client->request_userinfo( $token_response['access_token'] );
 
@@ -417,10 +385,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 			$user_claim = json_decode( $user_claim_result['body'], TRUE );
 
-			if ( isset( $user_claim['email'] ) ) {
-				$email    = $user_claim['email'];
-				$username = $this->get_username_from_claim( $user_claim );
+			// check for email in claim
+			if ( ! isset( $user_claim['email'] ) ) {
+				return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
 			}
+			
+			$email    = $user_claim['email'];
+			$username = $this->get_username_from_claim( $user_claim );
 		}
 
 		// allow other plugins / themes to determine authorization 
@@ -439,13 +410,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return new WP_Error( 'failed-user-creation', __( 'Failed user creation.' ), $uid );
 		}
 
+		// retrieve our new user
 		$user = get_user_by( 'id', $uid );
-
-		$this->log( "New user created: {$user->user_login} ($uid)", 'success' );
 
 		// save some meta data about this new user for the future
 		add_user_meta( $user->ID, 'openid-connect-generic-user', TRUE, TRUE );
-		add_user_meta( $user->ID, 'openid-connect-generic-user-identity', (string) $user_identity, TRUE );
+		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
+
+		// log the results
+		$this->logger->log( "New user created: {$user->user_login} ($uid)", 'success' );
 
 		// allow plugins / themes to take action on new user creation
 		do_action( 'openid-connect-generic-user-create', $user, $user_claim );

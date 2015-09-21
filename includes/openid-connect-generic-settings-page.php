@@ -34,7 +34,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		 * - example (optional example will appear beneath description and be wrapped in <code>)
 		 */
 		$fields = array(
-			'login_type'      => array(
+			'login_type'        => array(
 				'title'       => __( 'Login Type' ),
 				'description' => __( 'Select how the client (login form) should provide login options.' ),
 				'type'        => 'select',
@@ -44,79 +44,73 @@ class OpenID_Connect_Generic_Settings_Page {
 				),
 				'section'     => 'client_settings',
 			),
-			'ep_login'        => array(
-				'title'       => __( 'Login Endpoint URL' ),
-				'description' => __( 'Identify provider authorization endpoint.' ),
-				'example'     => 'https://example.com/oauth2/authorize',
-				'type'        => 'text',
-				'section'     => 'client_settings',
-			),
-			'ep_token'        => array(
-				'title'       => __( 'Token Validation Endpoint URL' ),
-				'description' => __( 'Identify provider token endpoint.' ),
-				'example'     => 'https://example.com/oauth2/token',
-				'type'        => 'text',
-				'section'     => 'client_settings',
-			),
-			'ep_userinfo'     => array(
-				'title'       => __( 'Userinfo Endpoint URL' ),
-				'description' => __( 'Identify provider User information endpoint.' ),
-				'example'     => 'https://example.com/oauth2/UserInfo',
-				'type'        => 'text',
-				'section'     => 'client_settings',
-			),
-			'no_sslverify'    => array(
-				'title'       => __( 'Disable SSL Verify' ),
-				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.' ),
-				'type'        => 'checkbox',
-				'section'     => 'client_settings',
-			),
-			'client_id'       => array(
+			'client_id'         => array(
 				'title'       => __( 'Client ID' ),
 				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.' ),
 				'example'     => 'my-wordpress-client-id',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
-			'client_secret'   => array(
+			'client_secret'     => array(
 				'title'       => __( 'Client Secret Key' ),
 				'description' => __( 'Arbitrary secret key the server expects from this client. Can be anything, but should be very unique.' ),
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
-			'scope'           => array(
+			'scope'             => array(
 				'title'       => __( 'OpenID Scope' ),
 				'description' => __( 'Space separated list of scopes this client should access.' ),
 				'example'     => 'email profile openid',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
-			'identity_key'    => array(
-				'title'       => __( 'Identity Key' ),
-				'description' => __( 'Where in the response array to find the identification data. When in doubt, use "sub".' ),
-				'example'     => 'sub',
+			'endpoint_login'    => array(
+				'title'       => __( 'Login Endpoint URL' ),
+				'description' => __( 'Identify provider authorization endpoint.' ),
+				'example'     => 'https://example.com/oauth2/authorize',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
-			'allowed_regex'   => array(
-				'title'       => __( 'Authorization Regex' ),
-				'description' => __( 'Provide a regular expression that enforces your expectations concerning the identity value returned from the IDP.' ),
+			'endpoint_userinfo' => array(
+				'title'       => __( 'Userinfo Endpoint URL' ),
+				'description' => __( 'Identify provider User information endpoint.' ),
+				'example'     => 'https://example.com/oauth2/UserInfo',
 				'type'        => 'text',
-				'section'     => 'authorization_settings',
+				'section'     => 'client_settings',
 			),
-			'enforce_privacy' => array(
+			'endpoint_token'    => array(
+				'title'       => __( 'Token Validation Endpoint URL' ),
+				'description' => __( 'Identify provider token endpoint.' ),
+				'example'     => 'https://example.com/oauth2/token',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
+			'no_sslverify'      => array(
+				'title'       => __( 'Disable SSL Verify' ),
+				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
+			'identity_key'     => array(
+				'title'       => __( 'Identity Key' ),
+				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".' ),
+				'example'     => 'preferred_username',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
+			'enforce_privacy'   => array(
 				'title'       => __( 'Enforce Privacy' ),
 				'description' => __( 'Require users be logged in to see the site.' ),
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
-			'enable_logging'  => array(
+			'enable_logging'    => array(
 				'title'       => __( 'Enable Logging' ),
 				'description' => __( 'Very simple log messages for debugging purposes.' ),
 				'type'        => 'checkbox',
 				'section'     => 'log_settings',
 			),
-			'log_limit'       => array(
+			'log_limit'         => array(
 				'title'       => __( 'Log Limit' ),
 				'description' => __( 'Number of items to keep in the log. These logs are stored as an option in the database, so space is limited.' ),
 				'type'        => 'number',
@@ -273,9 +267,10 @@ class OpenID_Connect_Generic_Settings_Page {
 				<code><?php print admin_url( 'admin-ajax.php?action=openid-connect-authorize' ); ?></code>
 			</p>
 
-			<?php
-				//$this->show_logs();
-			?>
+			<?php if ( $this->settings->enable_logging ) { ?>
+				<h2><?php _e( 'Logs' ); ?> </h2>
+				<div><?php print $this->logger->get_logs_table(); ?></div>
+			<?php } ?>
 		</div>
 		<?php
 	}

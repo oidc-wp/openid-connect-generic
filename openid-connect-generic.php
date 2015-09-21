@@ -73,9 +73,9 @@ class OpenID_Connect_Generic {
 			$this->settings->client_id,
 			$this->settings->client_secret,
 			$this->settings->scope,
-			$this->settings->ep_login,
-			$this->settings->ep_userinfo,
-			$this->settings->ep_token,
+			$this->settings->endpoint_login,
+			$this->settings->endpoint_userinfo,
+			$this->settings->endpoint_token,
 			// redirect uri
 			admin_url( 'admin-ajax.php?action=openid-connect-authorize' )
 		);
@@ -86,6 +86,33 @@ class OpenID_Connect_Generic {
 		if ( is_admin() ){
 			$this->settings_page = OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 		}
+	}
+	
+	/**
+	 * Check if privacy enforcement is enabled, and redirect users that aren't
+	 * logged in.
+	 */
+	function enforce_privacy_redirect() {
+		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
+			// our client endpoint relies on the wp admind ajax endpoint
+			if ( ! defined( 'DOING_AJAX') || ! DOING_AJAX || ! isset( $_GET['action'] ) || $_GET['action'] != 'openid-connect-authorize' ) {
+				auth_redirect();
+			}
+		}
+	}
+
+	/**
+	 * Enforce privacy settings for rss feeds
+	 * 
+	 * @param $content
+	 *
+	 * @return mixed
+	 */
+	function enforce_privacy_feeds( $content ){
+		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
+			$content = 'Private site';
+		}
+		return $content;
 	}
 
 	/**
@@ -112,20 +139,19 @@ class OpenID_Connect_Generic {
 			// default settings values
 			array(
 				// oauth client settings
-				'client_id'       => '',
-				'client_secret'   => '',
-				'scope'           => '',
-				'ep_login'        => '',
-				'ep_userinfo'     => '',
-				'ep_token'        => '',
+				'login_type'        => 'button',
+				'client_id'         => '',
+				'client_secret'     => '',
+				'scope'             => '',
+				'endpoint_login'    => '',
+				'endpoint_userinfo' => '',
+				'endpoint_token'    => '',
 				
 				// non-standard settings
 				'no_sslverify'    => 0,
-				'identity_key'    => 'sub',
-				'allowed_regex'   => '',
-
+				'identity_key'    => 'preferred_username',
+				
 				// plugin settings
-				'login_type'      => 'button',
 				'enforce_privacy' => 0,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000, 
@@ -137,6 +163,12 @@ class OpenID_Connect_Generic {
 		$plugin = new self( $settings, $logger );
 		
 		add_action( 'init', array( $plugin, 'init' ) );
+		
+		// privacy hooks
+		add_action( 'template_redireect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
+		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+		add_filter( 'the_excerpt_rss',  array( $plugin, 'enforce_privacy_feeds' ), 999 );
+		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 	}
 }
 

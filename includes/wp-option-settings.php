@@ -8,11 +8,15 @@ class WP_Option_Settings {
 	private $option_name;
 	
 	// stored option values array
-	private $values = array();
+	private $values;
 	
 	// default plugin settings values
 	private $default_settings;
-	
+
+	/**
+	 * @param $option_name
+	 * @param array $default_settings
+	 */
 	function __construct( $option_name, $default_settings = array() ){
 		$this->option_name = $option_name;
 		$this->default_settings = $default_settings;

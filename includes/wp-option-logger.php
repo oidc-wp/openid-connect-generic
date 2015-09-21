@@ -180,17 +180,24 @@ class WP_Option_Logger {
 			$logs = $this->get_logs();
 		}
 		
+		ini_set( 'xdebug.var_display_max_depth', -1 );
+		
 		ob_start();
 		?>
-		<table class="wp-list-table widefat fixed striped posts">
+		<style type="text/css">
+			#logger-table .col-data { width: 85% }
+			#logger-table .col-details div { padding: 4px 0; border-bottom: 1px solid #bbb; }
+			#logger-table .col-details label { font-weight: bold; }
+		</style>
+		<table id="logger-table" class="wp-list-table widefat fixed striped posts">
 			<thead>
-			<th>Details</th>
-			<th style="width: 85%;">Data</th>
+			<th class="col-details">Details</th>
+			<th class="col-data">Data</th>
 			</thead>
 			<tbody>
 			<?php foreach ( $logs as $log ) { ?>
 				<tr>
-					<td>
+					<td class="col-details">
 						<div>
 							<label><?php _e( 'Type' ); ?>: </label>
 							<?php print $log['type']; ?>
@@ -204,11 +211,12 @@ class WP_Option_Logger {
 							<?php print ( $log['user_ID'] ) ? get_userdata( $log['user_ID'] )->user_login : '0'; ?>
 						</div>
 						<div>
-							<label><?php _e( 'URI: ' ); ?>: </label>
+							<label><?php _e( 'URI ' ); ?>: </label>
 							<?php print $log['uri']; ?>
 						</div>
 					</td>
-					<td><?php var_dump( $log['data'] ); ?></td>
+					
+					<td class="col-data"><?php var_dump( $log['data'] ); ?></td>
 				</tr>
 			<?php } ?>
 			</tbody>
