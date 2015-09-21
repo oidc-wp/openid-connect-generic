@@ -3,7 +3,7 @@
 Plugin Name: OpenID Connect - Generic Client
 Plugin URI: https://github.com/daggerhart/openid-connect-generic
 Description:  Connect to an OpenID Connect identity provider with Authorization Code Flow
-Version: 3.0
+Version: 3.0.1
 Author: daggerhart
 Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
@@ -25,7 +25,7 @@ Notes
 
   User Meta
   - openid-connect-generic-user                - (bool) if the user was created by this plugin
-  - openid-connect-generic-user-identity       - the identity of the user provided by the idp
+  - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
   - openid-connect-generic-last-user-claim     - the user's most recent user_claim 
   
@@ -34,10 +34,10 @@ Notes
   - openid-connect-generic-valid-states - locally stored generated states
 */
 
-define( 'OPENID_CONNECT_GENERIC_DIR', dirname( __FILE__ ) );
-
 
 class OpenID_Connect_Generic {
+	// plugin version
+	const VERSION = '3.0.1';
 
 	// plugin settings
 	private $settings;
@@ -53,7 +53,7 @@ class OpenID_Connect_Generic {
 	
 	// login form adjustments
 	private $login_form;
-
+	
 	/**
 	 * Setup the plugin
 	 *
@@ -83,6 +83,8 @@ class OpenID_Connect_Generic {
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
 		$this->login_form = OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
 
+		$this->upgrade();
+		
 		if ( is_admin() ){
 			$this->settings_page = OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 		}
@@ -116,15 +118,30 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * Autoloader
+	 * Handle plugin upgrades
+	 */
+	function upgrade(){
+		$last_version = get_option( 'openid-connect-generic-plugin-version', self::VERSION );
+		
+		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
+			// upgrade required
+			
+			// update the stored version number
+			update_option( 'openid-connect-generic-plugin-version', self::VERSION );
+		}
+	}
+	
+	/**
+	 * Simple autoloader
 	 * 
 	 * @param $class
 	 */
 	static public function autoload( $class ) {
 		$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
-
-		if ( file_exists( OPENID_CONNECT_GENERIC_DIR . '/includes/' . $filename ) ) {
-			require OPENID_CONNECT_GENERIC_DIR . '/includes/' . $filename;
+		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
+		
+		if ( file_exists( $filepath ) ) {
+			require $filepath;
 		}
 	}
 

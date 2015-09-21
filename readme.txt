@@ -2,7 +2,7 @@
 Contributors: daggerhart
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
-Requires at least: 3.0.1
+Requires at least: 4
 Tested up to: 4.2.2
 Stable tag: trunk
 License: GPLv2 or later
@@ -19,8 +19,8 @@ new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
 
-Heavily based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/ but 
-has been completely rewritten to provide a bit more flexibility in development going forward.
+Originally based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/ - but 
+has been completely rewritten.
 
 == Installation ==
 
@@ -39,6 +39,12 @@ Replace `example.com` with your domain name and path to WordPress.
 
 
 == Changelog ==
+
+= 3.0 =
+
+* Complete rewrite to separate concerns
+* Changed settings keys for clarity (requires updating settings if upgrading from another version)
+* Error logging
 
 = 2.1 =
 
