@@ -257,6 +257,11 @@ class OpenID_Connect_Generic_Settings_Page {
 				settings_fields( $this->settings_field_group );
 				do_settings_sections( $this->options_page_name );
 				submit_button();
+				
+				// simple debug to view settings array
+				if ( isset( $_GET['debug'] ) ) {
+					var_dump( $this->settings->get_values() );
+				}
 				?>
 			</form>
 

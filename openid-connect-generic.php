@@ -121,10 +121,21 @@ class OpenID_Connect_Generic {
 	 * Handle plugin upgrades
 	 */
 	function upgrade(){
-		$last_version = get_option( 'openid-connect-generic-plugin-version', self::VERSION );
+		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
+		$settings = $this->settings;
 		
 		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
 			// upgrade required
+			
+			// @todo move this to another file for upgrade scripts
+			if ( isset( $settings->ep_login ) ) {
+				$settings->endpoint_login = $settings->ep_login;
+				$settings->endpoint_token = $settings->ep_token;
+				$settings->endpoint_userinfo = $settings->ep_userinfo;
+				
+				unset( $settings->ep_login, $settings->ep_token, $settings->ep_userinfo );
+				$settings->save();
+			}
 			
 			// update the stored version number
 			update_option( 'openid-connect-generic-plugin-version', self::VERSION );

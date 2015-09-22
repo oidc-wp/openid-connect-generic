@@ -37,6 +37,14 @@ class WP_Option_Settings {
 		return isset( $this->values[ $key ] );
 	}
 	
+	function __unset( $key ){
+		unset( $this->values[ $key ]);
+	}
+	
+	function get_values(){
+		return $this->values;
+	}
+	
 	function get_option_name() {
 		return $this->option_name;
 	}
