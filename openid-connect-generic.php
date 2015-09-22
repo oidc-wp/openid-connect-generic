@@ -182,7 +182,7 @@ class OpenID_Connect_Generic {
 		add_action( 'init', array( $plugin, 'init' ) );
 		
 		// privacy hooks
-		add_action( 'template_redireect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
+		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
 		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'the_excerpt_rss',  array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
