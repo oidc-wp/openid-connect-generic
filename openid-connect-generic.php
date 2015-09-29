@@ -177,6 +177,7 @@ class OpenID_Connect_Generic {
 				
 				// non-standard settings
 				'no_sslverify'    => 0,
+				'http_request_timeout' => 5,
 				'identity_key'    => 'preferred_username',
 				
 				// plugin settings

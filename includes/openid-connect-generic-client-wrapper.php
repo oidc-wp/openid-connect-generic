@@ -47,6 +47,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// alter the requests according to settings
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
+		add_filter( 'http_request_timeout', array( $client_wrapper, 'alter_http_request_timeout' ) );
 
 		if ( is_admin() ) {
 			// use the ajax url to handle processing authorization without any html output
@@ -63,6 +64,21 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		return $client_wrapper;
 	}
 
+	/**
+	 * WP Hook for altering remote request timeout
+	 * 
+	 * @param $timeout
+	 * 
+	 * @return int
+	 */
+	function alter_http_request_timeout( $timeout ){
+		if ( is_numeric( $this->settings->http_request_timeout ) ){
+			return absint( $this->settings->http_request_timeout );
+		}
+		
+		return $timeout;
+	}
+	
 	/**
 	 * Get the authentication url from the client
 	 * 

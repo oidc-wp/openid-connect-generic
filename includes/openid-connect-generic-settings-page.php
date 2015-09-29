@@ -85,16 +85,23 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'identity_key'     => array(
+				'title'       => __( 'Identity Key' ),
+				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".' ),
+				'example'     => 'preferred_username',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
 			'no_sslverify'      => array(
 				'title'       => __( 'Disable SSL Verify' ),
 				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
-			'identity_key'     => array(
-				'title'       => __( 'Identity Key' ),
-				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".' ),
-				'example'     => 'preferred_username',
+			'http_request_timeout'      => array(
+				'title'       => __( 'HTTP Request Timeout' ),
+				'description' => __( 'Set the timeout for requests made to the IDP. Default value is 5.' ),
+				'example'     => 5,
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),

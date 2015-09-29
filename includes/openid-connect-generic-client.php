@@ -111,6 +111,10 @@ class OpenID_Connect_Generic_Client {
 		// call the server and ask for a token
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
+		if ( is_wp_error( $response ) ){
+			$response->add( 'request_authentication_token' , __( 'Request for authentication token failed.' ) );
+		}
+		
 		return $response;
 	}
 
@@ -147,6 +151,10 @@ class OpenID_Connect_Generic_Client {
 		// attempt the request
 		$response = wp_remote_get( $this->endpoint_userinfo . '?access_token=' . $access_token, $request );
 
+		if ( is_wp_error( $response ) ){
+			$response->add( 'request_userinfo' , __( 'Request for userinfo failed.' ) );
+		}
+		
 		return $response;
 	}
 
