@@ -14,8 +14,7 @@ new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
 
-Originally based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/ - but 
-has been completely rewritten.
+Originally based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/
 
 ### Installation
 
@@ -33,6 +32,14 @@ by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=
 Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
+
+**3.0.2**
+
+* Added http_request_timeout setting
+
+**3.0.1**
+
+* Finalizing 3.0.x api
 
 **3.0**
 
