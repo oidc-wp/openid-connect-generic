@@ -127,7 +127,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	function get_token_response( $token_result ){
 		if ( ! isset( $token_result['body'] ) ){
-			return new WP_Error( 'missing-token-body', __( 'Missing token body.' ), $token_response );
+			return new WP_Error( 'missing-token-body', __( 'Missing token body.' ), $token_result );
 		}
 
 		// extract token response from token
