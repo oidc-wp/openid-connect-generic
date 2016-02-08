@@ -96,7 +96,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	function check_user_token() {
 		$is_openid_connect_user = get_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', TRUE );
 
-		if ( is_user_logged_in() && ! empty( $is_openid_connect_user ) && ! isset( $_COOKIE[ $this->cookie_id_key ] ) ) {
+		if ( is_user_logged_in() && ! empty( $is_openid_connect_user ) &&  isset( $_COOKIE[ $this->cookie_id_key ] ) ) {
 			wp_logout();
 			$this->error_redirect( new WP_Error( 'mismatch-identity', __( 'Mismatch identity' ), $_COOKIE ) );
 		}
