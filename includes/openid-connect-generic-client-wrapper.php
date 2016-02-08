@@ -362,7 +362,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$count = 1;
 		while ( username_exists( $username ) ) {
 			$count ++;
-			$username = $desired_name . $count;
+			$username = $desired_username . $count;
 		}
 
 		return $username;
