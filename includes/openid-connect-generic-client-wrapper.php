@@ -133,7 +133,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Remove cookies
 	 */
 	function wp_logout() {
-		setcookie( $this->cookie_id_key, false, 0, COOKIEPATH, COOKIE_DOMAIN, TRUE );
+		setcookie( $this->cookie_id_key, false, 0, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 	}
 
 	/**
@@ -290,7 +290,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// save our authorization cookie for the response expiration
 		$oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', TRUE );
-		setcookie( $this->cookie_id_key, $subject_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, TRUE );
+		setcookie( $this->cookie_id_key, $subject_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 
 		// you did great, have a cookie!
 		wp_set_auth_cookie( $user->ID, FALSE );
