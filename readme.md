@@ -33,6 +33,13 @@ Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
 
+
+**3.0.3**
+
+* Using WordPresss's is_ssl() for setcookie()'s "secure" parameter
+* Bug fix: Incrementing username in case of collision.
+* Bug fix: Wrong error sent when missing token body
+
 **3.0.2**
 
 * Added http_request_timeout setting

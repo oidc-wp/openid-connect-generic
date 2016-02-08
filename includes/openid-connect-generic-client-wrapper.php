@@ -31,10 +31,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	/**
 	 * Hook the client into WP
-	 * 
+	 *
 	 * @param \OpenID_Connect_Generic_Client $client
 	 * @param \WP_Option_Settings $settings
 	 * @param \WP_Option_Logger $logger
+	 *
+	 * @return \OpenID_Connect_Generic_Client_Wrapper
 	 */
 	static public function register( OpenID_Connect_Generic_Client $client, WP_Option_Settings $settings, WP_Option_Logger $logger ){
 		$client_wrapper  = new self( $client, $settings, $logger );
