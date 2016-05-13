@@ -413,8 +413,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Before trying to create the user, first check if a user with the same email already exists
-		if( $uid = email_exists( $email ) ) {
-			return $this->update_existing_user( $uid, $subject_identity );
+			if( $uid = email_exists( $email ) ) {
+				return $this->update_existing_user( $uid, $subject_identity );
+			}
 		}
 		
 		// allow other plugins / themes to determine authorization 
