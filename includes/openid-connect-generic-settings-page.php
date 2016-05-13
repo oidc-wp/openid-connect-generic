@@ -111,6 +111,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
+			'link_existing_users'   => array(
+				'title'       => __( 'Link Existing Users' ),
+				'description' => __( 'If a WordPress account already exists with the same email address as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.' ),
+				'type'        => 'checkbox',
+				'section'     => 'user_settings',
+			),
 			'enable_logging'    => array(
 				'title'       => __( 'Enable Logging' ),
 				'description' => __( 'Very simple log messages for debugging purposes.' ),
@@ -183,6 +189,12 @@ class OpenID_Connect_Generic_Settings_Page {
 			$this->options_page_name
 		);
 
+		add_settings_section( 'user_settings',
+			__( 'WordPress User Settings' ),
+			array( $this, 'user_settings_description' ),
+			$this->options_page_name
+		);
+		
 		add_settings_section( 'authorization_settings',
 			__( 'Authorization Settings' ),
 			array( $this, 'authorization_settings_description' ),
@@ -356,7 +368,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function client_settings_description() {
 		_e( 'Enter your OpenID Connect identity provider settings' );
 	}
-
+	
+	public function user_settings_description() {
+		_e( 'Modify the interaction between OpenID Connect and WordPress users' );
+	}
+	
 	public function authorization_settings_description() {
 		_e( 'Control the authorization mechanics of the site' );
 	}
