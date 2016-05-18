@@ -34,6 +34,15 @@ Replace `example.com` with your domain name and path to WordPress.
 ### Changelog
 
 
+**3.0.5**
+
+* Added [openid_connect_generic_login_button] shortcode to allow the login button to be placed anywhere
+* Added setting to "Redirect Back to Origin Page" after a successful login instead of redirecting to the home page.
+
+**3.0.4**
+
+* Added setting to allow linking existing WordPress user accounts with newly-authenticated OpenID Connect login
+
 **3.0.3**
 
 * Using WordPresss's is_ssl() for setcookie()'s "secure" parameter
