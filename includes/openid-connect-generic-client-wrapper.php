@@ -412,6 +412,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$username = $this->get_username_from_claim( $user_claim );
 		}
 
+		// Before trying to create the user, first check if a user with the same email already exists
+		if( $this->settings->link_existing_users ) {
+			if( $uid = email_exists( $email ) ) {
+				return $this->update_existing_user( $uid, $subject_identity );
+			}
+		}
+		
 		// allow other plugins / themes to determine authorization 
 		// of new accounts based on the returned user claim
 		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', TRUE, $user_claim );
@@ -442,5 +449,26 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		do_action( 'openid-connect-generic-user-create', $user, $user_claim );
 		
 		return $user;
+	}
+	
+	
+	/**
+	 * Update an existing user with OpenID Connect meta data
+	 * 
+	 * @param $uid
+	 * @param $subject_identity
+	 *
+	 * @return \WP_Error | \WP_User
+	 */
+	function update_existing_user( $uid, $subject_identity ) {
+		// add the OpenID Connect meta data 
+		add_user_meta( $uid, 'openid-connect-generic-user', TRUE, TRUE );
+		add_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
+		
+		// allow plugins / themes to take action on user update
+		do_action( 'openid-connect-generic-user-update', $uid );
+		
+		// return our updated user
+		return get_user_by( 'id', $uid );
 	}
 }
