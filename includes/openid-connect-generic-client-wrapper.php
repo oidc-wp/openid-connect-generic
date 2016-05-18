@@ -263,6 +263,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// redirect back to the origin page if enabled
 		if( $this->settings->redirect_user_back && !empty( $redirect_url = esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) ) ) {
+			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
 			wp_redirect( $redirect_url );
 		}
 		// otherwise, go home!
