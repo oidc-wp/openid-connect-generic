@@ -86,6 +86,16 @@ class OpenID_Connect_Generic_Login_Form {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
 		$href = $this->client_wrapper->get_authentication_url();
 
+		// record the URL of this page if set to redirect back to origin page
+		if( $this->settings->redirect_user_back ) {
+			$redirect_expiry = time() + DAY_IN_SECONDS;
+			if ( $GLOBALS['pagenow'] == 'wp-login.php' )
+				$redirect_url = admin_url();
+			else
+				$redirect_url = home_url( esc_url( add_query_arg( NULL, NULL ) ) );
+			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+		}
+		
 		ob_start();
 		?>
 		<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
