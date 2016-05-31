@@ -117,6 +117,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
+			'redirect_user_back'   => array(
+				'title'       => __( 'Redirect Back to Origin Page' ),
+				'description' => __( 'After a successful OpenID Connect authentication, this will <strong>override the default action of redirecting the user to the home page and instead redirect the user back to the page on which they clicked the OpenID Connect login button</strong>. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.' ),
+				'type'        => 'checkbox',
+				'section'     => 'user_settings',
+			),
 			'enable_logging'    => array(
 				'title'       => __( 'Enable Logging' ),
 				'description' => __( 'Very simple log messages for debugging purposes.' ),

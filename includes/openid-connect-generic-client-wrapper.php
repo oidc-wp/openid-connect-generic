@@ -12,7 +12,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	// internal tracking cookie key
 	private $cookie_id_key = 'openid-connect-generic-identity';
-	
+
+	// user redirect cookie key
+	public $cookie_redirect_key = 'openid-connect-generic-redirect';
+
 	// WP_Error if there was a problem, or false if no error
 	private $error = false;
 
@@ -258,8 +261,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// log our success
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
-		// go home!
-		wp_redirect( home_url() );
+		// redirect back to the origin page if enabled
+		if( $this->settings->redirect_user_back && !empty( $redirect_url = esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) ) ) {
+			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
+			wp_redirect( $redirect_url );
+		}
+		// otherwise, go home!
+		else {
+			wp_redirect( home_url() );
+		}
 	}
 
 	/**
