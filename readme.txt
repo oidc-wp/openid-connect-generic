@@ -3,7 +3,7 @@ Contributors: daggerhart
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
 Requires at least: 4
-Tested up to: 4.2.2
+Tested up to: 4.5.2
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -39,6 +39,10 @@ Replace `example.com` with your domain name and path to WordPress.
 
 
 == Changelog ==
+
+= 3.0.6 =
+
+* If "Link Existing Users" is enabled, allow users who login with OpenID Connect to also log in with WordPress credentials
 
 = 3.0.5 =
 

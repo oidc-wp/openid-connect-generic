@@ -33,6 +33,9 @@ Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
 
+**3.0.6**
+
+* If "Link Existing Users" is enabled, allow users who login with OpenID Connect to also log in with WordPress credentials
 
 **3.0.5**
 
