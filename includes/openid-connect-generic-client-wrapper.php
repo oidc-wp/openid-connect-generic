@@ -138,6 +138,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Remove cookies
 	 */
 	function wp_logout() {
+		// set OpenID Connect user flag to false on logout to allow users to log into the same account without OpenID Connect
+		if( $this->settings->link_existing_users ) {
+			if( get_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', TRUE ) )
+				update_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', FALSE );
+		}
+		
 		setcookie( $this->cookie_id_key, false, 0, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 	}
 
@@ -300,6 +306,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
+		// if we're allowing users to use WordPress and OpenID Connect, we need to set this to true at every login
+		if( $this->settings->link_existing_users ) {
+			update_user_meta( $user->ID, 'openid-connect-generic-user', TRUE );
+		}
+		
 		// save our authorization cookie for the response expiration
 		$oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', TRUE );
 		setcookie( $this->cookie_id_key, $subject_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
@@ -422,7 +433,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$username = $this->get_username_from_claim( $user_claim );
 		}
 
-		// Before trying to create the user, first check if a user with the same email already exists
+		// before trying to create the user, first check if a user with the same email already exists
 		if( $this->settings->link_existing_users ) {
 			if( $uid = email_exists( $email ) ) {
 				return $this->update_existing_user( $uid, $subject_identity );
