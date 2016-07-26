@@ -33,6 +33,10 @@ Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
 
+**3.0.7**
+* When requesting userinfo, send the access token using the Authorization header field as recommended in 
+section 5.3.1 of the specs. 
+
 **3.0.6**
 
 * If "Link Existing Users" is enabled, allow users who login with OpenID Connect to also log in with WordPress credentials
