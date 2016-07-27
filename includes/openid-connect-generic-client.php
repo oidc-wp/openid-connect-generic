@@ -148,7 +148,15 @@ class OpenID_Connect_Generic_Client {
 		// allow modifications to the request
 		$request = apply_filters( 'openid-connect-generic-alter-request', array(), 'get-userinfo' );
 
-		// attempt the request
+		// section 5.3.1 of the spec recommends sending the access token using the authorization header
+		// a filter may or may not have already added headers - make sure they exist then add the token
+		if ( !array_key_exists( 'headers', $request ) || !is_array( $request['headers'] ) ) {
+			$request['headers'] = array();
+		}
+
+		$request['headers']['Authorization'] = 'Bearer '.$access_token;
+
+		// attempt the request including the access token in the query string for backwards compatibility
 		$response = wp_remote_get( $this->endpoint_userinfo . '?access_token=' . $access_token, $request );
 
 		if ( is_wp_error( $response ) ){
