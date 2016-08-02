@@ -22,6 +22,7 @@ Notes
 
   Actions
   - openid-connect-generic-user-create - 2 args: fires when a new user is created by this plugin
+  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
 
   User Meta
   - openid-connect-generic-user                - (bool) if the user was created by this plugin
