@@ -32,6 +32,9 @@ by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=
 Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
+**3.0.8**
+* Added [openid-connect-generic-update-user-using-current-claim] action hook allowing other plugins/themes
+  to take action using the fresh claims received when an existing user logs in.
 
 **3.0.7**
 * When requesting userinfo, send the access token using the Authorization header field as recommended in 

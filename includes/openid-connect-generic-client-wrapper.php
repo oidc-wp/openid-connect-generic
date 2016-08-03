@@ -253,6 +253,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $user ) {
 			$user = $this->create_new_user( $subject_identity, $user_claim );
 		}
+		else {
+			// allow plugins / themes to take action using current claims on existing user (e.g. update role)
+			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
+		}
 
 		// validate the found / created user
 		$valid = $this->validate_user( $user );
