@@ -228,7 +228,7 @@ class OpenID_Connect_Generic_Client {
 		// we need to ensure 3 specific items exist with the token response in order
 		// to proceed with confidence:  id_token, access_token, and token_type == 'Bearer'
 		if ( ! isset( $token_response['id_token'] ) || ! isset( $token_response['access_token'] ) ||
-		     ! isset( $token_response['token_type'] ) || $token_response['token_type'] !== 'Bearer'
+		     ! isset( $token_response['token_type'] ) || strcasecmp( $token_response['token_type'], 'Bearer' )
 		) {
 			return new WP_Error( 'invalid-token-response', 'Invalid token response', $token_response );
 		}
