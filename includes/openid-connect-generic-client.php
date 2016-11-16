@@ -118,6 +118,35 @@ class OpenID_Connect_Generic_Client {
 		return $response;
 	}
 
+	/**
+	 * Using the refresh token, request new tokens from the idp
+	 *
+	 * @param $refresh_token - refresh token previously obtained from token response.
+	 *
+	 * @return array|\WP_Error
+	 */
+	function request_new_tokens( $refresh_token ) {
+		$request = array(
+			'body' => array(
+				'refresh_token' => $refresh_token,
+				'client_id'     => $this->client_id,
+				'client_secret' => $this->client_secret,
+				'grant_type'    => 'refresh_token'
+			)
+		);
+
+		// allow modifications to the request
+		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
+
+		// call the server and ask for new tokens
+		$response = wp_remote_post( $this->endpoint_token, $request );
+
+		if ( is_wp_error( $response ) ) {
+			$response->add( 'refresh_token' , __( 'Refresh token failed.' ) );
+		}
+
+		return $response;
+	}
 
 	/**
 	 * Extract and decode the token body of a token response
@@ -132,6 +161,15 @@ class OpenID_Connect_Generic_Client {
 
 		// extract token response from token
 		$token_response = json_decode( $token_result['body'], TRUE );
+
+		if ( isset( $token_response[ 'error' ] ) ) {
+			$error = $token_response[ 'error' ];
+			$error_description = $error;
+			if ( isset( $token_response[ 'error_description' ] ) ) {
+				$error_description = $token_response[ 'error_description' ];
+			}
+			return new WP_Error( $error, $error_description, $token_result );
+		}
 
 		return $token_response;
 	}

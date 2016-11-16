@@ -28,7 +28,8 @@ Notes
   - openid-connect-generic-user                - (bool) if the user was created by this plugin
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
-  - openid-connect-generic-last-user-claim     - the user's most recent user_claim 
+  - openid-connect-generic-last-user-claim     - the user's most recent user_claim
+  - openid-connect-generic-refresh-cookie-key  - encryption key used to secure refresh token info in cookie
   
   Options
   - openid_connect_generic_settings     - plugin settings
@@ -149,7 +150,11 @@ class OpenID_Connect_Generic {
 	 * @param $class
 	 */
 	static public function autoload( $class ) {
-		$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
+		$filename = $class . '.php';
+		if ( false === strpos( $class, '\\' ) ) {
+			$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
+		}
+
 		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
 		
 		if ( file_exists( $filepath ) ) {
