@@ -10,8 +10,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	// logger object
 	private $logger;
 
-	// internal tracking cookie key
-	private $cookie_id_key = 'openid-connect-generic-identity';
+	// token refresh info cookie key
+	private $cookie_token_refresh_key = 'openid-connect-generic-refresh';
 
 	// user redirect cookie key
 	public $cookie_redirect_key = 'openid-connect-generic-redirect';
@@ -47,8 +47,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// remove cookies on logout
 		add_action( 'wp_logout', array( $client_wrapper, 'wp_logout' ) );
 
-		// verify legitimacy of user token on admin pages
-		add_action( 'admin_init', array( $client_wrapper, 'check_user_token' ) );
 
 		// alter the requests according to settings
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
@@ -63,7 +61,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		
 		// verify token for any logged in user
 		if ( is_user_logged_in() ) {
-			$client_wrapper->check_user_token();
+			$client_wrapper->ensure_tokens_still_fresh();
 		}
 		
 		return $client_wrapper;
@@ -93,16 +91,47 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		return $this->client->make_authentication_url();
 	}
 
-	/**
-	 * Check the user's cookie
-	 */
-	function check_user_token() {
-		$is_openid_connect_user = get_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', TRUE );
-
-		if ( is_user_logged_in() && ! empty( $is_openid_connect_user ) && ! isset( $_COOKIE[ $this->cookie_id_key ] ) ) {
-			wp_logout();
-			$this->error_redirect( new WP_Error( 'mismatch-identity', __( 'Mismatch identity' ), $_COOKIE ) );
+	function ensure_tokens_still_fresh() {
+		if ( ! is_user_logged_in() ) {
+			return;
 		}
+
+		$is_openid_connect_user = get_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', TRUE );
+		if ( empty( $is_openid_connect_user ) ) {
+			return;
+		}
+
+		if ( ! isset( $_COOKIE[ $this->cookie_token_refresh_key] ) ) {
+			wp_logout();
+			$this->error_redirect( new WP_Error( 'token-refresh-cookie-missing', __( 'Single sign-on cookie missing. Please login again.' ), $_COOKIE ) );
+			exit;
+		}
+
+		$user_id = wp_get_current_user()->ID;
+		$current_time = current_time( 'timestamp', TRUE );
+		$refresh_token_info = $this->read_token_refresh_info_from_cookie( $user_id );
+
+		if ( ! $refresh_token_info ) {
+			wp_logout();
+			$this->error_redirect( new WP_Error( 'token-refresh-cookie-missing', __( 'Single sign-on cookie invalid. Please login again.' ), $_COOKIE ) );
+		}
+
+		$next_access_token_refresh_time = $refresh_token_info[ 'next_access_token_refresh_time' ];
+		$refresh_token = $refresh_token_info[ 'refresh_token' ];
+
+		if ( $current_time < $next_access_token_refresh_time ) {
+			return;
+		}
+
+		$token_result = $this->client->request_new_tokens( $refresh_token );
+		$token_response = $this->client->get_token_response( $token_result );
+
+		if ( is_wp_error( $token_response ) ) {
+			wp_logout();
+			$this->error_redirect( $token_response );
+		}
+
+		$this->issue_token_refresh_info_cookie( $user_id, $token_response );
 	}
 
 	/**
@@ -144,7 +173,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				update_user_meta( wp_get_current_user()->ID, 'openid-connect-generic-user', FALSE );
 		}
 		
-		setcookie( $this->cookie_id_key, false, 0, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+		setcookie( $this->cookie_token_refresh_key, false, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 	}
 
 	/**
@@ -314,13 +343,58 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if( $this->settings->link_existing_users ) {
 			update_user_meta( $user->ID, 'openid-connect-generic-user', TRUE );
 		}
-		
-		// save our authorization cookie for the response expiration
-		$oauth_expiry = $token_response['expires_in'] + current_time( 'timestamp', TRUE );
-		setcookie( $this->cookie_id_key, $subject_identity, $oauth_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 
 		// you did great, have a cookie!
+		$this->issue_token_refresh_info_cookie( $user->ID, $token_response );
 		wp_set_auth_cookie( $user->ID, FALSE );
+	}
+
+	function issue_token_refresh_info_cookie( $user_id, $token_response ) {
+		$cookie_value = serialize( array(
+			'next_access_token_refresh_time' =>  $token_response['expires_in'] + current_time( 'timestamp' , TRUE ),
+			'refresh_token' => $token_response[ 'refresh_token' ]
+		) );
+		$key = $this->get_refresh_cookie_encryption_key( $user_id );
+		$encrypted_cookie_value = \Defuse\Crypto\Crypto::encrypt( $cookie_value, $key );
+		setcookie( $this->cookie_token_refresh_key, $encrypted_cookie_value, 0, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+	}
+
+	function read_token_refresh_info_from_cookie( $user_id ) {
+		if ( ! isset( $_COOKIE[ $this->cookie_token_refresh_key ] ) ) {
+			return false;
+		}
+
+		try {
+			$encrypted_cookie_value = $_COOKIE[$this->cookie_token_refresh_key];
+			$key = $this->get_refresh_cookie_encryption_key( $user_id );
+			$cookie_value = unserialize( \Defuse\Crypto\Crypto::decrypt($encrypted_cookie_value, $key) );
+
+			if ( ! isset( $cookie_value[ 'next_access_token_refresh_time' ] ) || ! $cookie_value[ 'next_access_token_refresh_time' ]
+				|| ! isset( $cookie_value[ 'refresh_token' ] ) || ! $cookie_value[ 'refresh_token' ] ) {
+				return false;
+			}
+
+			return $cookie_value;
+		}
+		catch ( Exception $e ) {
+			$this->logger->log( $e->getMessage() );
+			return false;
+		}
+	}
+
+	function get_refresh_cookie_encryption_key( $user_id ) {
+		$meta_key = 'openid-connect-generic-refresh-cookie-key';
+		$existing_key_string = get_user_meta( $user_id, $meta_key, true );
+
+		try {
+			$user_encryption_key = \Defuse\Crypto\Key::loadFromAsciiSafeString( $existing_key_string );
+		} catch ( Exception $e ) {
+			$this->logger->log( "Error loading user {$user_id} refresh token cookie key, generating new: " . $e->getMessage() );
+			$user_encryption_key = \Defuse\Crypto\Key::createNewRandomKey();
+			update_user_meta( $user_id, $meta_key, $user_encryption_key->saveToAsciiSafeString() );
+		}
+
+		return $user_encryption_key;
 	}
 	
 	/**
