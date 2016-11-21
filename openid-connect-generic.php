@@ -151,14 +151,18 @@ class OpenID_Connect_Generic {
 	 */
 	static public function autoload( $class ) {
 		$filename = $class . '.php';
+
 		if ( false === strpos( $class, '\\' ) ) {
 			$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
 		}
+		else {
+			$filename  = str_replace('\\', DIRECTORY_SEPARATOR, $filename);
+		}
 
 		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
-		
+
 		if ( file_exists( $filepath ) ) {
-			require $filepath;
+			require_once $filepath;
 		}
 	}
 

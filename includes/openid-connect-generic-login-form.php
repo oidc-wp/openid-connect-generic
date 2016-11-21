@@ -28,8 +28,36 @@ class OpenID_Connect_Generic_Login_Form {
 		
 		// add a shortcode for the login button
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
+		
+		$login_form->handle_redirect_cookie();
 
 		return $login_form;
+	}
+
+	/**
+	 * Handle login related redirects
+	 */
+	function handle_redirect_cookie()
+	{
+		// record the URL of this page if set to redirect back to origin page
+		if ( $this->settings->redirect_user_back )
+		{
+			$redirect_expiry = current_time('timestamp') + DAY_IN_SECONDS;
+
+			// default redirect to the homepage
+			$redirect_url = home_url( esc_url( add_query_arg( NULL, NULL ) ) );
+
+			if ( $GLOBALS['pagenow'] == 'wp-login.php' ) {
+				// if using the login form, default redirect to the admin dashboard
+				$redirect_url = admin_url();
+
+				if ( isset( $_REQUEST['redirect_to'] ) ) {
+					$redirect_url = esc_url( $_REQUEST[ 'redirect_to' ] );
+				}
+			}
+
+			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+		}
 	}
 	
 	/**
@@ -40,22 +68,6 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	function handle_login_page( $message ) {
 		$settings = $this->settings;
-
-		// record the URL of this page if set to redirect back to origin page
-		if ( $this->settings->redirect_user_back ) {
-			$redirect_expiry = time() + DAY_IN_SECONDS;
-			if ( $GLOBALS['pagenow'] == 'wp-login.php' ) {
-				if ( isset( $_REQUEST['redirect_to'] ) ) {
-					$redirect_url = esc_url( $_REQUEST[ 'redirect_to' ] );
-				}
-				else {
-					$redirect_url = admin_url();
-				}
-			} else {
-				$redirect_url = home_url( esc_url( add_query_arg( NULL, NULL ) ) );
-			}
-			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
-		}
 
 		// errors and auto login can't happen at the same time
 		if ( isset( $_GET['login-error'] ) ) {
