@@ -70,19 +70,22 @@ class OpenID_Connect_Generic_Login_Form {
 		$settings = $this->settings;
 
 		// errors and auto login can't happen at the same time
-		if ( isset( $_GET['login-error'] ) ) {
-			$message = $this->make_error_output( $_GET['login-error'], $_GET['message'] );
-		}
-		else if ( $settings->login_type == 'auto' ) {
-			wp_redirect( $this->client_wrapper->get_authentication_url() );
-			exit;
-		}
-		
-		// login button is appended to existing messages in case of error
-		if ( $settings->login_type == 'button' ) {
-			$message .= $this->make_login_button();
+		$message = '';
+		if ( $settings->login_type == 'auto' ) {
+			if ( ! isset( $_GET['login-error'] ) ) {
+				wp_redirect( $this->client_wrapper->get_authentication_url() );
+				exit;
+			} else {
+				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
+			}
 		}
 
+		if ( isset( $_GET['login-error'] ) ) {
+			$message .= $this->make_error_output( $_GET['login-error'], $_GET['message'] );
+		}
+
+		// login button is appended to existing messages in case of error
+		$message .= $this->make_login_button();
 		return $message;
 	}
 	
@@ -121,5 +124,20 @@ class OpenID_Connect_Generic_Login_Form {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/*
+	 * Removes the login form from the HTML DOM
+	 */
+	function remove_login_form() {
+		?>
+		<script type="text/javascript">
+			(function() {
+				var loginForm = document.getElementById("user_login").form;
+				var parent = loginForm.parentNode;
+				parent.removeChild(loginForm);
+			})();
+		</script>
+		<?php
 	}
 }
