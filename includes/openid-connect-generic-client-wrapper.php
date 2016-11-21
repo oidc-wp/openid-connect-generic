@@ -123,6 +123,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return;
 		}
 
+		if ( ! $refresh_token ) {
+			wp_logout();
+			$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.' ) ) );
+		}
+
 		$token_result = $this->client->request_new_tokens( $refresh_token );
 		$token_response = $this->client->get_token_response( $token_result );
 
@@ -352,8 +357,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	function issue_token_refresh_info_cookie( $user_id, $token_response ) {
 		$cookie_value = serialize( array(
-			'next_access_token_refresh_time' =>  $token_response['expires_in'] + current_time( 'timestamp' , TRUE ),
-			'refresh_token' => $token_response[ 'refresh_token' ]
+			'next_access_token_refresh_time' => $token_response['expires_in'] + current_time( 'timestamp' , TRUE ),
+			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false
 		) );
 		$key = $this->get_refresh_cookie_encryption_key( $user_id );
 		$encrypted_cookie_value = \Defuse\Crypto\Crypto::encrypt( $cookie_value, $key );
@@ -370,8 +375,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$key = $this->get_refresh_cookie_encryption_key( $user_id );
 			$cookie_value = unserialize( \Defuse\Crypto\Crypto::decrypt($encrypted_cookie_value, $key) );
 
-			if ( ! isset( $cookie_value[ 'next_access_token_refresh_time' ] ) || ! $cookie_value[ 'next_access_token_refresh_time' ]
-				|| ! isset( $cookie_value[ 'refresh_token' ] ) || ! $cookie_value[ 'refresh_token' ] ) {
+			if ( ! isset( $cookie_value[ 'next_access_token_refresh_time' ] )
+				|| ! $cookie_value[ 'next_access_token_refresh_time' ]
+				|| ! isset( $cookie_value[ 'refresh_token' ] ) ) {
 				return false;
 			}
 
