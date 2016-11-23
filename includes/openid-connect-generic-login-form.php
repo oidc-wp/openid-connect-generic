@@ -40,7 +40,8 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	function handle_redirect_login_type_auto()
 	{
-		if ( $GLOBALS['pagenow'] == 'wp-login.php' && $this->settings->login_type == 'auto' )
+		if ( $GLOBALS['pagenow'] == 'wp-login.php' && $this->settings->login_type == 'auto'
+			&& ( ! isset( $_GET[ 'action' ] ) || $_GET[ 'action' ] !== 'logout' ) )
 		{
 			if (  ! isset( $_GET['login-error'] ) ) {
 				wp_redirect( $this->client_wrapper->get_authentication_url() );
@@ -57,6 +58,10 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	function handle_redirect_cookie()
 	{
+		if ( $GLOBALS['pagenow'] == 'wp-login.php' && isset( $_GET[ 'action' ] ) && $_GET[ 'action' ] === 'logout' ) {
+			return;
+		}
+
 		// record the URL of this page if set to redirect back to origin page
 		if ( $this->settings->redirect_user_back )
 		{

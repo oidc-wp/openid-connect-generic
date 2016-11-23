@@ -85,6 +85,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'endpoint_end_session'    => array(
+				'title'       => __( 'End Session Endpoint URL' ),
+				'description' => __( 'Identify provider logout endpoint.' ),
+				'example'     => 'https://example.com/oauth2/logout',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
 			'identity_key'     => array(
 				'title'       => __( 'Identity Key' ),
 				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".' ),

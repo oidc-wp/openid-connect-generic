@@ -47,6 +47,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// remove cookies on logout
 		add_action( 'wp_logout', array( $client_wrapper, 'wp_logout' ) );
 
+		// integrated logout
+		if ( $settings->endpoint_end_session ) {
+			add_filter( 'allowed_redirect_hosts', array( $client_wrapper, 'update_allowed_redirect_hosts' ), 99, 1 );
+			add_filter( 'logout_redirect', array( $client_wrapper, 'get_end_session_logout_redirect_url' ), 99, 1 );
+		}
 
 		// alter the requests according to settings
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
@@ -179,6 +184,35 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 		
 		setcookie( $this->cookie_token_refresh_key, false, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+	}
+
+	function update_allowed_redirect_hosts( array $allowed ) {
+		$host = parse_url( $this->settings->endpoint_end_session, PHP_URL_HOST );
+		if ( ! $host ) {
+			return false;
+		}
+
+		$allowed[] = $host;
+		return $allowed;
+	}
+
+	function get_end_session_logout_redirect_url( $redirect_url ) {
+		$url = $this->settings->endpoint_end_session;
+		$query = parse_url( $url, PHP_URL_QUERY );
+		$url .= $query ? '&' : '?';
+
+		// prevent redirect back to the IdP when logging out in auto mode
+		if ( $this->settings->login_type === 'auto' && $redirect_url === 'wp-login.php?loggedout=true' ) {
+			$redirect_url = '';
+		}
+
+		// convert to absolute url if needed
+		if ( ! parse_url( $redirect_url, PHP_URL_HOST ) ) {
+			$redirect_url = home_url( $redirect_url );
+		}
+
+		$url .= 'post_logout_redirect_uri=' . urlencode( $redirect_url );
+		return $url;
 	}
 
 	/**
