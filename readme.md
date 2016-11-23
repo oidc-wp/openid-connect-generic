@@ -16,6 +16,10 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 
 Originally based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/
 
+#### Requirements
+
+* PHP 5.4+ with the OpenSSL extensions enabled (Defuse encryption library) 
+
 ### Installation
 
 1. Upload to the `/wp-content/plugins/` directory
@@ -33,7 +37,7 @@ Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
 
-**3.0.9**
+**3.1.0**
 * Feature: Refresh tokens 
 * Feature: Integrated logout support with end_session endpoint
 * Bug fix: case insensitive check for Bearer token
