@@ -96,6 +96,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		return $this->client->make_authentication_url();
 	}
 
+	/**
+	 * Handle retrieval and validation of refresh_token
+	 */
 	function ensure_tokens_still_fresh() {
 		if ( ! is_user_logged_in() ) {
 			return;
@@ -186,6 +189,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		setcookie( $this->cookie_token_refresh_key, false, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 	}
 
+	/**
+	 * Add the end_session endpoint to WP core's whitelist of redirect hosts
+	 *
+	 * @param array $allowed
+	 *
+	 * @return array
+	 */
 	function update_allowed_redirect_hosts( array $allowed ) {
 		$host = parse_url( $this->settings->endpoint_end_session, PHP_URL_HOST );
 		if ( ! $host ) {
@@ -196,6 +206,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		return $allowed;
 	}
 
+	/**
+	 * Handle the logout redirect for end_session endpoint
+	 *
+	 * @param $redirect_url
+	 *
+	 * @return string
+	 */
 	function get_end_session_logout_redirect_url( $redirect_url ) {
 		$url = $this->settings->endpoint_end_session;
 		$query = parse_url( $url, PHP_URL_QUERY );
@@ -389,6 +406,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		wp_set_auth_cookie( $user->ID, FALSE );
 	}
 
+	/**
+	 * Create encrypted refresh_token cookie
+	 *
+	 * @param $user_id
+	 * @param $token_response
+	 */
 	function issue_token_refresh_info_cookie( $user_id, $token_response ) {
 		$cookie_value = serialize( array(
 			'next_access_token_refresh_time' => $token_response['expires_in'] + current_time( 'timestamp' , TRUE ),
@@ -399,6 +422,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		setcookie( $this->cookie_token_refresh_key, $encrypted_cookie_value, 0, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 	}
 
+	/**
+	 * Retrieve and decrypt refresh_token contents from user cookie
+	 * @param $user_id
+	 *
+	 * @return bool|mixed
+	 */
 	function read_token_refresh_info_from_cookie( $user_id ) {
 		if ( ! isset( $_COOKIE[ $this->cookie_token_refresh_key ] ) ) {
 			return false;
@@ -411,7 +440,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 			if ( ! isset( $cookie_value[ 'next_access_token_refresh_time' ] )
 				|| ! $cookie_value[ 'next_access_token_refresh_time' ]
-				|| ! isset( $cookie_value[ 'refresh_token' ] ) ) {
+				|| ! isset( $cookie_value[ 'refresh_token' ] ) )
+			{
 				return false;
 			}
 
@@ -423,13 +453,21 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 	}
 
+	/**
+	 * Retrieve or regenerate a user's unique encryption key
+	 *
+	 * @param $user_id
+	 *
+	 * @return \Defuse\Crypto\Key
+	 */
 	function get_refresh_cookie_encryption_key( $user_id ) {
 		$meta_key = 'openid-connect-generic-refresh-cookie-key';
 		$existing_key_string = get_user_meta( $user_id, $meta_key, true );
 
 		try {
 			$user_encryption_key = \Defuse\Crypto\Key::loadFromAsciiSafeString( $existing_key_string );
-		} catch ( Exception $e ) {
+		}
+		catch ( Exception $e ) {
 			$this->logger->log( "Error loading user {$user_id} refresh token cookie key, generating new: " . $e->getMessage() );
 			$user_encryption_key = \Defuse\Crypto\Key::createNewRandomKey();
 			update_user_meta( $user_id, $meta_key, $user_encryption_key->saveToAsciiSafeString() );

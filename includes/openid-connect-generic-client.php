@@ -16,6 +16,8 @@ class OpenID_Connect_Generic_Client {
 	private $state_time_limit = 180;
 
 	/**
+	 * Client constructor
+	 *
 	 * @param $client_id
 	 * @param $client_secret
 	 * @param $scope
@@ -256,7 +258,7 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * 
+	 * Ensure that the token meets basic requirements
 	 * 
 	 * @param $token_response
 	 *
