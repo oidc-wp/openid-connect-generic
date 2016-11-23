@@ -32,6 +32,16 @@ by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=
 Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
+
+**3.0.9**
+* Feature: Refresh tokens 
+* Feature: Integrated logout support with end_session endpoint
+* Bug fix: case insensitive check for Bearer token
+* Bug fix: "redirect to origin when auto-sso" cookie issue
+* Bug fix: PHP Warnings headers already sent due to attempts to redirect and set cookies during login form message
+* Bug fix: expire session when access_token expires if no refresh token found
+* UX fix: Show login button on error redirect when using auto-sso
+
 **3.0.8**
 * Added [openid-connect-generic-update-user-using-current-claim] action hook allowing other plugins/themes
   to take action using the fresh claims received when an existing user logs in.
