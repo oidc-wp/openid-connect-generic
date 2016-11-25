@@ -152,8 +152,9 @@ class OpenID_Connect_Generic {
 	static public function autoload( $class ) {
 		$filename = $class . '.php';
 
-		if ( false === strpos( $class, '\\' ) ) {
-			$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
+		// internal files are all lowercase and use dashes in filenames
+		if ( false === strpos( $filename, '\\' ) ) {
+			$filename = strtolower( str_replace( '_', '-', $filename ) );
 		}
 		else {
 			$filename  = str_replace('\\', DIRECTORY_SEPARATOR, $filename);
@@ -193,6 +194,8 @@ class OpenID_Connect_Generic {
 				
 				// plugin settings
 				'enforce_privacy' => 0,
+				'link_existing_users' => 0,
+				'redirect_user_back' => 0,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000, 
 			)

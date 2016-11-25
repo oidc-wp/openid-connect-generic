@@ -137,6 +137,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );
+		
+		if ( is_wp_error( $token_result ) ) {
+			wp_logout();
+			$this->error_redirect( $token_result );
+		}
+
 		$token_response = $this->client->get_token_response( $token_result );
 
 		if ( is_wp_error( $token_response ) ) {
