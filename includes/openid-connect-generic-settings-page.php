@@ -118,6 +118,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
+			'alternate_redirect_uri'   => array(
+				'title'       => __( 'Alternate Redirect URI' ),
+				'description' => __( 'Provide an alternative redirect route. Useful if your server is causing issues with the default admin-ajax method. You must flush rewrite rules after changing this setting. This can be done by saving the Permalinks settings page.' ),
+				'type'        => 'checkbox',
+				'section'     => 'authorization_settings',
+			),
 			'link_existing_users'   => array(
 				'title'       => __( 'Link Existing Users' ),
 				'description' => __( 'If a WordPress account already exists with the same email address as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.' ),
@@ -280,6 +286,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * Output the options/settings page
 	 */
 	public function settings_page() {
+		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
+
+		if ( $this->settings->alternate_redirect_uri ){
+			$redirect_uri = site_url( '/openid-connect-authorize' );
+		}
 		?>
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
@@ -301,7 +312,7 @@ class OpenID_Connect_Generic_Settings_Page {
 
 			<p class="description">
 				<strong><?php _e( 'Redirect URI' ); ?></strong>
-				<code><?php print admin_url( 'admin-ajax.php?action=openid-connect-authorize' ); ?></code>
+				<code><?php print $redirect_uri; ?></code>
 			</p>
 			<p class="description">
 				<strong><?php _e( 'Login Button Shortcode' ); ?></strong>

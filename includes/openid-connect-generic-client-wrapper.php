@@ -63,13 +63,38 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 		}
-		
+
+		if ( $settings->alternate_redirect_uri ){
+			// provide an alternate route for authentication_request_callback
+			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
+			add_rewrite_tag( '%openid-connect-authorize%', '1' );
+			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
+		}
+
 		// verify token for any logged in user
 		if ( is_user_logged_in() ) {
 			$client_wrapper->ensure_tokens_still_fresh();
 		}
 		
 		return $client_wrapper;
+	}
+
+	/**
+	 * Implements WP action - parse_request
+	 * 
+	 * @param $query
+	 *
+	 * @return mixed
+	 */
+	function alternate_redirect_uri_parse_request( $query ){
+		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
+		     $query->query_vars['openid-connect-authorize'] === '1' )
+		{
+			$this->authentication_request_callback();
+			exit;
+		}
+
+		return $query;
 	}
 
 	/**
@@ -259,7 +284,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *  returning from the IDP.
 	 */
 	function authentication_request_callback() {
-		$settings = $this->settings;
 		$client = $this->client;
 		
 		// start the authentication flow

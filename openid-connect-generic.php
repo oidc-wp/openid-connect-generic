@@ -71,6 +71,12 @@ class OpenID_Connect_Generic {
 	 * WP Hook 'init'
 	 */
 	function init(){
+		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
+
+		if ( $this->settings->alternate_redirect_uri ){
+			$redirect_uri = site_url( '/openid-connect-authorize' );
+		}
+
 		$this->client = new OpenID_Connect_Generic_Client( 
 			$this->settings->client_id,
 			$this->settings->client_secret,
@@ -78,8 +84,7 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
-			// redirect uri
-			admin_url( 'admin-ajax.php?action=openid-connect-authorize' )
+			$redirect_uri
 		);
 		
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
@@ -194,6 +199,7 @@ class OpenID_Connect_Generic {
 				
 				// plugin settings
 				'enforce_privacy' => 0,
+				'alternate_redirect_uri' => 0,
 				'link_existing_users' => 0,
 				'redirect_user_back' => 0,
 				'enable_logging'  => 0,
