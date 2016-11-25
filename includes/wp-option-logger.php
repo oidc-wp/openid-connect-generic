@@ -108,6 +108,15 @@ class WP_Option_Logger {
 
 		return $this->logs;
 	}
+
+	/**
+	 * Get the name of the option where this log is stored
+	 * 
+	 * @return string
+	 */
+	public function get_option_name(){
+		return $this->option_name;
+	}
 	
 	/**
 	 * Create a message array containing the data and other information
@@ -170,6 +179,13 @@ class WP_Option_Logger {
 	}
 
 	/**
+	 * Clear all log messages
+	 */
+	public function clear_logs(){
+		$this->save_logs( array() );
+	}
+
+	/**
 	 * Get a simple html table of all the logs
 	 * 
 	 * @param array $logs
@@ -179,6 +195,7 @@ class WP_Option_Logger {
 		if ( empty( $logs ) ) {
 			$logs = $this->get_logs();
 		}
+		$logs = array_reverse( $logs );
 		
 		ini_set( 'xdebug.var_display_max_depth', -1 );
 		
@@ -216,7 +233,7 @@ class WP_Option_Logger {
 						</div>
 					</td>
 					
-					<td class="col-data"><?php var_dump( $log['data'] ); ?></td>
+					<td class="col-data"><pre><?php var_dump( $log['data'] ); ?></pre></td>
 				</tr>
 			<?php } ?>
 			</tbody>

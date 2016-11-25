@@ -60,7 +60,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			'scope'             => array(
 				'title'       => __( 'OpenID Scope' ),
 				'description' => __( 'Space separated list of scopes this client should access.' ),
-				'example'     => 'email profile openid',
+				'example'     => 'email profile openid offline_access',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
@@ -101,14 +101,14 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'no_sslverify'      => array(
 				'title'       => __( 'Disable SSL Verify' ),
-				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.' ),
+				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.<br><strong>Not recommended for production sites.</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
 			'http_request_timeout'      => array(
 				'title'       => __( 'HTTP Request Timeout' ),
 				'description' => __( 'Set the timeout for requests made to the IDP. Default value is 5.' ),
-				'example'     => 5,
+				'example'     => 30,
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
@@ -303,10 +303,17 @@ class OpenID_Connect_Generic_Settings_Page {
 				<strong><?php _e( 'Redirect URI' ); ?></strong>
 				<code><?php print admin_url( 'admin-ajax.php?action=openid-connect-authorize' ); ?></code>
 			</p>
+			<p class="description">
+				<strong><?php _e( 'Login Button Shortcode' ); ?></strong>
+				<code>[openid_connect_generic_login_button]</code>
+			</p>
 
 			<?php if ( $this->settings->enable_logging ) { ?>
-				<h2><?php _e( 'Logs' ); ?> </h2>
-				<div><?php print $this->logger->get_logs_table(); ?></div>
+				<h2><?php _e( 'Logs' ); ?></h2>
+				<div id="logger-table-wrapper">
+					<?php print $this->logger->get_logs_table(); ?>
+				</div>
+
 			<?php } ?>
 		</div>
 		<?php
@@ -394,4 +401,3 @@ class OpenID_Connect_Generic_Settings_Page {
 		_e( 'Log information about login attempts through OpenID Connect Generic' );
 	}
 }
- 
