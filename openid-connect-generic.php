@@ -154,6 +154,8 @@ class OpenID_Connect_Generic {
 
 		if ( false === strpos( $class, '\\' ) ) {
 			$filename = strtolower( str_replace( '_', '-', $class ) ) . '.php';
+		} else {
+			$filename = str_replace( '\\', '/', $filename );
 		}
 		else {
 			$filename  = str_replace('\\', DIRECTORY_SEPARATOR, $filename);
