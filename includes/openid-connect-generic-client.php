@@ -96,6 +96,11 @@ class OpenID_Connect_Generic_Client {
 	 * @return array|\WP_Error
 	 */
 	function request_authentication_token( $code ) {
+
+		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy
+		$parsed_url = parse_url($this->endpoint_token);
+		$host = $parsed_url['host'];
+
 		$request = array(
 			'body' => array(
 				'code'          => $code,
@@ -104,7 +109,8 @@ class OpenID_Connect_Generic_Client {
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
 				'scope'         => $this->scope,
-			)
+			),
+			'headers' => array( 'Host' => $host )
 		);
 
 		// allow modifications to the request
@@ -196,6 +202,11 @@ class OpenID_Connect_Generic_Client {
 
 		$request['headers']['Authorization'] = 'Bearer '.$access_token;
 
+		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy
+		$parsed_url = parse_url($this->endpoint_userinfo);
+		$host = $parsed_url['host'];
+		$request['headers']['Host'] = $host;
+
 		// attempt the request including the access token in the query string for backwards compatibility
 		$response = wp_remote_post( $this->endpoint_userinfo, $request );
 
@@ -247,7 +258,6 @@ class OpenID_Connect_Generic_Client {
 		if ( isset( $states[ $state ] ) ) {
 			// state is valid, remove it
 			unset( $states[ $state ] );
-
 			$valid = TRUE;
 		}
 
