@@ -47,6 +47,7 @@ Replace `example.com` with your domain name and path to WordPress.
 * Feature: Refresh tokens
 * Feature: Integrated logout support with end_session endpoint
 * Feature: May use an alternate redirect_uri that doesn't rely on admin-ajax
+* Feature: Support for IDP behind reverse proxy
 * Bug fix: case insensitive check for Bearer token
 * Bug fix: "redirect to origin when auto-sso" cookie issue
 * Bug fix: PHP Warnings headers already sent due to attempts to redirect and set cookies during login form message
