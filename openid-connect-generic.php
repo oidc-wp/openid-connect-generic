@@ -196,7 +196,11 @@ class OpenID_Connect_Generic {
 				'no_sslverify'    => 0,
 				'http_request_timeout' => 5,
 				'identity_key'    => 'preferred_username',
-				
+				'nickname_key'    => 'preferred_username',
+				'email_format'       => '{email}',
+				'displayname_format' => '',
+				'identify_with_username' => false,
+
 				// plugin settings
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
