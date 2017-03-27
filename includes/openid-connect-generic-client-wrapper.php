@@ -19,6 +19,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	// WP_Error if there was a problem, or false if no error
 	private $error = false;
 
+	// session state temporary
+	static public $session_state;
 	
 	/**
 	 * Inject necessary objects and services into the client
@@ -46,6 +48,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		
 		// remove cookies on logout
 		add_action( 'wp_logout', array( $client_wrapper, 'wp_logout' ) );
+
+		// auth
+		add_filter( 'auth_cookie', array( $client_wrapper, 'keep_session_state' ), 10, 5 );
+		// session_state
+		add_filter( 'openid_connect_session_state', array( $client_wrapper, 'openid_connect_session_state' ), 10, 1 );
 
 		// integrated logout
 		if ( $settings->endpoint_end_session ) {
@@ -383,6 +390,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $valid );
 		}
 
+		// keep session_state with temporary
+		$this->session_state = $token_response['session_state'];
+
 		// login the found / created user
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
 		
@@ -439,6 +449,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// you did great, have a cookie!
 		$this->issue_token_refresh_info_cookie( $user->ID, $token_response );
 		wp_set_auth_cookie( $user->ID, FALSE );
+		do_action( 'wp_login', $user->ID, $user);
 	}
 
 	/**
@@ -816,5 +827,33 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		
 		// return our updated user
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * Keep session state (auth_cookie filter)
+	 **/
+	function keep_session_state( $cookie, $user_id, $expiration, $scheme, $token ) {
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		$session = $manager->get( $token );
+
+                $session['session_state'] = $this->session_state;
+
+		$manager->update( $token, $session );
+
+		return $cookie;
+	}
+
+	/**
+	 * session state from WP session
+	 **/
+	function openid_connect_session_state( $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		$token = wp_get_session_token();
+		$session = $manager->get( $token );
+
+		return $session['session_state'];
 	}
 }
