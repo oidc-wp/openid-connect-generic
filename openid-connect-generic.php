@@ -3,7 +3,7 @@
 Plugin Name: OpenID Connect - Generic Client
 Plugin URI: https://github.com/daggerhart/openid-connect-generic
 Description:  Connect to an OpenID Connect identity provider with Authorization Code Flow
-Version: 3.1.0
+Version: 3.1.0+oc0
 Author: daggerhart
 Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
@@ -39,7 +39,7 @@ Notes
 
 class OpenID_Connect_Generic {
 	// plugin version
-	const VERSION = '3.1.0';
+	const VERSION = '3.1.0+oc0';
 
 	// plugin settings
 	private $settings;
@@ -196,7 +196,11 @@ class OpenID_Connect_Generic {
 				'no_sslverify'    => 0,
 				'http_request_timeout' => 5,
 				'identity_key'    => 'preferred_username',
-				
+				'nickname_key'    => 'preferred_username',
+				'email_format'       => '{email}',
+				'displayname_format' => '',
+				'identify_with_username' => false,
+
 				// plugin settings
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,

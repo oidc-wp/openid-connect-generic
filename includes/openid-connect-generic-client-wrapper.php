@@ -19,6 +19,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	// WP_Error if there was a problem, or false if no error
 	private $error = false;
 
+	// session state temporary
+	static public $session_state;
 	
 	/**
 	 * Inject necessary objects and services into the client
@@ -46,6 +48,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		
 		// remove cookies on logout
 		add_action( 'wp_logout', array( $client_wrapper, 'wp_logout' ) );
+
+		// auth
+		add_filter( 'auth_cookie', array( $client_wrapper, 'keep_session_state' ), 10, 5 );
+		// session_state
+		add_filter( 'openid_connect_session_state', array( $client_wrapper, 'openid_connect_session_state' ), 10, 1 );
 
 		// integrated logout
 		if ( $settings->endpoint_end_session ) {
@@ -367,6 +374,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// if we didn't find an existing user, we'll need to create it
 		if ( ! $user ) {
 			$user = $this->create_new_user( $subject_identity, $user_claim );
+			if ( is_wp_error( $user ) ) {
+				return $this->error_redirect( $user );
+			}
 		}
 		else {
 			// allow plugins / themes to take action using current claims on existing user (e.g. update role)
@@ -379,6 +389,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( is_wp_error( $valid ) ){
 			$this->error_redirect( $valid );
 		}
+
+		// keep session_state with temporary
+		$this->session_state = $token_response['session_state'];
 
 		// login the found / created user
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
@@ -436,6 +449,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// you did great, have a cookie!
 		$this->issue_token_refresh_info_cookie( $user->ID, $token_response );
 		wp_set_auth_cookie( $user->ID, FALSE );
+		do_action( 'wp_login', $user->ID, $user);
 	}
 
 	/**
@@ -579,7 +593,81 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		return $username;
 	}
-	
+
+	/**
+	 * Get a nickname
+	 *
+	 * @param $user_claim array
+	 *
+	 * @return string
+	 */
+	private function get_nickname_from_claim( $user_claim ) {
+		$desired_nickname = null;
+		// allow settings to take first stab at nickname
+		if ( !empty( $this->settings->nickname_key ) && isset( $user_claim[ $this->settings->nickname_key ] ) ) {
+			$desired_nickname =  $user_claim[ $this->settings->nickname_key ];
+		}
+		return $desired_nickname;
+	}
+
+	/**
+	 * Build a string from the user claim according to the specified format.
+	 *
+	 * @param $format string
+	 * @param $user_claim array
+	 *
+	 * @return string
+	 */
+	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
+		$matches = null;
+		$string = '';
+		$i = 0;
+		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
+			foreach ( $matches[ 0 ] as $match ) {
+				$key = substr($match[ 0 ], 1, -1);
+				$string .= substr( $format, $i, $match[ 1 ] - $i );
+				if ( ! isset( $user_claim[ $key ] ) ) {
+					if ( $error_on_missing_key ) {
+						return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
+					}
+				} else {
+					$string .= $user_claim[ $key ];
+				}
+				$i = $match[ 1 ] + strlen( $match[ 0 ] );
+			}
+		}
+		$string .= substr( $format, $i );
+		return $string;
+	}
+
+	/**
+	 * Get a displayname
+	 *
+	 * @param $user_claim array
+	 *
+	 * @return string
+	 */
+	private function get_displayname_from_claim( $user_claim, $error_on_missing_key = false ) {
+		if ( ! empty( $this->settings->displayname_format ) ) {
+			return $this->format_string_with_claim( $this->settings->displayname_format, $user_claim, $error_on_missing_key );
+		}
+		return null;
+	}
+
+	/**
+	 * Get an email
+	 *
+	 * @param $user_claim array
+	 *
+	 * @return string
+	 */
+	private function get_email_from_claim( $user_claim, $error_on_missing_key = false ) {
+		if ( ! empty( $this->settings->email_format ) ) {
+			return $this->format_string_with_claim( $this->settings->email_format, $user_claim, $error_on_missing_key );
+		}
+		return null;
+	}
+
 	/**
 	 * Create a new user from details in a user_claim
 	 * 
@@ -588,22 +676,46 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return \WP_Error | \WP_User
 	 */
-	function create_new_user( $subject_identity, $user_claim){
+	function create_new_user( $subject_identity, $user_claim ) {
 		// default username & email to the subject identity
 		$username = $subject_identity;
 		$email    = $subject_identity;
+		$nickname = $subject_identity;
+		$displayname = $subject_identity;
 
-		// allow claim details to determine username
-		if ( isset( $user_claim['email'] ) ) {
-			$email    = $user_claim['email'];
-			$username = $this->get_username_from_claim( $user_claim );
-			
-			if ( is_wp_error( $username ) ){
-				return $username;
-			}
+		$values_missing = false;
+
+		// allow claim details to determine username, email, nickname and displayname.
+		$_email = $this->get_email_from_claim( $user_claim, true );
+		if ( is_wp_error( $_email ) ) {
+			$values_missing = true;
+		} else if ( $_email !== null ) {
+			$email = $_email;
 		}
-		// if no email exists, attempt another request for userinfo
-		else if ( isset( $token_response['access_token'] ) ) {
+
+		$_username = $this->get_username_from_claim( $user_claim );
+		if ( is_wp_error( $_username ) ) {
+			$values_missing = true;
+		} else if ( $_username !== null ) {
+			$username = $_username;
+		}
+
+		$_nickname = $this->get_nickname_from_claim( $user_claim, true );
+		if ( is_wp_error( $_nickname ) ) {
+			$values_missing = true;
+		} else if ( $_nickname !== null) {
+			$nickname = $_nickname;
+		}
+
+		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
+		if ( is_wp_error( $_displayname ) ) {
+			$values_missing = true;
+		} else if ( $_displayname !== null ) {
+			$displayname = $_displayname;
+		}
+
+		// attempt another request for userinfo if some values are missing
+		if ( $values_missing && isset( $token_response['access_token'] ) ) {
 			$user_claim_result = $this->client->request_userinfo( $token_response['access_token'] );
 
 			// make sure we didn't get an error
@@ -612,23 +724,48 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			}
 
 			$user_claim = json_decode( $user_claim_result['body'], TRUE );
+		}
 
-			// check for email in claim
-			if ( ! isset( $user_claim['email'] ) ) {
-				return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
-			}
-			
-			$email    = $user_claim['email'];
-			$username = $this->get_username_from_claim( $user_claim );
+		$_email = $this->get_email_from_claim( $user_claim, true );
+		if ( is_wp_error( $_email ) ) {
+			return $_email;
+		} else if ( $_email !== null ) {
+			$email = $_email;
+		}
+
+		$_username = $this->get_username_from_claim( $user_claim );
+		if ( is_wp_error( $_username ) ) {
+			return $_username;
+		} else if ( $_username !== null ) {
+			$username = $_username;
+		}
+
+		$_nickname = $this->get_nickname_from_claim( $user_claim, true );
+		if ( is_wp_error( $_nickname ) ) {
+			return $_nickname;
+		} else if ( $_nickname === null) {
+			$nickname = $username;
+		}
+
+		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
+		if ( is_wp_error( $_displayname ) ) {
+			return $_displayname;
+		} else if ( $_displayname === null ) {
+			$displayname = $nickname;
 		}
 
 		// before trying to create the user, first check if a user with the same email already exists
 		if( $this->settings->link_existing_users ) {
-			if( $uid = email_exists( $email ) ) {
+			if ( $this->settings->identify_with_username) {
+				$uid = username_exists( $username );
+			} else {
+				$uid = email_exists( $email );
+			}
+			if ( $uid ) {
 				return $this->update_existing_user( $uid, $subject_identity );
 			}
 		}
-		
+
 		// allow other plugins / themes to determine authorization 
 		// of new accounts based on the returned user claim
 		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', TRUE, $user_claim );
@@ -638,7 +775,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// create the new user
-		$uid = wp_create_user( $username, wp_generate_password( 32, TRUE, TRUE ), $email );
+		$uid = wp_insert_user(
+			array(
+				'user_login' => $username,
+				'user_pass' => wp_generate_password( 32, TRUE, TRUE ),
+				'user_email' => $email,
+				'display_name' => $displayname,
+				'nickname' => $nickname,
+				'first_name' => isset( $user_claim[ 'given_name' ] ) ? $user_claim[ 'given_name' ]: '',
+				'last_name' => isset( $user_claim[ 'family_name' ] ) ? $user_claim[ 'family_name' ]: '',
+			)
+		);
 
 		// make sure we didn't fail in creating the user
 		if ( is_wp_error( $uid ) ) {
@@ -680,5 +827,33 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		
 		// return our updated user
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * Keep session state (auth_cookie filter)
+	 **/
+	function keep_session_state( $cookie, $user_id, $expiration, $scheme, $token ) {
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		$session = $manager->get( $token );
+
+                $session['session_state'] = $this->session_state;
+
+		$manager->update( $token, $session );
+
+		return $cookie;
+	}
+
+	/**
+	 * session state from WP session
+	 **/
+	function openid_connect_session_state( $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		$token = wp_get_session_token();
+		$session = $manager->get( $token );
+
+		return $session['session_state'];
 	}
 }
