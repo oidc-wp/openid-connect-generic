@@ -147,7 +147,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'identify_with_username'     => array(
 				'title'       => __( 'Identify with User Name' ),
-				'description' => __( 'If checked, the user\' identity will be determined by the user name instead of the email address.' ),
+				'description' => __( 'If checked, the user\'s identity will be determined by the user name instead of the email address.' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
@@ -159,7 +159,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'redirect_user_back'   => array(
 				'title'       => __( 'Redirect Back to Origin Page' ),
-				'description' => __( 'After a successful OpenID Connect authentication, this will <strong>override the default action of redirecting the user to the home page and instead redirect the user back to the page on which they clicked the OpenID Connect login button</strong>. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.' ),
+				'description' => __( 'After a successful OpenID Connect authentication, this will redirect the user back to the page on which they clicked the OpenID Connect login button. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),

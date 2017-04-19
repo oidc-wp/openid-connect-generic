@@ -58,7 +58,7 @@ class OpenID_Connect_Generic_Client {
 	 * 
 	 * @param $request
 	 * 
-	 * @return \WP_Error
+	 * @return array|\WP_Error
 	 */
 	function validate_authentication_request( $request ){
 		// look for an existing error of some kind
@@ -82,7 +82,9 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Get the authorization code from the request
 	 *
-	 * @return string
+	 * @param $request array
+	 *
+	 * @return string|\WP_Error
 	 */
 	function get_authentication_code( $request ){
 		return $request['code'];
@@ -386,6 +388,8 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Retrieve the subject identity from the id_token
 	 * 
+	 * @param $id_token_claim array
+	 *
 	 * @return mixed
 	 */
 	function get_subject_identity( $id_token_claim ){

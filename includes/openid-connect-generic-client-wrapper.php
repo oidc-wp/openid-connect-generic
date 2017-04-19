@@ -23,6 +23,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Inject necessary objects and services into the client
 	 * 
+	 * @param \OpenID_Connect_Generic_Client $client
 	 * @param \WP_Option_Settings $settings
 	 * @param \WP_Option_Logger $logger
 	 */
@@ -368,7 +369,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $user ) {
 			$user = $this->create_new_user( $subject_identity, $user_claim );
 			if ( is_wp_error( $user ) ) {
-				return $this->error_redirect( $user );
+				$this->error_redirect( $user );
+				return;
 			}
 		}
 		else {
@@ -408,7 +410,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * 
 	 * @param $user
 	 *
-	 * @return \WP_Error
+	 * @return true|\WP_Error
 	 */
 	function validate_user( $user ){
 		// ensure our found user is a real WP_User
@@ -689,7 +691,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$username = $_username;
 		}
 
-		$_nickname = $this->get_nickname_from_claim( $user_claim, true );
+		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			$values_missing = true;
 		} else if ( $_nickname !== null) {
@@ -729,7 +731,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$username = $_username;
 		}
 
-		$_nickname = $this->get_nickname_from_claim( $user_claim, true );
+		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			return $_nickname;
 		} else if ( $_nickname === null) {
