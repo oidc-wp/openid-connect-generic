@@ -207,6 +207,11 @@ class OpenID_Connect_Generic_Client {
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy
 		$parsed_url = parse_url($this->endpoint_userinfo);
 		$host = $parsed_url['host'];
+
+		if ( !empty( $parsed_url['port'] ) ) {
+			$host.= ":{$parsed_url['port']}";
+		}
+
 		$request['headers']['Host'] = $host;
 
 		// attempt the request including the access token in the query string for backwards compatibility
