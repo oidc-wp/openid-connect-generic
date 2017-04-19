@@ -37,37 +37,41 @@ Replace `example.com` with your domain name and path to WordPress.
 
 ### Changelog
 
+**3.2.0**
+* Feature: #27 Determine the WP_User display name with replacement tokens on the settings page. Tokens can be any property of the user_claim. 
+* Bug fix: #30 Provide port to the request header when requesting the user_claim
+
 **3.1.0**
-* Feature: Refresh tokens 
-* Feature: Integrated logout support with end_session endpoint
-* Feature: May use an alternate redirect_uri that doesn't rely on admin-ajax
-* Feature: Support for IDP behind reverse proxy
-* Bug fix: case insensitive check for Bearer token
-* Bug fix: "redirect to origin when auto-sso" cookie issue
-* Bug fix: PHP Warnings headers already sent due to attempts to redirect and set cookies during login form message
-* Bug fix: expire session when access_token expires if no refresh token found
-* UX fix: Show login button on error redirect when using auto-sso
+* Feature: #18 Refresh tokens 
+* Feature: #24 Integrated logout support with end_session endpoint
+* Feature: #14 May use an alternate redirect_uri that doesn't rely on admin-ajax
+* Feature: #25 Support for IDP behind reverse proxy
+* Bug fix: #17 case insensitive check for Bearer token
+* Bug fix: #20 "redirect to origin when auto-sso" cookie issue
+* Bug fix: #12 PHP Warnings headers already sent due to attempts to redirect and set cookies during login form message
+* Bug fix: #22 expire session when access_token expires if no refresh token found
+* UX fix: #20 Show login button on error redirect when using auto-sso
 
 **3.0.8**
-* Added [openid-connect-generic-update-user-using-current-claim] action hook allowing other plugins/themes
+* Feature: #10 Added `openid-connect-generic-update-user-using-current-claim` action hook allowing other plugins/themes
   to take action using the fresh claims received when an existing user logs in.
 
 **3.0.7**
-* When requesting userinfo, send the access token using the Authorization header field as recommended in 
+* Bug fix: #9 When requesting userinfo, send the access token using the Authorization header field as recommended in 
 section 5.3.1 of the specs. 
 
 **3.0.6**
 
-* If "Link Existing Users" is enabled, allow users who login with OpenID Connect to also log in with WordPress credentials
+* Bug fix: #8 If "Link Existing Users" is enabled, allow users who login with OpenID Connect to also log in with WordPress credentials
 
 **3.0.5**
 
-* Added [openid_connect_generic_login_button] shortcode to allow the login button to be placed anywhere
-* Added setting to "Redirect Back to Origin Page" after a successful login instead of redirecting to the home page.
+* Feature: #6 Added [openid_connect_generic_login_button] shortcode to allow the login button to be placed anywhere
+* Feature: #6 Added setting to "Redirect Back to Origin Page" after a successful login instead of redirecting to the home page.
 
 **3.0.4**
 
-* Added setting to allow linking existing WordPress user accounts with newly-authenticated OpenID Connect login
+* Feature: #5 Added setting to allow linking existing WordPress user accounts with newly-authenticated OpenID Connect login
 
 **3.0.3**
 

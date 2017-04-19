@@ -3,7 +3,7 @@ Contributors: daggerhart
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
 Requires at least: 4
-Tested up to: 4.6.1
+Tested up to: 4.7.3
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,11 @@ Replace `example.com` with your domain name and path to WordPress.
 
 
 == Changelog ==
+
+= 3.2.0 =
+* Feature: Determine the WP_User display name with replacement tokens on the settings page. Tokens can be any property of the user_claim. @moriyoshi
+* Bug fix: Provide port to the request header when requesting the user_claim
+
 = 3.1.0 =
 * Feature: Refresh tokens
 * Feature: Integrated logout support with end_session endpoint
