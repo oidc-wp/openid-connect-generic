@@ -441,6 +441,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// you did great, have a cookie!
 		$this->issue_token_refresh_info_cookie( $user->ID, $token_response );
 		wp_set_auth_cookie( $user->ID, FALSE );
+		do_action( 'wp_login', $user->user_login, $user );
 	}
 
 	/**
