@@ -113,7 +113,7 @@ class OpenID_Connect_Generic_Login_Form {
 		?>
 		<div id="login_error">
 			<strong><?php _e( 'ERROR'); ?>: </strong>
-			<?php print $error_message; ?>
+			<?php print esc_html($error_message); ?>
 		</div>
 		<?php
 		return ob_get_clean();
