@@ -19,6 +19,7 @@ Notes
   - openid-connect-generic-login-button-text  - modify the login button text 
   - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
   - openid-connect-generic-user-creation-test - (bool) should the user be created based on their claim
+  - openid-connect-generic-auth-url           - modify the authentication url
 
   Actions
   - openid-connect-generic-user-create - 2 args: fires when a new user is created by this plugin
