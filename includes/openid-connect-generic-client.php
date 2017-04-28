@@ -50,7 +50,7 @@ class OpenID_Connect_Generic_Client {
 			urlencode( $this->redirect_uri )
 		);
 
-		return $url;
+		return apply_filters( 'openid-connect-generic-auth-url', $url );
 	}
 
 	/**
