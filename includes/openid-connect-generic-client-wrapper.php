@@ -136,9 +136,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		if ( ! isset( $_COOKIE[ $this->cookie_token_refresh_key] ) ) {
-			wp_logout();
-			$this->error_redirect( new WP_Error( 'token-refresh-cookie-missing', __( 'Single sign-on cookie missing. Please login again.' ), $_COOKIE ) );
-			exit;
+                        return;
 		}
 
 		$user_id = wp_get_current_user()->ID;
