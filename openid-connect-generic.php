@@ -207,8 +207,9 @@ class OpenID_Connect_Generic {
 				'alternate_redirect_uri' => 0,
 				'link_existing_users' => 0,
 				'redirect_user_back' => 0,
+				'redirect_on_logout' => 1,
 				'enable_logging'  => 0,
-				'log_limit'       => 1000, 
+				'log_limit'       => 1000,
 			)
 		);
 		

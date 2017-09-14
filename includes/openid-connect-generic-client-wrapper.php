@@ -159,7 +159,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		if ( ! $refresh_token ) {
 			wp_logout();
-			$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.' ) ) );
+
+			if ( $this->settings->redirect_on_logout ) {
+				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.' ) ) );
+			}
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );

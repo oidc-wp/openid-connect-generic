@@ -163,6 +163,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
+			'redirect_on_logout'   => array(
+				'title'       => __( 'Redirect to the login screen session is expired' ),
+				'description' => __( 'When enabled, this will automatically redirect the user back to the WordPress login page if their access token has expired.' ),
+				'type'        => 'checkbox',
+				'section'     => 'user_settings',
+			),
 			'enable_logging'    => array(
 				'title'       => __( 'Enable Logging' ),
 				'description' => __( 'Very simple log messages for debugging purposes.' ),
