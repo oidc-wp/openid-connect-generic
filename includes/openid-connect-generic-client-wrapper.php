@@ -264,10 +264,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$user_id = wp_get_current_user()->ID;
-                $token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
-                $id_token_hint = $token_response['id_token'];
-                $url .= 'id_token_hint='.$id_token_hint.'&post_logout_redirect_uri=' . urlencode( $redirect_url );
-                return $url;
+		$token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
+		$id_token_hint = $token_response['id_token'];
+		$url .= 'id_token_hint='.$id_token_hint.'&post_logout_redirect_uri=' . urlencode( $redirect_url );
+		return $url;
 	}
 
 	/**

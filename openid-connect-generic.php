@@ -22,14 +22,17 @@ Notes
   - openid-connect-generic-auth-url           - modify the authentication url
 
   Actions
-  - openid-connect-generic-user-create - 2 args: fires when a new user is created by this plugin
+  - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
+  - openid-connect-generic-user-update        - 1 arg: user ID, fires when user is updated by this plugin
   - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
+  - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
 
   User Meta
   - openid-connect-generic-user                - (bool) if the user was created by this plugin
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
   - openid-connect-generic-last-user-claim     - the user's most recent user_claim
+  - openid-connect-generic-last-token-response - the user's most recent token response
   - openid-connect-generic-refresh-cookie-key  - encryption key used to secure refresh token info in cookie
   
   Options

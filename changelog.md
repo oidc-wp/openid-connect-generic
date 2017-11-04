@@ -4,7 +4,10 @@
 **3.2.0**
 
 * Feature: @robbiepaul - trigger core action `wp_login` when user is logged in through this plugin
-* Feature: @moriyoshi - Determine the WP_User display name with replacement tokens on the settings page. Tokens can be any property of the user_claim. 
+* Feature: @moriyoshi - Determine the WP_User display name with replacement tokens on the settings page. Tokens can be any property of the user_claim.
+* Feature: New setting to set redirect URL when session expires.
+* Feature: @robbiepaul - New filter for modifying authentication URL
+* Fix: @cedrox - Adding id_token_hint to logout URL according to spec
 * Bug fix: Provide port to the request header when requesting the user_claim
 
 **3.1.0**
