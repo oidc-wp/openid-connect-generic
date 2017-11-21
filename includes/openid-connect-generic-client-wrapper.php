@@ -409,6 +409,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		else {
 			wp_redirect( home_url() );
 		}
+		
+		exit;
 	}
 
 	/**
