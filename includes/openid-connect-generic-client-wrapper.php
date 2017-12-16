@@ -71,7 +71,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// verify token for any logged in user
 		if ( is_user_logged_in() ) {
-			add_action( 'wp_loaded', [$client_wrapper, 'ensure_tokens_still_fresh']);
+			add_action( 'wp_loaded', array($client_wrapper, 'ensure_tokens_still_fresh'));
 		}
 		
 		return $client_wrapper;
