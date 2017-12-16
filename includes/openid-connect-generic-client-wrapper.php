@@ -416,11 +416,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
-		// if we're allowing users to use WordPress and OpenID Connect, we need to set this to true at every login
-		if( $this->settings->link_existing_users ) {
-			update_user_meta( $user->ID, 'openid-connect-generic-user', TRUE );
-		}
-
 		// Create the WP session, so we know its token
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, FALSE );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
@@ -725,7 +720,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$user = get_user_by( 'id', $uid );
 
 		// save some meta data about this new user for the future
-		add_user_meta( $user->ID, 'openid-connect-generic-user', TRUE, TRUE );
 		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
 
 		// log the results
@@ -748,7 +742,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function update_existing_user( $uid, $subject_identity ) {
 		// add the OpenID Connect meta data 
-		add_user_meta( $uid, 'openid-connect-generic-user', TRUE, TRUE );
 		add_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
 		
 		// allow plugins / themes to take action on user update
