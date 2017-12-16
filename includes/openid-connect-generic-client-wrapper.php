@@ -141,18 +141,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
 
 		$next_access_token_refresh_time = $refresh_token_info[ 'next_access_token_refresh_time' ];
-		$refresh_token = $refresh_token_info[ 'refresh_token' ];
 
 		if ( $current_time < $next_access_token_refresh_time ) {
 			return;
 		}
 
-		if ( ! $refresh_token ) {
+		$refresh_token = $refresh_token_info[ 'refresh_token' ];
+		$refresh_expires = $refresh_token_info[ 'refresh_expires' ];
+
+		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
 			wp_logout();
 
 			if ( $this->settings->redirect_on_logout ) {
 				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.' ) ) );
 			}
+
+			return;
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );
@@ -438,10 +442,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function save_refresh_token( $manager, $token, $token_response ) {
 		$session = $manager->get($token);
+		$now = current_time( 'timestamp' , TRUE );
 		$session[$this->cookie_token_refresh_key] = array(
-			'next_access_token_refresh_time' => $token_response['expires_in'] + current_time( 'timestamp' , TRUE ),
-			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false
+			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
+			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false,
+			'refresh_expires' => false,
 		);
+		if ( isset( $token_response[ 'refresh_expires_in' ] ) ) {
+			$refresh_expires_in = $token_response[ 'refresh_expires_in' ];
+			if ($refresh_expires_in > 0) {
+				// leave enough time for the actual refresh request to go through
+				$refresh_expires = $now + $refresh_expires_in - $this->alter_http_request_timeout(5);
+				$session[$this->cookie_token_refresh_key]['refresh_expires'] = $refresh_expires;
+			}
+		}
 		$manager->update($token, $session);
 		return;
 	}
