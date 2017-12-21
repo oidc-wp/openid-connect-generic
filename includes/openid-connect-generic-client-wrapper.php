@@ -10,8 +10,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	// logger object
 	private $logger;
 
-	// token refresh info cookie key
-	private $cookie_token_refresh_key = 'openid-connect-generic-refresh';
+	// id_token of the current user session; used to generate logout redirect
+	private $last_id_token;
 
 	// user redirect cookie key
 	public $cookie_redirect_key = 'openid-connect-generic-redirect';
@@ -123,23 +123,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Handle retrieval and validation of refresh_token
 	 */
 	function ensure_tokens_still_fresh() {
-		if ( ! is_user_logged_in() ) {
-			return;
-		}
+		$this->with_session_info( array($this, 'check_and_refresh_tokens') );
+	}
 
-		$user_id = wp_get_current_user()->ID;
-		$manager = WP_Session_Tokens::get_instance( $user_id );
-		$token = wp_get_session_token();
-		$session = $manager->get( $token );
-
-		if ( ! isset( $session[ $this->cookie_token_refresh_key ] ) ) {
+	/**
+	 * Update session info when access token expires
+	 */
+	function check_and_refresh_tokens($user_id, $refresh_token_info, $extra) {
+		if ( empty($refresh_token_info) ) {
 			// not an OpenID-based session
 			return;
 		}
 
-		$current_time = current_time( 'timestamp', TRUE );
-		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
+		if ( !empty($refresh_token_info['id_token']) ) {
+			// Save the current id_token to log out the right session
+			$this->last_id_token = $refresh_token_info['id_token'];
+		}
 
+		$current_time = current_time( 'timestamp', TRUE );
 		$next_access_token_refresh_time = $refresh_token_info[ 'next_access_token_refresh_time' ];
 
 		if ( $current_time < $next_access_token_refresh_time ) {
@@ -173,7 +174,68 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $token_response );
 		}
 
-		$this->save_refresh_token( $manager, $token, $token_response );
+		return $this->update_session_info($user_id, $refresh_token_info, $token_response );
+	}
+
+	/**
+	 * Invoke $callback($user_id, $session[$key], $extra) -> $session[$key]
+	 *
+	 * This wrapper takes care of all the necessary WP Session Tokens
+	 * wrangling to both load and retrieve the session token data, as
+	 * well as logging in the specified user if a $login_user user object
+	 * is provided.
+	 *
+	 * @param $callback   -- the callback to invoke
+	 * @param $extra      -- any data to pass along to the callback
+	 * @param $login_user -- user object to be logged in
+	 * @param $key        -- key in the session, defaults to 'openid-connect-generic-refresh'
+	 *
+	 * The second parameter to the callback is the original session data for $key,
+	 * or an empty array if the key doesn't exist.  The callback's return value
+	 * replaces the contents of that key in the session.  If the callback returns
+	 * false, the data is removed from the session. If it returns null or an
+	 * unchanged value, the session's contents are not updated.
+	 *
+	 * If $login_user is not supplied and no user is logged in, this method is a no-op.
+	 * If $login_user is supplied, the user is logged in after $callback returns and
+	 * the session is updated.
+	 */
+	function with_session_info($callback, $extra=null, $login_user=false, $key='openid-connect-generic-refresh') {
+
+		if (!empty($login_user)) {
+			// Create the WP session, so we know its token
+			$user_id = $login_user->ID;
+			$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user_id, FALSE );
+			$manager = WP_Session_Tokens::get_instance( $user_id );
+			$token = $manager->create( $expiration );
+		} elseif ( ! is_user_logged_in() ) {
+			return;
+		} else {
+			$user_id = wp_get_current_user()->ID;
+			$manager = WP_Session_Tokens::get_instance( $user_id );
+			$token = wp_get_session_token();
+		}
+
+		$session = $manager->get( $token );
+
+		$data = isset($session[$key]) ? $session[$key] : array();
+		$ret = $callback($user_id, $data, $extra);
+		$session[$key] = $ret;
+
+		// false return = delete session data
+		if ($ret === false) unset( $session[$key] );
+
+		if (!empty($login_user)) {
+			// you did great, have a cookie!
+			$manager->update($token, $session);
+			wp_set_auth_cookie( $user_id, FALSE, '', $token);
+			do_action( 'wp_login', $login_user->user_login, $login_user );
+		} else {
+			// Only update session if a changed value was returned
+			if ($ret !== null && $ret != $data ) {
+				$manager->update($token, $session);
+			}
+		}
 	}
 
 	/**
@@ -242,10 +304,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = home_url( $redirect_url );
 		}
 
-		$user_id = wp_get_current_user()->ID;
-		$token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
-		$id_token_hint = $token_response['id_token'];
-		$url .= 'id_token_hint='.$id_token_hint.'&post_logout_redirect_uri=' . urlencode( $redirect_url );
+		// Add current user session's id_token, if present
+		if ( !empty( $this->last_id_token ) ) {
+			$url .= "id_token_hint={$this->last_id_token}&";
+		}
+
+		$url .= 'post_logout_redirect_uri=' . urlencode( $redirect_url );
 		return $url;
 	}
 
@@ -420,44 +484,32 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
-		// Create the WP session, so we know its token
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, FALSE );
-		$manager = WP_Session_Tokens::get_instance( $user->ID );
-		$token = $manager->create( $expiration );
-
-		// Save the refresh token in the session
-		$this->save_refresh_token( $manager, $token, $token_response );
-
-		// you did great, have a cookie!
-		wp_set_auth_cookie( $user->ID, FALSE, '', $token);
-		do_action( 'wp_login', $user->user_login, $user );
+		// Save the refresh token in the session and log the user in
+		$this->with_session_info(array($this, 'update_session_info'), $token_response, $user);
 	}
 
 	/**
-	 * Save refresh token to WP session tokens
+	 * Update refresh token info to save in WP session tokens
 	 *
-	 * @param $manager
-	 * @param $token
+	 * @param $user_id       -- user ID (ingnored currently)
+	 * @param $refresh_info  -- previous session data (ignored currently)
 	 * @param $token_response
 	 */
-	function save_refresh_token( $manager, $token, $token_response ) {
-		$session = $manager->get($token);
+	function update_session_info( $user_id, $refresh_info, $token_response ) {
 		$now = current_time( 'timestamp' , TRUE );
-		$session[$this->cookie_token_refresh_key] = array(
-			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
-			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false,
-			'refresh_expires' => false,
-		);
+		$refresh_info['next_access_token_refresh_time'] = $token_response['expires_in'] + $now;
+		$refresh_info['refresh_token'] = isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false;
+		$refresh_info['refresh_expires'] = false;
 		if ( isset( $token_response[ 'refresh_expires_in' ] ) ) {
 			$refresh_expires_in = $token_response[ 'refresh_expires_in' ];
 			if ($refresh_expires_in > 0) {
 				// leave enough time for the actual refresh request to go through
 				$refresh_expires = $now + $refresh_expires_in - $this->alter_http_request_timeout(5);
-				$session[$this->cookie_token_refresh_key]['refresh_expires'] = $refresh_expires;
+				$refresh_info['refresh_expires'] = $refresh_expires;
 			}
 		}
-		$manager->update($token, $session);
-		return;
+		if ( isset( $token_response[ 'id_token' ] ) ) $refresh_info['id_token'] = $token_response[ 'id_token' ];
+		return $refresh_info;
 	}
 
 	/**
