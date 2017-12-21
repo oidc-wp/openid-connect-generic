@@ -22,9 +22,6 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 Originally based on the plugin provided by shirounagi - https://wordpress.org/plugins/generic-openid-connect/ - but 
 has been completely rewritten.
 
-=== Requirements ===
-
-* Requires PHP 5.4+ with the OpenSSL extensions enabled (Defuse encryption library)
 
 == Installation ==
 

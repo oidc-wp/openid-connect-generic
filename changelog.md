@@ -1,6 +1,14 @@
 
 # OpenId Connect Generic Changelog
 
+**3.3.0**
+
+* Fix: @pjeby - Handle multiple user sessions better by using the `WP_Session_Tokens` object. Predecessor to fixes for multiple other issues: #49, #50, #51
+
+**3.2.1**
+
+* Bug fix: @svenvanhal - Exit after issuing redirect. Fixes #46
+
 **3.2.0**
 
 * Feature: @robbiepaul - trigger core action `wp_login` when user is logged in through this plugin
