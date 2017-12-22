@@ -232,7 +232,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			do_action( 'wp_login', $login_user->user_login, $login_user );
 		} else {
 			// Only update session if a changed value was returned
-			if ($ret !== null && $ret != $data ) {
+			if ($ret !== null && $ret !== $data ) {
 				$manager->update($token, $session);
 			}
 		}
