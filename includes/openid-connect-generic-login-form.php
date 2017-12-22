@@ -29,7 +29,6 @@ class OpenID_Connect_Generic_Login_Form {
 		// add a shortcode for the login button
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
 		
-		$login_form->handle_redirect_cookie();
 		$login_form->handle_redirect_login_type_auto();
 
 		return $login_form;
@@ -44,7 +43,7 @@ class OpenID_Connect_Generic_Login_Form {
 			&& ( ! isset( $_GET[ 'action' ] ) || $_GET[ 'action' ] !== 'logout' ) )
 		{
 			if (  ! isset( $_GET['login-error'] ) ) {
-				wp_redirect( $this->client_wrapper->get_authentication_url() );
+				wp_redirect( $this->client_wrapper->get_authentication_url($this->get_login_redirect()) );
 				exit;
 			}
 			else {
@@ -56,7 +55,7 @@ class OpenID_Connect_Generic_Login_Form {
 	/**
 	 * Handle login related redirects
 	 */
-	function handle_redirect_cookie()
+	function get_login_redirect()
 	{
 		if ( $GLOBALS['pagenow'] == 'wp-login.php' && isset( $_GET[ 'action' ] ) && $_GET[ 'action' ] === 'logout' ) {
 			return;
@@ -65,8 +64,6 @@ class OpenID_Connect_Generic_Login_Form {
 		// record the URL of this page if set to redirect back to origin page
 		if ( $this->settings->redirect_user_back )
 		{
-			$redirect_expiry = current_time('timestamp') + DAY_IN_SECONDS;
-
 			// default redirect to the homepage
 			$redirect_url = home_url( esc_url( add_query_arg( NULL, NULL ) ) );
 
@@ -79,7 +76,7 @@ class OpenID_Connect_Generic_Login_Form {
 				}
 			}
 
-			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+			return $redirect_url;
 		}
 	}
 	
@@ -126,7 +123,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	function make_login_button() {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
-		$href = $this->client_wrapper->get_authentication_url();
+		$href = $this->client_wrapper->get_authentication_url($this->get_login_redirect());
 		
 		ob_start();
 		?>

@@ -41,16 +41,27 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string
 	 */
-	function make_authentication_url() {
+	function make_authentication_url($redirect='') {
 		$url = sprintf( '%1$s?response_type=code&scope=%2$s&client_id=%3$s&state=%4$s&redirect_uri=%5$s',
 			$this->endpoint_login,
 			urlencode( $this->scope ),
 			urlencode( $this->client_id ),
-			$this->new_state(),
+			urlencode( $this->new_state() . (!empty($redirect) ? "." . base64_encode($redirect) : "") ),
 			urlencode( $this->redirect_uri )
 		);
 
 		return apply_filters( 'openid-connect-generic-auth-url', $url );
+	}
+
+	/**
+	 * Get the redirect info from an authentication request, if any
+	 */
+	function get_state_and_redirect_from_auth_request( $request ) {
+		if ( ! empty( $request['state'] ) ) {
+			$states = explode('.', $request['state']);
+			$states[1] = empty( $states[1] ) ? '' : base64_decode($states[1]);
+			return $states;
+		} else return array();
 	}
 
 	/**
@@ -71,8 +82,10 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-code', 'No authentication code present in the request.', $request );
 		}
 
+		list( $request['state'], $request['redirect'] ) = $this->get_state_and_redirect_from_auth_request($request);
+
 		// check the client request state 
-		if ( ! isset( $request['state'] ) || ! $this->check_state( $request['state'] ) ){
+		if ( empty( $request['state'] ) || ! $this->check_state( $request['state'] ) ){
 			return new WP_Error( 'missing-state', __( 'Missing state.' ), $request );
 		}
 

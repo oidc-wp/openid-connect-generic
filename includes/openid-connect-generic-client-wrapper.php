@@ -13,9 +13,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	// token refresh info cookie key
 	private $cookie_token_refresh_key = 'openid-connect-generic-refresh';
 
-	// user redirect cookie key
-	public $cookie_redirect_key = 'openid-connect-generic-redirect';
-
 	// WP_Error if there was a problem, or false if no error
 	private $error = false;
 
@@ -115,8 +112,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * 
 	 * @return string
 	 */
-	function get_authentication_url(){
-		return $this->client->make_authentication_url();
+	function get_authentication_url($redirect=''){
+		return $this->client->make_authentication_url($redirect);
 	}
 
 	/**
@@ -182,15 +179,26 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param $error WP_Error
 	 */
-	function error_redirect( $error ) {
+	function error_redirect( $error, $redirect = null) {
+		if ( $GLOBALS['pagenow'] == 'wp-login.php' && isset( $_GET[ 'action' ] ) && $_GET[ 'action' ] === 'logout' ) {
+			// Never redirect a login to the logout page
+			$redirect = '';
+		} elseif ( $redirect === null ) {
+			$redirect = $this->settings->redirect_user_back ? home_url( esc_url( add_query_arg( NULL, NULL ) ) ) : '';
+		}
+
 		$this->logger->log( $error );
 		
 		// redirect user back to login page
-		wp_redirect(  
-			wp_login_url() . 
-			'?login-error=' . $error->get_error_code() .
-		    '&message=' . urlencode( $error->get_error_message() )
+		$redirect = add_query_arg(
+			array(
+				'login-error' => $error->get_error_code(),
+				'message' => urlencode( $error->get_error_message() )
+			),
+			wp_login_url($redirect)
 		);
+
+		wp_redirect($redirect);
 		exit;
 	}
 
@@ -273,38 +281,39 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$client = $this->client;
 		
 		// start the authentication flow
+		list ($state, $redirect_url) = $client->get_state_and_redirect_from_auth_request( $_GET );
+
 		$authentication_request = $client->validate_authentication_request( $_GET );
-		
 		if ( is_wp_error( $authentication_request ) ){
-			$this->error_redirect( $authentication_request );
+			$this->error_redirect( $authentication_request, $redirect_url );
 		}
-		
+
 		// retrieve the authentication code from the authentication request
 		$code = $client->get_authentication_code( $authentication_request );
 		
 		if ( is_wp_error( $code ) ){
-			$this->error_redirect( $code );
+			$this->error_redirect( $code, $redirect_url );
 		}
 
 		// attempting to exchange an authorization code for an authentication token
 		$token_result = $client->request_authentication_token( $code );
 		
 		if ( is_wp_error( $token_result ) ) {
-			$this->error_redirect( $token_result );
+			$this->error_redirect( $token_result, $redirect_url );
 		}
 
 		// get the decoded response from the authentication request result
 		$token_response = $client->get_token_response( $token_result );
 
 		if ( is_wp_error( $token_response ) ){
-			$this->error_redirect( $token_response );
+			$this->error_redirect( $token_response, $redirect_url );
 		}
 
 		// ensure the that response contains required information
 		$valid = $client->validate_token_response( $token_response );
 		
 		if ( is_wp_error( $valid ) ) {
-			$this->error_redirect( $valid );
+			$this->error_redirect( $valid, $redirect_url );
 		}
 
 		/**
@@ -318,28 +327,28 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$id_token_claim = $client->get_id_token_claim( $token_response );
 		
 		if ( is_wp_error( $id_token_claim ) ){
-			$this->error_redirect( $id_token_claim );
+			$this->error_redirect( $id_token_claim, $redirect_url );
 		}
 		
 		// validate our id_token has required values
 		$valid = $client->validate_id_token_claim( $id_token_claim );
 		
 		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
+			$this->error_redirect( $valid, $redirect_url );
 		}
 		
 		// exchange the token_response for a user_claim
 		$user_claim = $client->get_user_claim( $token_response );
 		
 		if ( is_wp_error( $user_claim ) ){
-			$this->error_redirect( $user_claim );
+			$this->error_redirect( $user_claim, $redirect_url );
 		}
 		
 		// validate our user_claim has required values
 		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
 		
 		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
+			$this->error_redirect( $valid, $redirect_url );
 		}
 
 		/**
@@ -354,7 +363,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $user ) {
 			$user = $this->create_new_user( $subject_identity, $user_claim );
 			if ( is_wp_error( $user ) ) {
-				$this->error_redirect( $user );
+				$this->error_redirect( $user, $redirect_url );
 				return;
 			}
 		}
@@ -367,7 +376,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$valid = $this->validate_user( $user );
 		
 		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
+			$this->error_redirect( $valid, $redirect_url );
 		}
 
 		// login the found / created user
@@ -377,11 +386,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
 		// redirect back to the origin page if enabled
-		$redirect_url = esc_url( $_COOKIE[ $this->cookie_redirect_key ] );
-
 		if( $this->settings->redirect_user_back && !empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
-			setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 			wp_redirect( $redirect_url );
 		}
 		// otherwise, go home!
