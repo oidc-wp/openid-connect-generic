@@ -53,7 +53,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// alter the requests according to settings
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
-		add_filter( 'http_request_timeout', array( $client_wrapper, 'alter_http_request_timeout' ) );
 
 		if ( is_admin() ) {
 			// use the ajax url to handle processing authorization without any html output
@@ -95,21 +94,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		return $query;
 	}
 
-	/**
-	 * WP Hook for altering remote request timeout
-	 * 
-	 * @param $timeout
-	 * 
-	 * @return int
-	 */
-	function alter_http_request_timeout( $timeout ){
-		if ( is_numeric( $this->settings->http_request_timeout ) ){
-			return absint( $this->settings->http_request_timeout );
-		}
-		
-		return $timeout;
-	}
-	
 	/**
 	 * Get the authentication url from the client
 	 * 
@@ -258,6 +242,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return mixed
 	 */
 	function alter_request( $request, $op ) {
+		if ( !empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
+			$request['timeout'] = intval( $this->settings->http_request_timeout );
+		}
+
 		if ( $this->settings->no_sslverify ) {
 			$request['sslverify'] = FALSE;
 		}
@@ -452,7 +440,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$refresh_expires_in = $token_response[ 'refresh_expires_in' ];
 			if ($refresh_expires_in > 0) {
 				// leave enough time for the actual refresh request to go through
-				$refresh_expires = $now + $refresh_expires_in - $this->alter_http_request_timeout(5);
+				$refresh_expires = $now + $refresh_expires_in - 5;
 				$session[$this->cookie_token_refresh_key]['refresh_expires'] = $refresh_expires;
 			}
 		}
