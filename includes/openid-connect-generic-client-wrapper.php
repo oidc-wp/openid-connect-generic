@@ -24,10 +24,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Inject necessary objects and services into the client
 	 * 
 	 * @param \OpenID_Connect_Generic_Client $client
-	 * @param \WP_Option_Settings $settings
-	 * @param \WP_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Settings $settings
+	 * @param \OpenID_Connect_Generic_Option_Logger $logger
 	 */
-	function __construct( OpenID_Connect_Generic_Client $client, WP_Option_Settings $settings, WP_Option_Logger $logger ){
+	function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
 		$this->client = $client;
 		$this->settings = $settings;
 		$this->logger = $logger;
@@ -37,12 +37,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Hook the client into WP
 	 *
 	 * @param \OpenID_Connect_Generic_Client $client
-	 * @param \WP_Option_Settings $settings
-	 * @param \WP_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Settings $settings
+	 * @param \OpenID_Connect_Generic_Option_Logger $logger
 	 *
 	 * @return \OpenID_Connect_Generic_Client_Wrapper
 	 */
-	static public function register( OpenID_Connect_Generic_Client $client, WP_Option_Settings $settings, WP_Option_Logger $logger ){
+	static public function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
 		$client_wrapper  = new self( $client, $settings, $logger );
 		
 		// integrated logout

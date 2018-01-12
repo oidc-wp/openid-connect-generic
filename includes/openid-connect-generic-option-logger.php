@@ -2,9 +2,7 @@
 /**
  * Simple class for logging messages to the options table
  */
-if ( !class_exists( 'WP_Option_Logger' ) ) :
-		
-class WP_Option_Logger {
+class OpenID_Connect_Generic_Option_Logger {
 	
 	// wp option name/key
 	private $option_name;
@@ -82,7 +80,7 @@ class WP_Option_Logger {
 	/**
 	 * Save an array of data to the logs
 	 * 
-	 * @param $data array
+	 * @param $data mixed
 	 * @return bool
 	 */
 	public function log( $data, $type = null ) {
@@ -117,11 +115,13 @@ class WP_Option_Logger {
 	public function get_option_name(){
 		return $this->option_name;
 	}
-	
+
 	/**
 	 * Create a message array containing the data and other information
-	 * 
-	 * @param $data (mixed)
+	 *
+	 * @param $data mixed
+	 * @param $type
+	 *
 	 * @return array
 	 */
 	private function make_message( $data, $type ){
@@ -244,5 +244,3 @@ class WP_Option_Logger {
 		return $output;
 	}
 }
-
-endif;
