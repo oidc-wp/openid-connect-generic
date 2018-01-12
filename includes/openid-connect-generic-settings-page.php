@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Class OpenID_Connect_Generic_Settings_Page.
+ * Admin settings page.
+ */
 class OpenID_Connect_Generic_Settings_Page {
 
 	// local copy of the settings provided by the base plugin
@@ -16,10 +20,10 @@ class OpenID_Connect_Generic_Settings_Page {
 	private $settings_field_group;
 
 	/**
-	 * @param \WP_Option_Settings $settings
-	 * @param \WP_Option_Logger $logger
+	 * @param OpenID_Connect_Generic_Option_Settings $settings
+	 * @param OpenID_Connect_Generic_Option_Logger $logger
 	 */
-	function __construct( WP_Option_Settings $settings, WP_Option_Logger $logger ) {
+	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings             = $settings;
 		$this->logger               = $logger;
 		$this->settings_field_group = $this->settings->get_option_name() . '-group';
@@ -196,12 +200,12 @@ class OpenID_Connect_Generic_Settings_Page {
 	}
 
 	/**
-	 * @param \WP_Option_Settings $settings
-	 * @param \WP_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Settings $settings
+	 * @param \OpenID_Connect_Generic_Option_Logger $logger
 	 *
 	 * @return \OpenID_Connect_Generic_Settings_Page
 	 */
-	static public function register( WP_Option_Settings $settings, WP_Option_Logger $logger ){
+	static public function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
 		$settings_page = new self( $settings, $logger );
 
 		// add our options page the the admin menu

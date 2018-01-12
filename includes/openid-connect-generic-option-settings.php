@@ -1,8 +1,8 @@
 <?php
-
-if ( ! class_exists( 'WP_Option_Settings' ) ) :
- 
-class WP_Option_Settings {
+/**
+ * Class OpenId_Connect_Generic_Option_Settings
+ */
+class OpenID_Connect_Generic_Option_Settings {
 	
 	// wp option name/key
 	private $option_name;
@@ -58,5 +58,3 @@ class WP_Option_Settings {
 		update_option( $this->option_name, $this->values );
 	}
 }
-
-endif;

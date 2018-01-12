@@ -61,10 +61,10 @@ class OpenID_Connect_Generic {
 	/**
 	 * Setup the plugin
 	 *
-	 * @param \WP_Option_Settings $settings
-	 * @param \WP_Option_Logger $logger
+	 * @param OpenID_Connect_Generic_Option_Settings $settings
+	 * @param OpenID_Connect_Generic_Option_Logger $logger
 	 */
-	function __construct( WP_Option_Settings $settings, WP_Option_Logger $logger ){
+	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
 		$this->settings = $settings;
 		$this->logger = $logger;
 	}
@@ -157,6 +157,12 @@ class OpenID_Connect_Generic {
 	 * @param $class
 	 */
 	static public function autoload( $class ) {
+		$prefix = 'OpenID_Connect_Generic_';
+
+		if ( stripos($class, $prefix) !== 0 ) {
+			return;
+		}
+
 		$filename = $class . '.php';
 
 		// internal files are all lowercase and use dashes in filenames
@@ -180,7 +186,7 @@ class OpenID_Connect_Generic {
 	static public function bootstrap(){
 		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
 		
-		$settings = new WP_Option_Settings(
+		$settings = new OpenID_Connect_Generic_Option_Settings(
 			'openid_connect_generic_settings',
 			// default settings values
 			array(
@@ -214,7 +220,7 @@ class OpenID_Connect_Generic {
 			)
 		);
 		
-		$logger = new WP_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
+		$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
 		
 		$plugin = new self( $settings, $logger );
 		
