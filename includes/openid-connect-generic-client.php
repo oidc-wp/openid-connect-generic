@@ -255,7 +255,7 @@ class OpenID_Connect_Generic_Client {
 	function check_state( $state ) {
 		$states = get_option( 'openid-connect-generic-valid-states', array() );
 		$valid  = FALSE;
-    
+
 		// remove any expired states
 		foreach ( $states as $code => $timestamp ) {
 			if ( ( $timestamp + $this->state_time_limit ) < time() ) {
