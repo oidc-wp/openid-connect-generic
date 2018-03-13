@@ -25,7 +25,7 @@ class OpenID_Connect_Generic_Client {
 	 * @param $endpoint_userinfo
 	 * @param $endpoint_token
 	 * @param $redirect_uri
-   * @param $state_time_limit time states are valid in seconds
+	 * @param $state_time_limit time states are valid in seconds
 	 */
 	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit){
 		$this->client_id = $client_id;
