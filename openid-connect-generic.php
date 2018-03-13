@@ -77,12 +77,12 @@ class OpenID_Connect_Generic {
 
 		if ( $this->settings->alternate_redirect_uri ){
 			$redirect_uri = site_url( '/openid-connect-authorize' );
-    }
+		}
     
-    $state_time_limit = 180;
-    if ($this->settings->state_time_limit) {
+		$state_time_limit = 180;
+		if ($this->settings->state_time_limit) {
 			$state_time_limit = intval($this->settings->state_time_limit);
-    }
+		}
 
 		$this->client = new OpenID_Connect_Generic_Client( 
 			$this->settings->client_id,
@@ -91,8 +91,8 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
-      $redirect_uri,
-      $state_time_limit
+			$redirect_uri,
+			$state_time_limit
 		);
 		
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
