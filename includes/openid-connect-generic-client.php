@@ -34,8 +34,8 @@ class OpenID_Connect_Generic_Client {
 		$this->endpoint_login = $endpoint_login;
 		$this->endpoint_userinfo = $endpoint_userinfo;
 		$this->endpoint_token = $endpoint_token;
-    $this->redirect_uri = $redirect_uri;
-    $this->state_time_limit = $state_time_limit;
+		$this->redirect_uri = $redirect_uri;
+		$this->state_time_limit = $state_time_limit;
 	}
 
 	/**
