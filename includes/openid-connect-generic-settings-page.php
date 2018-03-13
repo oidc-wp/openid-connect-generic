@@ -155,6 +155,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
+			'state_time_limit'     => array(
+				'title'       => __( 'State time limit' ),
+				'description' => __( 'State valid time in seconds. Defaults to 180' ),
+				'type'        => 'number',
+				'section'     => 'client_settings',
+			),
 			'link_existing_users'   => array(
 				'title'       => __( 'Link Existing Users' ),
 				'description' => __( 'If a WordPress account already exists with the same identity as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.' ),
