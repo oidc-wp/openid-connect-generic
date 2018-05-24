@@ -700,18 +700,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.' ), $create_user );
 		}
 
-		// create the new user
-		$uid = wp_insert_user(
-			array(
-				'user_login' => $username,
-				'user_pass' => wp_generate_password( 32, TRUE, TRUE ),
-				'user_email' => $email,
-				'display_name' => $displayname,
-				'nickname' => $nickname,
-				'first_name' => isset( $user_claim[ 'given_name' ] ) ? $user_claim[ 'given_name' ]: '',
-				'last_name' => isset( $user_claim[ 'family_name' ] ) ? $user_claim[ 'family_name' ]: '',
-			)
+		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
+		$user_data = array(
+			'user_login' => $username,
+			'user_pass' => wp_generate_password( 32, TRUE, TRUE ),
+			'user_email' => $email,
+			'display_name' => $displayname,
+			'nickname' => $nickname,
+			'first_name' => isset( $user_claim[ 'given_name' ] ) ? $user_claim[ 'given_name' ]: '',
+			'last_name' => isset( $user_claim[ 'family_name' ] ) ? $user_claim[ 'family_name' ]: '',
 		);
+		$user_data = apply_filters( 'openid-connect-generic-alter-user-data', $user_data, $user_claim );
+
+		// create the new user
+		$uid = wp_insert_user( $user_data );
 
 		// make sure we didn't fail in creating the user
 		if ( is_wp_error( $uid ) ) {
