@@ -48,7 +48,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// integrated logout
 		if ( $settings->endpoint_end_session ) {
 			add_filter( 'allowed_redirect_hosts', array( $client_wrapper, 'update_allowed_redirect_hosts' ), 99, 1 );
-			add_filter( 'logout_redirect', array( $client_wrapper, 'get_end_session_logout_redirect_url' ), 99, 1 );
+			add_filter( 'logout_redirect', array( $client_wrapper, 'get_end_session_logout_redirect_url' ), 99, 3 );
 		}
 
 		// alter the requests according to settings
@@ -211,7 +211,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return string
 	 */
-	function get_end_session_logout_redirect_url( $redirect_url ) {
+	function get_end_session_logout_redirect_url( $redirect_url, $requested_redirect_to, $user ) {
 		$url = $this->settings->endpoint_end_session;
 		$query = parse_url( $url, PHP_URL_QUERY );
 		$url .= $query ? '&' : '?';
@@ -226,8 +226,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = home_url( $redirect_url );
 		}
 
-		$user_id = wp_get_current_user()->ID;
-		$token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
+		$token_response = $user->get('openid-connect-generic-last-token-response');
 		$id_token_hint = $token_response['id_token'];
 		$url .= 'id_token_hint='.$id_token_hint.'&post_logout_redirect_uri=' . urlencode( $redirect_url );
 		return $url;
