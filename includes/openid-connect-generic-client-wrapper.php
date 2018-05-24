@@ -227,9 +227,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$token_response = $user->get('openid-connect-generic-last-token-response');
-		$id_token_hint = $token_response['id_token'];
-		$url .= 'id_token_hint='.$id_token_hint.'&post_logout_redirect_uri=' . urlencode( $redirect_url );
-		return $url;
+		$claim = $user->get( 'openid-connect-generic-last-id-token-claim' );
+
+		if ( isset( $claim['iss'] ) && $claim['iss'] == 'https://accounts.google.com' ) {
+			/* Google revoke endpoint
+			   1. expects the *access_token* to be passed as "token"
+			   2. does not support redirection (post_logout_redirect_uri)
+			   So just redirect to regular WP logout URL.
+			   (we would *not* disconnect the user from any Google service even if he was
+			   initially disconnected to them) */
+			return $redirect_url;
+		}
+		else {
+			return $url . sprintf( 'id_token_hint=%s&post_logout_redirect_uri=%s', $token_response['id_token'], urlencode( $redirect_url ) );
+		}
 	}
 
 	/**
