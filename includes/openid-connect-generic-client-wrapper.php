@@ -221,12 +221,16 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = '';
 		}
 
-		// convert to absolute url if needed
-		if ( ! parse_url( $redirect_url, PHP_URL_HOST ) ) {
-			$redirect_url = home_url( $redirect_url );
+		$token_response = $user->get('openid-connect-generic-last-token-response');
+		if (! $token_response ) {
+			// happens if non-openid login was used
+			return $redirect_url;
+		}
+		else if ( ! parse_url( $redirect_url, PHP_URL_HOST ) ) {
+			// convert to absolute url if needed. site_url() to be friendly with non-standard (Bedrock) layout
+			$redirect_url = site_url( $redirect_url );
 		}
 
-		$token_response = $user->get('openid-connect-generic-last-token-response');
 		$claim = $user->get( 'openid-connect-generic-last-id-token-claim' );
 
 		if ( isset( $claim['iss'] ) && $claim['iss'] == 'https://accounts.google.com' ) {
