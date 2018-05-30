@@ -1,5 +1,5 @@
 {
-  "name": "daggerhart/openid-connect-generic-wordpress",
+  "name": "daggerhart/daggerhart-openid-connect-generic",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-only",
   "description": "OpenID Connect generic WordPress plugin.",
