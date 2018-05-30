@@ -20,6 +20,15 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 1. Activate the plugin
 1. Visit Settings > OpenID Connect and configure to meet your needs
 
+#### Composer
+
+[OpenID Connect Generic on packagist](https://packagist.org/packages/daggerhart/openid-connect-generic-wordpress)
+
+Installation:
+
+`composer require daggerhart/openid-connect-generic-wordpress`
+
+
 ### Frequently Asked Questions
 
 **What is the client's Redirect URI?**
