@@ -1,6 +1,19 @@
 
 # OpenId Connect Generic Changelog
 
+**3.4.0**
+
+* Feature: @drzraf - New filter hook: ability to filter claim and derived user data before user creation.
+* Feature: @anttileppa - State time limit can now be changed on the settings page.
+* Fix: @drzraf - Fix PHP notice when using traditional login, $token_response may be empty.
+* Fix: @drzraf - Fixed a notice when cookie does not contain expected redirect_url 
+
+**3.3.1**
+
+* Prefixing classes for more efficient autoloading.
+* Avoid altering global wp_remote_post() parameters.
+* Minor metadata updates for wp.org
+
 **3.3.0**
 
 * Fix: @pjeby - Handle multiple user sessions better by using the `WP_Session_Tokens` object. Predecessor to fixes for multiple other issues: #49, #50, #51
