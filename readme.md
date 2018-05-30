@@ -22,11 +22,11 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 
 #### Composer
 
-[OpenID Connect Generic on packagist](https://packagist.org/packages/daggerhart/openid-connect-generic-wordpress)
+[OpenID Connect Generic on packagist](https://packagist.org/packages/daggerhart/openid-connect-generic)
 
 Installation:
 
-`composer require daggerhart/openid-connect-generic-wordpress`
+`composer require daggerhart/openid-connect-generic`
 
 
 ### Frequently Asked Questions
