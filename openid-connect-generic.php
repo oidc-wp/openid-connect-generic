@@ -73,6 +73,10 @@ class OpenID_Connect_Generic {
 	 * WP Hook 'init'
 	 */
 	function init(){
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return;
+		}
+
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ){
