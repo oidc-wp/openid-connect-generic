@@ -22,14 +22,13 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	static public function register( $settings, $client_wrapper ){
 		$login_form = new self( $settings, $client_wrapper );
-		
+
 		// alter the login form as dictated by settings
 		add_filter( 'login_message', array( $login_form, 'handle_login_page' ), 99 );
-		
+
 		// add a shortcode for the login button
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
-		
-		$login_form->handle_redirect_cookie();
+
 		$login_form->handle_redirect_login_type_auto();
 
 		return $login_form;
@@ -82,7 +81,7 @@ class OpenID_Connect_Generic_Login_Form {
 			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 		}
 	}
-	
+
 	/**
 	 * Implements filter login_message
 	 *
@@ -99,7 +98,7 @@ class OpenID_Connect_Generic_Login_Form {
 		$message .= $this->make_login_button();
 		return $message;
 	}
-	
+
 	/**
 	 * Display an error message to the user
 	 *
@@ -127,7 +126,10 @@ class OpenID_Connect_Generic_Login_Form {
 	function make_login_button() {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
 		$href = $this->client_wrapper->get_authentication_url();
-		
+
+		// maybe set redirect cookie on formular page
+		$this->handle_redirect_cookie();
+
 		ob_start();
 		?>
 		<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
