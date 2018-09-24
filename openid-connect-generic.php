@@ -9,14 +9,14 @@ Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
 */
 
-/* 
+/*
 Notes
   Spec Doc - http://openid.net/specs/openid-connect-basic-1_0-32.html
 
   Filters
   - openid-connect-generic-alter-request      - 3 args: request array, plugin settings, specific request op
   - openid-connect-generic-settings-fields    - modify the fields provided on the settings page
-  - openid-connect-generic-login-button-text  - modify the login button text 
+  - openid-connect-generic-login-button-text  - modify the login button text
   - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
   - openid-connect-generic-user-creation-test - (bool) should the user be created based on their claim
   - openid-connect-generic-auth-url           - modify the authentication url
@@ -32,7 +32,7 @@ Notes
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
   - openid-connect-generic-last-user-claim     - the user's most recent user_claim
   - openid-connect-generic-last-token-response - the user's most recent token response
-  
+
   Options
   - openid_connect_generic_settings     - plugin settings
   - openid-connect-generic-valid-states - locally stored generated states
@@ -45,19 +45,19 @@ class OpenID_Connect_Generic {
 
 	// plugin settings
 	private $settings;
-	
+
 	// plugin logs
 	private $logger;
-	
+
 	// openid connect generic client
 	private $client;
-	
+
 	// settings admin page
 	private $settings_page;
-	
+
 	// login form adjustments
 	private $login_form;
-	
+
 	/**
 	 * Setup the plugin
 	 *
@@ -82,13 +82,13 @@ class OpenID_Connect_Generic {
 		if ( $this->settings->alternate_redirect_uri ){
 			$redirect_uri = site_url( '/openid-connect-authorize' );
 		}
-    
+
 		$state_time_limit = 180;
 		if ($this->settings->state_time_limit) {
 			$state_time_limit = intval($this->settings->state_time_limit);
 		}
 
-		$this->client = new OpenID_Connect_Generic_Client( 
+		$this->client = new OpenID_Connect_Generic_Client(
 			$this->settings->client_id,
 			$this->settings->client_secret,
 			$this->settings->scope,
@@ -98,17 +98,20 @@ class OpenID_Connect_Generic {
 			$redirect_uri,
 			$state_time_limit
 		);
-		
+
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
 		$this->login_form = OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
 
+		// add a shortcode to get the auth url
+		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
+
 		$this->upgrade();
-		
+
 		if ( is_admin() ){
 			$this->settings_page = OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 		}
 	}
-	
+
 	/**
 	 * Check if privacy enforcement is enabled, and redirect users that aren't
 	 * logged in.
@@ -124,7 +127,7 @@ class OpenID_Connect_Generic {
 
 	/**
 	 * Enforce privacy settings for rss feeds
-	 * 
+	 *
 	 * @param $content
 	 *
 	 * @return mixed
@@ -142,28 +145,28 @@ class OpenID_Connect_Generic {
 	function upgrade(){
 		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
 		$settings = $this->settings;
-		
+
 		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
 			// upgrade required
-			
+
 			// @todo move this to another file for upgrade scripts
 			if ( isset( $settings->ep_login ) ) {
 				$settings->endpoint_login = $settings->ep_login;
 				$settings->endpoint_token = $settings->ep_token;
 				$settings->endpoint_userinfo = $settings->ep_userinfo;
-				
+
 				unset( $settings->ep_login, $settings->ep_token, $settings->ep_userinfo );
 				$settings->save();
 			}
-			
+
 			// update the stored version number
 			update_option( 'openid-connect-generic-plugin-version', self::VERSION );
 		}
 	}
-	
+
 	/**
 	 * Simple autoloader
-	 * 
+	 *
 	 * @param $class
 	 */
 	static public function autoload( $class ) {
@@ -195,7 +198,7 @@ class OpenID_Connect_Generic {
 	 */
 	static public function bootstrap(){
 		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
-		
+
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			'openid_connect_generic_settings',
 			// default settings values
@@ -209,7 +212,7 @@ class OpenID_Connect_Generic {
 				'endpoint_userinfo' => '',
 				'endpoint_token'    => '',
 				'endpoint_end_session' => '',
-				
+
 				// non-standard settings
 				'no_sslverify'    => 0,
 				'http_request_timeout' => 5,
@@ -229,13 +232,13 @@ class OpenID_Connect_Generic {
 				'log_limit'       => 1000,
 			)
 		);
-		
+
 		$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
-		
+
 		$plugin = new self( $settings, $logger );
-		
+
 		add_action( 'init', array( $plugin, 'init' ) );
-		
+
 		// privacy hooks
 		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
 		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
