@@ -330,8 +330,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $valid );
 		}
 		
-		// exchange the token_response for a user_claim
-		$user_claim = $client->get_user_claim( $token_response );
+		// if userinfo endpoint is set, exchange the token_response for a user_claim
+		if (isset( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] )) {
+			$user_claim = $client->get_user_claim( $token_response );
+		} else {
+			$user_claim = $id_token_claim;
+		}
 		
 		if ( is_wp_error( $user_claim ) ){
 			$this->error_redirect( $user_claim );
@@ -655,7 +659,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// attempt another request for userinfo if some values are missing
-		if ( $values_missing && isset( $token_response['access_token'] ) ) {
+		if ( $values_missing && isset( $token_response['access_token'] ) && isset( $this->settings->endpoint_userinfo ) ) {
 			$user_claim_result = $this->client->request_userinfo( $token_response['access_token'] );
 
 			// make sure we didn't get an error
@@ -713,7 +717,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $create_user ) {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.' ), $create_user );
 		}
-
+		
 		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 		$user_data = array(
 			'user_login' => $username,
