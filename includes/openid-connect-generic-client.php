@@ -376,7 +376,16 @@ class OpenID_Connect_Generic_Client {
 		if ( ! is_array( $user_claim ) ){
 			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim' ), $user_claim );
 		}
-		
+
+		// allow for errors from the IDP
+		if ( isset( $user_claim['error'] ) ) {
+			$message = __( 'Error from the IDP' );
+			if ( !empty( $user_claim['error_description'] ) ) {
+				$message = $user_claim['error_description'];
+			}
+			return new WP_Error( 'invalid-user-claim-' . $user_claim['error'], $message, $user_claim );
+		}
+
 		// make sure the id_token sub === user_claim sub, according to spec
 		if ( $id_token_claim['sub' ] !== $user_claim['sub'] ) {
 			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim' ), func_get_args() );
