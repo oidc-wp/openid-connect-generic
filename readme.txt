@@ -39,6 +39,10 @@ Replace `example.com` with your domain name and path to WordPress.
 
 == Changelog ==
 
+= 3.4.1 =
+
+* Minor documentation update and additional error checking.
+
 = 3.4.0 =
 
 * Feature: @drzraf - New filter hook: ability to filter claim and derived user data before user creation.
