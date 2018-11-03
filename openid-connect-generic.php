@@ -20,6 +20,8 @@ Notes
   - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
   - openid-connect-generic-user-creation-test - (bool) should the user be created based on their claim
   - openid-connect-generic-auth-url           - modify the authentication url
+  - openid-connect-generic-alter-user-claim   - modify the user_claim before a new user is created
+  - openid-connect-generic-alter-user-data    - modify user data before a new user is created
 
   Actions
   - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
