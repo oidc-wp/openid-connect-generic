@@ -36,6 +36,17 @@ by this client is like so:  https://example.com/wp-admin/admin-ajax.php?action=o
 
 Replace `example.com` with your domain name and path to WordPress.
 
+= Can I change the client's Redirect URI? =
+
+Some OAuth2 servers do not allow for a client redirect URI to contain a query string. The default URI provided by
+this module leverages WordPress's `admin-ajax.php` endpoint as an easy way to provide a route that does not include
+HTML, but this will naturally involve a query string. Fortunately, this plugin provides a setting that will make use of
+an alternate redirect URI that does not include a query string.
+
+On the settings page for this plugin (Dashboard > Settings > OpenID Connect Generic) there is a checkbox for
+**Alternate Redirect URI**. When checked, the plugin will use the Redirect URI
+`https://example.com/openid-connect-authorize`.
+
 
 == Changelog ==
 

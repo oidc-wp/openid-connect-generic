@@ -14,7 +14,7 @@ Notes
   Spec Doc - http://openid.net/specs/openid-connect-basic-1_0-32.html
 
   Filters
-  - openid-connect-generic-alter-request      - 3 args: request array, plugin settings, specific request op
+  - openid-connect-generic-alter-request      - 2 args: request array, specific request op
   - openid-connect-generic-settings-fields    - modify the fields provided on the settings page
   - openid-connect-generic-login-button-text  - modify the login button text
   - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
