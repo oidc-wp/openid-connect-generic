@@ -1,11 +1,11 @@
-## OpenID Connect Generic Client
+# OpenID Connect Generic Client
 
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 A simple client that provides SSO or opt-in authentication against a generic OAuth2 Server implementation.
 
-### Description
+## Description
 
 This plugin allows to authenticate users against OpenID Connect OAuth2 API with Authorization Code Flow.
 Once installed, it can be configured to automatically authenticate users (SSO), or provide a "Login with OpenID Connect"
@@ -14,13 +14,13 @@ new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
 
-### Installation
+## Installation
 
 1. Upload to the `/wp-content/plugins/` directory
 1. Activate the plugin
 1. Visit Settings > OpenID Connect and configure to meet your needs
 
-#### Composer
+### Composer
 
 [OpenID Connect Generic on packagist](https://packagist.org/packages/daggerhart/openid-connect-generic)
 
@@ -29,16 +29,16 @@ Installation:
 `composer require daggerhart/openid-connect-generic`
 
 
-### Frequently Asked Questions
+## Frequently Asked Questions
 
-#### What is the client's Redirect URI?
+### What is the client's Redirect URI?
 
 Most OAuth2 servers should require a whitelist of redirect URIs for security purposes. The Redirect URI provided
 by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=openid-connect-authorize`
 
 Replace `example.com` with your domain name and path to WordPress.
 
-#### Can I change the client's Redirect URI?
+### Can I change the client's Redirect URI?
 
 Some OAuth2 servers do not allow for a client redirect URI to contain a query string. The default URI provided by 
 this module leverages WordPress's `admin-ajax.php` endpoint as an easy way to provide a route that does not include
@@ -49,12 +49,12 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 **Alternate Redirect URI**. When checked, the plugin will use the Redirect URI 
 `https://example.com/openid-connect-authorize`.
 
-### Hooks
+## Hooks
 
 This plugin provides a number of hooks to allow for a significant amount of customization of the plugin operations from 
 elsewhere in the WordPress system.
 
-#### Filters
+### Filters
 
 Filters are WordPress hooks that are used to modify data. The first argument in a filter hook is always expected to be
 returned at the end of the hook.
@@ -64,7 +64,7 @@ WordPress filters API - [`add_filter()`](https://developer.wordpress.org/referen
 
 Most often you'll only need to use `add_filter()` to hook into this plugin's code.
 
-##### `openid-connect-generic-alter-request`
+#### `openid-connect-generic-alter-request`
 
 Hooks directly into client before requests are sent to the OpenID Server.
 
@@ -87,7 +87,7 @@ add_filter('openid-connect-generic-alter-request', function( $request, $operatio
 }, 10, 2);
 ```
 
-##### `openid-connect-generic-login-button-text`
+#### `openid-connect-generic-login-button-text`
 
 Modify the login button text. Default value is `__( 'Login with OpenID Connect' )`.
 
@@ -101,7 +101,7 @@ add_filter('openid-connect-generic-login-button-text, function( $text ) {
 });
 ```
 
-##### `openid-connect-generic-auth-url`
+#### `openid-connect-generic-auth-url`
 
 Modify the authentication URL before presented to the user. This is the URL that will send the user to the IDP server 
 for login.
@@ -116,7 +116,7 @@ add_filter('openid-connect-generic-auth-url', function( $url ) {
 }); 
 ```
 
-##### `openid-connect-generic-user-login-test`
+#### `openid-connect-generic-user-login-test`
 
 Determine whether or not the user should be logged into WordPress.
 
@@ -133,7 +133,7 @@ add_filter('openid-connect-generic-user-login-test', function( $result, $user_cl
 }, 10, 2);
 ```
 
-##### `openid-connect-generic-user-creation-test`
+#### `openid-connect-generic-user-creation-test`
 
 Determine whether or not the user should be created. This filter is called when a new user is trying to login and they
 do not currently exist within WordPress.
@@ -152,7 +152,7 @@ add_filter('', function( $result, $user_claim ) {
 }, 10, 2) 
 ```
 
-##### <del>`openid-connect-generic-alter-user-claim`</del>
+#### <del>`openid-connect-generic-alter-user-claim`</del>
 
 Modify the `$user_claim` before the plugin builds the `$user_data` array for new user created.
 
@@ -176,7 +176,7 @@ add_filter('openid-connect-generic-alter-user-claim', function( $user_claim ) {
 });
 ```
 
-##### `openid-connect-generic-alter-user-data`
+#### `openid-connect-generic-alter-user-data`
 
 Modify a new user's data immediately before the user is created.
 
@@ -196,7 +196,7 @@ add_filter('openid-connect-generic-alter-user-claim', function( $user_data, $use
 }, 10, 2);
 ```
 
-##### `openid-connect-generic-settings-fields`
+#### `openid-connect-generic-settings-fields`
 
 For extending the plugin with a new setting field (found on Dashboard > Settings > OpenID Connect Generic) that the site 
 administrator can modify. Also useful to alter the existing settings fields.
@@ -256,7 +256,7 @@ Field types:
 - checkbox
 - select (requires an array of "options")
 
-#### Actions
+### Actions
 
 WordPress actions are generic events that other plugins can react to.
 
@@ -264,7 +264,7 @@ Actions API: [`add_action`](https://developer.wordpress.org/reference/functions/
 
 You'll probably only ever want to use `add_action` when hooking into this plugin.
 
-##### `openid-connect-generic-user-create`
+#### `openid-connect-generic-user-create`
 
 React to a new user being created by this plugin.
 
@@ -281,7 +281,7 @@ add_action('openid-connect-generic-user-create', function( $user, $user_claim ) 
 }, 10, 2);
 ``` 
 
-##### `openid-connect-generic-user-update`
+#### `openid-connect-generic-user-update`
 
 React to the user being updated after login. This is the event that happens when a user logins and they already exist as 
 a user in WordPress, as opposed to a new WordPress user being created.
@@ -297,7 +297,7 @@ add_action('openid-connect-generic-user-update', function( $uid ) {
 });
 ```
 
-##### `openid-connect-generic-update-user-using-current-claim`
+#### `openid-connect-generic-update-user-using-current-claim`
 
 React to an existing user logging in (after authentication and authorization).
 
@@ -314,7 +314,7 @@ add_action('openid-connect-generic-update-user-using-current-claim', function( $
 }, 10, 2); 
 ```
 
-##### `openid-connect-generic-redirect-user-back`
+#### `openid-connect-generic-redirect-user-back`
 
 React to a user being redirected after a successful login. This hook is the last hook that will fire when a user logs 
 in. It will only fire if the plugin setting "Redirect Back to Origin Page" is enabled at Dashboard > Settings > 
@@ -332,7 +332,7 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
 }, 10, 2); 
 ```
 
-#### User Meta Data
+### User Meta Data
 
 This plugin stores meta data about the user for both practical and debugging purposes.
 
