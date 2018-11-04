@@ -216,7 +216,7 @@ Provides 1 argument: the existing fields array.
 add_filter('openid-connect-generic-settings-fields', function( $fields ) {
 
     // Modify an existing field's title.
-    $fields['']['title'] = __('');
+    $fields['endpoint_userinfo']['title'] = __('User information endpoint url');
     
     // Add a new field that is a simple checkbox.
     $fields['block_terry'] = array(
