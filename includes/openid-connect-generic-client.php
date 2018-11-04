@@ -316,7 +316,16 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// Extract the id_token's claims from the token
-		$id_token_claim = json_decode( base64_decode( $tmp[1] ), TRUE );
+		$id_token_claim = json_decode(
+			base64_decode(
+				str_replace( // because token is encoded in base64 URL (and not just base64)
+					array('-', '_'),
+					array('+', '/'),
+					$tmp[1]
+				)
+			)
+			, TRUE
+		);
 		
 		return $id_token_claim;
 	}
