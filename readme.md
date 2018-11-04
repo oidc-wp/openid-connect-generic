@@ -14,6 +14,30 @@ new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
 
+## Table of Contents
+
+- [Installation](#installation)
+    - [Composer](#composer)
+- [Frequently Asked Questions](#frequently-asked-questions)
+    - [What is the client's Redirect URI?](#what-is-the-clients-redirect-uri)
+    - [Can I change the client's Redirect URI?](#can-i-change-the-clients-redirect-uri)
+- [Hooks](#hooks)
+    - [Filters](#filters)
+        - [openid-connect-generic-alter-request](#openid-connect-generic-alter-request)
+        - [openid-connect-generic-login-button-text](#openid-connect-generic-login-button-text)
+        - [openid-connect-generic-auth-url](#openid-connect-generic-auth-url)
+        - [openid-connect-generic-user-login-test](#openid-connect-generic-user-login-test)
+        - [openid-connect-generic-user-creation-test](#openid-connect-generic-user-creation-test)
+        - <del>[openid-connect-generic-alter-user-claim](#openid-connect-generic-alter-user-claim)</del>
+        - [openid-connect-generic-alter-user-data](#openid-connect-generic-alter-user-data)
+        - [openid-connect-generic-settings-fields](#openid-connect-generic-settings-fields)
+    - [Actions](#actions)
+        - [openid-connect-generic-user-create](#openid-connect-generic-user-create)
+        - [openid-connect-generic-user-update](#openid-connect-generic-user-update)
+        - [openid-connect-generic-update-user-using-current-claim](#openid-connect-generic-update-user-using-current-claim)
+        - [openid-connect-generic-redirect-user-back](#openid-connect-generic-redirect-user-back)
+
+
 ## Installation
 
 1. Upload to the `/wp-content/plugins/` directory
