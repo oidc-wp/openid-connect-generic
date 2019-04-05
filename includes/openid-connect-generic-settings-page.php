@@ -273,7 +273,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		foreach ( $this->settings_fields as $key => $field ) {
 			// make sure each key exists in the settings array
 			if ( ! isset( $this->settings->{ $key } ) ) {
-				$this->settings->{ $key } = NULL;
+				$this->settings->{ $key } = null;
 			}
 
 			// determine appropriate output callback

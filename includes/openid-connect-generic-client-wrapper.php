@@ -121,7 +121,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return;
 		}
 
-		$current_time = current_time( 'timestamp', TRUE );
+		$current_time = current_time( 'timestamp', true );
 		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
 
 		$next_access_token_refresh_time = $refresh_token_info[ 'next_access_token_refresh_time' ];
@@ -261,7 +261,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		if ( $this->settings->no_sslverify ) {
-			$request['sslverify'] = FALSE;
+			$request['sslverify'] = false;
 		}
 
 		return $request;
@@ -383,7 +383,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
 		// redirect back to the origin page if enabled
-		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) : FALSE;
+		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
 
 		if( $this->settings->redirect_user_back && !empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
@@ -427,7 +427,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
 		// Create the WP session, so we know its token
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, FALSE );
+		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		$token = $manager->create( $expiration );
 
@@ -435,7 +435,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->save_refresh_token( $manager, $token, $token_response );
 
 		// you did great, have a cookie!
-		wp_set_auth_cookie( $user->ID, FALSE, '', $token);
+		wp_set_auth_cookie( $user->ID, false, '', $token);
 		do_action( 'wp_login', $user->user_login, $user );
 	}
 
@@ -448,7 +448,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function save_refresh_token( $manager, $token, $token_response ) {
 		$session = $manager->get($token);
-		$now = current_time( 'timestamp' , TRUE );
+		$now = current_time( 'timestamp' , true );
 		$session[$this->cookie_token_refresh_key] = array(
 			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
 			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false,
@@ -667,7 +667,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				return new WP_Error( 'bad-user-claim-result', __( 'Bad user claim result' ), $user_claim_result );
 			}
 
-			$user_claim = json_decode( $user_claim_result['body'], TRUE );
+			$user_claim = json_decode( $user_claim_result['body'], true );
 		}
 
 		$_email = $this->get_email_from_claim( $user_claim, true );
@@ -712,7 +712,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// allow other plugins / themes to determine authorization 
 		// of new accounts based on the returned user claim
-		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', TRUE, $user_claim );
+		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', true, $user_claim );
 
 		if ( ! $create_user ) {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.' ), $create_user );
@@ -721,7 +721,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 		$user_data = array(
 			'user_login' => $username,
-			'user_pass' => wp_generate_password( 32, TRUE, TRUE ),
+			'user_pass' => wp_generate_password( 32, true, true ),
 			'user_email' => $email,
 			'display_name' => $displayname,
 			'nickname' => $nickname,
@@ -742,7 +742,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$user = get_user_by( 'id', $uid );
 
 		// save some meta data about this new user for the future
-		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
+		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
 
 		// log the results
 		$this->logger->log( "New user created: {$user->user_login} ($uid)", 'success' );
@@ -764,7 +764,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function update_existing_user( $uid, $subject_identity ) {
 		// add the OpenID Connect meta data 
-		add_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity, TRUE );
+		add_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
 		
 		// allow plugins / themes to take action on user update
 		do_action( 'openid-connect-generic-user-update', $uid );

@@ -67,7 +67,7 @@ class OpenID_Connect_Generic_Login_Form {
 			$redirect_expiry = current_time('timestamp') + DAY_IN_SECONDS;
 
 			// default redirect to the homepage
-			$redirect_url = home_url( esc_url( add_query_arg( NULL, NULL ) ) );
+			$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
 
 			if ( $GLOBALS['pagenow'] == 'wp-login.php' ) {
 				// if using the login form, default redirect to the admin dashboard
