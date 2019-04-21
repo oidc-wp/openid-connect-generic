@@ -3,7 +3,7 @@ Contributors: daggerhart
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
 Requires at least: 4
-Tested up to: 4.9.8
+Tested up to: 5.1.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -49,6 +49,14 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.5.0 =
+
+* Readme fix: @thijskh - Fix syntax error in example openid-connect-generic-login-button-text
+* Feature: @slavicd - Allow override of the plugin by posting credentials to wp-login.php
+* Fix: @daggerhart - Avoid double question marks in auth url query string
+* Fix: @drzraf - wp-cli bootstrap must not inhibit custom rewrite rules
+* Syntax change: @mullikine - Change PHP keywords to comply with PSR2
 
 = 3.4.1 =
 
