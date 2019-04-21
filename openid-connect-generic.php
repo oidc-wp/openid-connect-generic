@@ -75,9 +75,6 @@ class OpenID_Connect_Generic {
 	 * WP Hook 'init'
 	 */
 	function init(){
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			return;
-		}
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
@@ -102,6 +99,10 @@ class OpenID_Connect_Generic {
 		);
 
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return;
+		}
+
 		$this->login_form = OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
 
 		// add a shortcode to get the auth url
