@@ -175,7 +175,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	private function save_logs( $logs ){
 		// save our logs
 		$this->logs = $logs;
-		return update_option( $this->option_name, $logs, FALSE );
+		return update_option( $this->option_name, $logs, false );
 	}
 
 	/**

@@ -172,7 +172,7 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// extract token response from token
-		$token_response = json_decode( $token_result['body'], TRUE );
+		$token_response = json_decode( $token_result['body'], true );
 
 		if ( isset( $token_response[ 'error' ] ) ) {
 			$error = $token_response[ 'error' ];
@@ -254,7 +254,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	function check_state( $state ) {
 		$states = get_option( 'openid-connect-generic-valid-states', array() );
-		$valid  = FALSE;
+		$valid  = false;
 
 		// remove any expired states
 		foreach ( $states as $code => $timestamp ) {
@@ -267,7 +267,7 @@ class OpenID_Connect_Generic_Client {
 		if ( isset( $states[ $state ] ) ) {
 			// state is valid, remove it
 			unset( $states[ $state ] );
-			$valid = TRUE;
+			$valid = true;
 		}
 
 		// save our altered states
@@ -324,7 +324,7 @@ class OpenID_Connect_Generic_Client {
 					$tmp[1]
 				)
 			)
-			, TRUE
+			, true
 		);
 		
 		return $id_token_claim;
@@ -366,7 +366,7 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'bad-claim', __( 'Bad user claim' ), $user_claim_result );
 		}
 
-		$user_claim = json_decode( $user_claim_result['body'], TRUE );
+		$user_claim = json_decode( $user_claim_result['body'], true );
 
 		return $user_claim;
 	}
@@ -401,7 +401,7 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// allow for other plugins to alter the login success
-		$login_user = apply_filters( 'openid-connect-generic-user-login-test', TRUE, $user_claim );
+		$login_user = apply_filters( 'openid-connect-generic-user-login-test', true, $user_claim );
 		
 		if ( ! $login_user ) {
 			return new WP_Error( 'unauthorized', __( 'Unauthorized access' ), $login_user );
