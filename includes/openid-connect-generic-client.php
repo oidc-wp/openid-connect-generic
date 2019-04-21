@@ -44,8 +44,13 @@ class OpenID_Connect_Generic_Client {
 	 * @return string
 	 */
 	function make_authentication_url() {
-		$url = sprintf( '%1$s?response_type=code&scope=%2$s&client_id=%3$s&state=%4$s&redirect_uri=%5$s',
+		$separator = '?';
+		if ( stripos( $this->endpoint_login, '?' !== FALSE ) ) {
+			$separator = '&';
+		}
+		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
 			$this->endpoint_login,
+			$separator,
 			urlencode( $this->scope ),
 			urlencode( $this->client_id ),
 			$this->new_state(),
