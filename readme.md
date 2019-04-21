@@ -118,7 +118,7 @@ Modify the login button text. Default value is `__( 'Login with OpenID Connect' 
 Provides 1 argument: the current login button text.
 
 ```
-add_filter('openid-connect-generic-login-button-text, function( $text ) {
+add_filter('openid-connect-generic-login-button-text', function( $text ) {
     $text = __('Login to my super cool IDP server');
     
     return $text;
