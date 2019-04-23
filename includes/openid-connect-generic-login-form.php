@@ -44,6 +44,7 @@ class OpenID_Connect_Generic_Login_Form {
 			&& ! isset( $_POST['wp-submit'] ) )
 		{
 			if (  ! isset( $_GET['login-error'] ) ) {
+			    $this->handle_redirect_cookie();
 				wp_redirect( $this->client_wrapper->get_authentication_url() );
 				exit;
 			}
