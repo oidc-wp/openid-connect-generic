@@ -80,6 +80,8 @@ class OpenID_Connect_Generic_Login_Form {
 				}
 			}
 
+			$redirect_url = apply_filters( 'openid-connect-generic-cookie-redirect-url', $redirect_url );
+
 			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 		}
 	}

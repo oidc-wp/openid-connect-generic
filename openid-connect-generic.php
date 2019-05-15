@@ -14,14 +14,15 @@ Notes
   Spec Doc - http://openid.net/specs/openid-connect-basic-1_0-32.html
 
   Filters
-  - openid-connect-generic-alter-request      - 2 args: request array, specific request op
-  - openid-connect-generic-settings-fields    - modify the fields provided on the settings page
-  - openid-connect-generic-login-button-text  - modify the login button text
-  - openid-connect-generic-user-login-test    - (bool) should the user be logged in based on their claim
-  - openid-connect-generic-user-creation-test - (bool) should the user be created based on their claim
-  - openid-connect-generic-auth-url           - modify the authentication url
-  - openid-connect-generic-alter-user-claim   - modify the user_claim before a new user is created
-  - openid-connect-generic-alter-user-data    - modify user data before a new user is created
+  - openid-connect-generic-alter-request       - 3 args: request array, plugin settings, specific request op
+  - openid-connect-generic-settings-fields     - modify the fields provided on the settings page
+  - openid-connect-generic-login-button-text   - modify the login button text
+  - openid-connect-generic-cookie-redirect-url - modify the redirect url stored as a cookie
+  - openid-connect-generic-user-login-test     - (bool) should the user be logged in based on their claim
+  - openid-connect-generic-user-creation-test  - (bool) should the user be created based on their claim
+  - openid-connect-generic-auth-url            - modify the authentication url
+  - openid-connect-generic-alter-user-claim    - modify the user_claim before a new user is created
+  - openid-connect-generic-alter-user-data     - modify user data before a new user is created
 
   Actions
   - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
