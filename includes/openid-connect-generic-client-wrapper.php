@@ -378,7 +378,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// login the found / created user
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
-		
+
+		do_action( 'openid-connect-generic-user-logged-in', $user );
+
 		// log our success
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
