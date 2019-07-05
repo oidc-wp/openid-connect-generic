@@ -40,7 +40,7 @@ class OpenID_Connect_Generic_Login_Form {
 	function handle_redirect_login_type_auto()
 	{
 		if ( $GLOBALS['pagenow'] == 'wp-login.php'
-            && ( $this->settings->login_type == 'auto' || ! empty( $_GET['force_redirect'] ) )
+			&& ( $this->settings->login_type == 'auto' || ! empty( $_GET['force_redirect'] ) )
 			&& ( ! isset( $_GET[ 'action' ] ) || $_GET[ 'action' ] !== 'logout' )
 			&& ! isset( $_POST['wp-submit'] ) )
 		{

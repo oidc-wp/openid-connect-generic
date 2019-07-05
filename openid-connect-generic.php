@@ -29,6 +29,7 @@ Notes
   - openid-connect-generic-user-update        - 1 arg: user ID, fires when user is updated by this plugin
   - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
   - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
+  - openid-connect-generic-user-logged-in     - 1 arg: $user, fires when user is logged in.
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
