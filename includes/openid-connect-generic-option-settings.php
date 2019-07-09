@@ -1,6 +1,32 @@
 <?php
 /**
  * Class OpenId_Connect_Generic_Option_Settings
+ *
+ * @property $login_type
+ * @property $client_id
+ * @property $client_secret
+ * @property $scope
+ * @property $endpoint_login
+ * @property $endpoint_userinfo
+ * @property $endpoint_token
+ * @property $endpoint_end_session
+ * @property $identity_key
+ * @property $no_sslverify
+ * @property $http_request_timeout
+ * @property $authenticate_filter
+ * @property $enforce_privacy
+ * @property $alternate_redirect_uri
+ * @property $nickname_key
+ * @property $email_format
+ * @property $displayname_format
+ * @property $identify_with_username
+ * @property $state_time_limit
+ * @property $link_existing_users
+ * @property $redirect_user_back
+ * @property $redirect_on_logout
+ * @property $enable_logging
+ * @property $log_limit
+ *
  */
 class OpenID_Connect_Generic_Option_Settings {
 	

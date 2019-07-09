@@ -116,6 +116,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'authenticate_filter'   => array(
+				'title'       => __( 'Register authenticate filter' ),
+				'description' => __( 'Enables login by entering username and password on wordpress site without forwarding end user to OpenId server if allowed (grant_type: password).' ),
+				'type'        => 'checkbox',
+				'section'     => 'authorization_settings',
+			),
 			'enforce_privacy'   => array(
 				'title'       => __( 'Enforce Privacy' ),
 				'description' => __( 'Require users be logged in to see the site.' ),

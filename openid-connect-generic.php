@@ -47,8 +47,10 @@ class OpenID_Connect_Generic {
 	// plugin version
 	const VERSION = '3.5.0';
 
+	public $client_wrapper;
+
 	// plugin settings
-	private $settings;
+	public $settings;
 
 	// plugin logs
 	private $logger;
@@ -68,7 +70,7 @@ class OpenID_Connect_Generic {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings
 	 * @param OpenID_Connect_Generic_Option_Logger $logger
 	 */
-	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
+	private function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
 		$this->settings = $settings;
 		$this->logger = $logger;
 	}
@@ -201,55 +203,59 @@ class OpenID_Connect_Generic {
 	/**
 	 * Instantiate the plugin and hook into WP
 	 */
-	static public function bootstrap(){
-		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
+	static public function plugin(){
+		static $plugin;
 
-		$settings = new OpenID_Connect_Generic_Option_Settings(
-			'openid_connect_generic_settings',
-			// default settings values
-			array(
-				// oauth client settings
-				'login_type'        => 'button',
-				'client_id'         => '',
-				'client_secret'     => '',
-				'scope'             => '',
-				'endpoint_login'    => '',
-				'endpoint_userinfo' => '',
-				'endpoint_token'    => '',
-				'endpoint_end_session' => '',
+		if ( is_null( $plugin ) ) {
+			spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
 
-				// non-standard settings
-				'no_sslverify'    => 0,
-				'http_request_timeout' => 5,
-				'identity_key'    => 'preferred_username',
-				'nickname_key'    => 'preferred_username',
-				'email_format'       => '{email}',
-				'displayname_format' => '',
-				'identify_with_username' => false,
+			$settings = new OpenID_Connect_Generic_Option_Settings( 'openid_connect_generic_settings', // default settings values
+				array(
+					// oauth client settings
+					'login_type'             => 'button',
+					'client_id'              => '',
+					'client_secret'          => '',
+					'scope'                  => '',
+					'endpoint_login'         => '',
+					'endpoint_userinfo'      => '',
+					'endpoint_token'         => '',
+					'endpoint_end_session'   => '',
 
-				// plugin settings
-				'enforce_privacy' => 0,
-				'alternate_redirect_uri' => 0,
-				'link_existing_users' => 0,
-				'redirect_user_back' => 0,
-				'redirect_on_logout' => 1,
-				'enable_logging'  => 0,
-				'log_limit'       => 1000,
-			)
-		);
+					// non-standard settings
+					'no_sslverify'           => 0,
+					'http_request_timeout'   => 5,
+					'identity_key'           => 'preferred_username',
+					'nickname_key'           => 'preferred_username',
+					'email_format'           => '{email}',
+					'displayname_format'     => '',
+					'identify_with_username' => false,
 
-		$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
+					// plugin settings
+					'authenticate_filter'    => 0,
+					'enforce_privacy'        => 0,
+					'alternate_redirect_uri' => 0,
+					'link_existing_users'    => 0,
+					'redirect_user_back'     => 0,
+					'redirect_on_logout'     => 1,
+					'enable_logging'         => 0,
+					'log_limit'              => 1000,
+				) );
 
-		$plugin = new self( $settings, $logger );
+			$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
 
-		add_action( 'init', array( $plugin, 'init' ) );
+			$plugin = new self( $settings, $logger );
 
-		// privacy hooks
-		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
-		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
-		add_filter( 'the_excerpt_rss',  array( $plugin, 'enforce_privacy_feeds' ), 999 );
-		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+			add_action( 'init', array( $plugin, 'init' ) );
+
+			// privacy hooks
+			add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
+			add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+			add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+			add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+		}
+
+		return $plugin;
 	}
 }
 
-OpenID_Connect_Generic::bootstrap();
+OpenID_Connect_Generic::plugin();

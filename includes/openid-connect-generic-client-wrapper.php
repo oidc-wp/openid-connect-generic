@@ -72,7 +72,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( is_user_logged_in() ) {
 			add_action( 'wp_loaded', array($client_wrapper, 'ensure_tokens_still_fresh'));
 		}
-		
+
+		if ( $settings->authenticate_filter ) {
+			add_filter('authenticate', array( $client_wrapper, 'authenticate_filter' ), 15, 3);
+		}
+
 		return $client_wrapper;
 	}
 
@@ -273,24 +277,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function authentication_request_callback() {
 		$client = $this->client;
-		
+
 		// start the authentication flow
 		$authentication_request = $client->validate_authentication_request( $_GET );
-		
+
 		if ( is_wp_error( $authentication_request ) ){
 			$this->error_redirect( $authentication_request );
 		}
-		
+
 		// retrieve the authentication code from the authentication request
 		$code = $client->get_authentication_code( $authentication_request );
-		
+
 		if ( is_wp_error( $code ) ){
 			$this->error_redirect( $code );
 		}
 
 		// attempting to exchange an authorization code for an authentication token
 		$token_result = $client->request_authentication_token( $code );
-		
+
 		if ( is_wp_error( $token_result ) ) {
 			$this->error_redirect( $token_result );
 		}
@@ -298,91 +302,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// get the decoded response from the authentication request result
 		$token_response = $client->get_token_response( $token_result );
 
-		if ( is_wp_error( $token_response ) ){
-			$this->error_redirect( $token_response );
-		}
+		$user = $this->validate($token_response);
 
-		// ensure the that response contains required information
-		$valid = $client->validate_token_response( $token_response );
-		
-		if ( is_wp_error( $valid ) ) {
-			$this->error_redirect( $valid );
+		if ( is_wp_error( $user ) ) {
+			$this->error_redirect( $user );
 		}
-
-		/**
-		 * End authentication
-		 * -
-		 * Start Authorization
-		 */
-		// The id_token is used to identify the authenticated user, e.g. for SSO.
-		// The access_token must be used to prove access rights to protected resources
-		// e.g. for the userinfo endpoint
-		$id_token_claim = $client->get_id_token_claim( $token_response );
-		
-		if ( is_wp_error( $id_token_claim ) ){
-			$this->error_redirect( $id_token_claim );
-		}
-		
-		// validate our id_token has required values
-		$valid = $client->validate_id_token_claim( $id_token_claim );
-		
-		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
-		}
-		
-		// if userinfo endpoint is set, exchange the token_response for a user_claim
-		if ( !empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] )) {
-			$user_claim = $client->get_user_claim( $token_response );
-		} else {
-			$user_claim = $id_token_claim;
-		}
-		
-		if ( is_wp_error( $user_claim ) ){
-			$this->error_redirect( $user_claim );
-		}
-		
-		// validate our user_claim has required values
-		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
-		
-		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
-		}
-
-		/**
-		 * End authorization
-		 * -
-		 * Request is authenticated and authorized - start user handling
-		 */
-		$subject_identity = $client->get_subject_identity( $id_token_claim );
-		$user = $this->get_user_by_identity( $subject_identity );
-
-		// if we didn't find an existing user, we'll need to create it
-		if ( ! $user ) {
-			$user = $this->create_new_user( $subject_identity, $user_claim );
-			if ( is_wp_error( $user ) ) {
-				$this->error_redirect( $user );
-				return;
-			}
-		}
-		else {
-			// allow plugins / themes to take action using current claims on existing user (e.g. update role)
-			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
-		}
-
-		// validate the found / created user
-		$valid = $this->validate_user( $user );
-		
-		if ( is_wp_error( $valid ) ){
-			$this->error_redirect( $valid );
-		}
-
-		// login the found / created user
-		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
-
-		do_action( 'openid-connect-generic-user-logged-in', $user );
-
-		// log our success
-		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
 		// redirect back to the origin page if enabled
 		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
@@ -396,8 +320,128 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		else {
 			wp_redirect( home_url() );
 		}
-		
+
 		exit;
+	}
+
+	/**
+	 * @param $token_response
+	 *
+	 * @return WP_Error|WP_User
+	 */
+	function validate($token_response) {
+		$client = $this->client;
+
+		if ( is_wp_error( $token_response ) ) {
+			return $token_response;
+		}
+
+		// ensure the that response contains required information
+		$valid = $client->validate_token_response( $token_response );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		/**
+		 * End authentication
+		 * -
+		 * Start Authorization
+		 */
+		// The id_token is used to identify the authenticated user, e.g. for SSO.
+		// The access_token must be used to prove access rights to protected resources
+		// e.g. for the userinfo endpoint
+		$id_token_claim = $client->get_id_token_claim( $token_response );
+
+		if ( is_wp_error( $id_token_claim ) ) {
+			return $id_token_claim;
+		}
+
+		// validate our id_token has required values
+		$valid = $client->validate_id_token_claim( $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid ;
+		}
+
+		// if userinfo endpoint is set, exchange the token_response for a user_claim
+		if ( ! empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] ) ) {
+			$user_claim = $client->get_user_claim( $token_response );
+		} else {
+			$user_claim = $id_token_claim;
+		}
+
+		if ( is_wp_error( $user_claim ) ) {
+			return $user_claim;
+		}
+
+		// validate our user_claim has required values
+		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		/**
+		 * End authorization
+		 * -
+		 * Request is authenticated and authorized - start user handling
+		 */
+		$subject_identity = $client->get_subject_identity( $id_token_claim );
+
+		$user = $this->get_user_by_identity( $subject_identity );
+
+		// if we didn't find an existing user, we'll need to create it
+		if ( ! $user ) {
+			$user = $this->create_new_user( $subject_identity, $user_claim );
+			if ( is_wp_error( $user ) ) {
+				return $user;
+			}
+		}
+		else {
+			// allow plugins / themes to take action using current claims on existing user (e.g. update role)
+			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
+		}
+
+		// validate the found / created user
+		$valid = $this->validate_user( $user );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		// login the found / created user
+		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+
+		do_action( 'openid-connect-generic-user-logged-in', $user );
+
+		// log our success
+		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
+
+		return $user;
+	}
+
+	function authenticate_filter($user, $username, $password) {
+		if ( $user instanceof WP_User ) {
+			return $user;
+		}
+
+		if ( is_null($user) || is_wp_error($user) && $user->get_error_code() === 'invalid_username' ) {
+			if (! empty($username) && ! empty($password)) {
+				$token_result = $this->client->request_authentication_token_by_username_and_password($username, $password);
+
+				if ( is_wp_error( $token_result ) ) {
+					return $token_result;
+				}
+
+				// get the decoded response from the authentication request result
+				$token_response = $this->client->get_token_response( $token_result );
+
+				$user = $this->validate($token_response);
+			}
+		}
+
+		return $user;
 	}
 
 	/**
