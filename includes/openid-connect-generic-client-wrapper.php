@@ -708,7 +708,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$uid = email_exists( $email );
 			}
 			if ( $uid ) {
-				return $this->update_existing_user( $uid, $subject_identity );
+				$user = $this->update_existing_user( $uid, $subject_identity );
+				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
+				return $user;
 			}
 		}
 
@@ -766,7 +768,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function update_existing_user( $uid, $subject_identity ) {
 		// add the OpenID Connect meta data 
-		add_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
+		update_user_meta( $uid, 'openid-connect-generic-subject-identity', (string) $subject_identity );
 		
 		// allow plugins / themes to take action on user update
 		do_action( 'openid-connect-generic-user-update', $uid );
