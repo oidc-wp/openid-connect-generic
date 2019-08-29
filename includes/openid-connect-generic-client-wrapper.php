@@ -574,7 +574,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$string .= substr( $format, $i, $match[ 1 ] - $i );
 				if ( ! isset( $user_claim[ $key ] ) ) {
 					if ( $error_on_missing_key ) {
-						return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
+                                                return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), 
+								    array('message'=>'Unable to find key: '.$key.' in user_claim',
+									  'hint'=>'Verify OpenID Scope includes a scope with the attributes you need',
+									  'user_claim'=>$user_claim,
+									  'format'=>$format) );
 					}
 				} else {
 					$string .= $user_claim[ $key ];
