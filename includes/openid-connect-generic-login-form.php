@@ -12,6 +12,9 @@ class OpenID_Connect_Generic_Login_Form {
 	function __construct( $settings, $client_wrapper ){
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
+
+		// maybe set redirect cookie on formular page
+		add_action('login_form_login', [$this, 'handle_redirect_cookie']);
 	}
 
 	/**
@@ -131,9 +134,6 @@ class OpenID_Connect_Generic_Login_Form {
 	function make_login_button() {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
 		$href = $this->client_wrapper->get_authentication_url();
-
-		// maybe set redirect cookie on formular page
-		$this->handle_redirect_cookie();
 
 		ob_start();
 		?>
