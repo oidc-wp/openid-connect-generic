@@ -358,7 +358,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		if ( ! $user ) {
 
+
 			if($this->settings->create_if_does_not_exist)
+
 
 
 			{

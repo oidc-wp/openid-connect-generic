@@ -168,9 +168,11 @@ class OpenID_Connect_Generic_Settings_Page {
 				'section'     => 'user_settings',
 			),
 
+
 			'create_if_does_not_exist'   => array(
 				'title'       => __( 'Create user if does not exist' ),
 				'description' => __( 'If the user\'s identity is not linked to an existing Wordpress user, the user is created. If this checkbox is not tick the authentication failed' ),
+
 
 
 				'type'        => 'checkbox',
