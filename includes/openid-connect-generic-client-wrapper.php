@@ -357,14 +357,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$user = $this->get_user_by_identity( $subject_identity );
 
 		if ( ! $user ) {
-<<<<<<< HEAD
+
 
 			if($this->settings->create_if_does_not_exist)
-
-
-=======
-			if(!$this->settings->fail_not_map_existing_wordpress_user)
->>>>>>> 5863d78... Add settings which failed the authentication if the user's identity cannot be mapped to an existing wordpress user
 			{
 				$user = $this->create_new_user( $subject_identity, $user_claim );
 				if ( is_wp_error( $user ) ) {

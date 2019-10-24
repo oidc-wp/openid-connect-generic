@@ -168,17 +168,25 @@ class OpenID_Connect_Generic_Settings_Page {
 				'section'     => 'user_settings',
 			),
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> c41c62ee59777539c8f91fa2e8deae9dafefe344
 
 			'create_if_does_not_exist'   => array(
 				'title'       => __( 'Create user if does not exist' ),
 				'description' => __( 'If the user\'s identity is not linked to an existing Wordpress user, the user is created. If this checkbox is not tick the authentication failed' ),
 
 
+<<<<<<< HEAD
 =======
 			'fail_not_map_existing_wordpress_user'   => array(
 				'title'       => __( 'User shall exist' ),
 				'description' => __( 'If the user\'s identity is not linked to an existing Wordpress user. The authentication failed.' ),
 >>>>>>> 5863d78... Add settings which failed the authentication if the user's identity cannot be mapped to an existing wordpress user
+=======
+
+>>>>>>> c41c62ee59777539c8f91fa2e8deae9dafefe344
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
