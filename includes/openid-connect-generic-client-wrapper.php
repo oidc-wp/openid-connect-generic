@@ -392,7 +392,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
 		// redirect back to the origin page if enabled
-		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
+		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
 
 		if( $this->settings->redirect_user_back && !empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
@@ -581,7 +581,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$string .= substr( $format, $i, $match[ 1 ] - $i );
 				if ( ! isset( $user_claim[ $key ] ) ) {
 					if ( $error_on_missing_key ) {
-						return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
+                                                return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), 
+								    array('message'=>'Unable to find key: '.$key.' in user_claim',
+									  'hint'=>'Verify OpenID Scope includes a scope with the attributes you need',
+									  'user_claim'=>$user_claim,
+									  'format'=>$format) );
 					}
 				} else {
 					$string .= $user_claim[ $key ];
