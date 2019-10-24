@@ -77,7 +77,7 @@ class OpenID_Connect_Generic_Login_Form {
 				$redirect_url = admin_url();
 
 				if ( isset( $_REQUEST['redirect_to'] ) ) {
-					$redirect_url = esc_url( $_REQUEST[ 'redirect_to' ] );
+					$redirect_url = esc_url_raw( $_REQUEST[ 'redirect_to' ] );
 				}
 			}
 
