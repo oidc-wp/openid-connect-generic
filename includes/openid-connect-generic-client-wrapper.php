@@ -356,12 +356,19 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
 		$user = $this->get_user_by_identity( $subject_identity );
 
-		// if we didn't find an existing user, we'll need to create it
 		if ( ! $user ) {
-			$user = $this->create_new_user( $subject_identity, $user_claim );
-			if ( is_wp_error( $user ) ) {
-				$this->error_redirect( $user );
+			if(!$this->settings->fail_not_map_existing_wordpress_user)
+			{
+				$user = $this->create_new_user( $subject_identity, $user_claim );
+				if ( is_wp_error( $user ) ) {
+					$this->error_redirect( $user );
+					return;
+				}
+			}else{
+				$this->error_redirect(new WP_Error( 'identity-not-map-existing-user', __( "User's identity is not linked to an existing Wordpress user"), $user_claim ));
+
 				return;
+
 			}
 		}
 		else {
@@ -574,7 +581,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$string .= substr( $format, $i, $match[ 1 ] - $i );
 				if ( ! isset( $user_claim[ $key ] ) ) {
 					if ( $error_on_missing_key ) {
-						return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), $user_claim );
+                                                return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ), 
+								    array('message'=>'Unable to find key: '.$key.' in user_claim',
+									  'hint'=>'Verify OpenID Scope includes a scope with the attributes you need',
+									  'user_claim'=>$user_claim,
+									  'format'=>$format) );
 					}
 				} else {
 					$string .= $user_claim[ $key ];
