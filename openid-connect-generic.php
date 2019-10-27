@@ -231,6 +231,7 @@ class OpenID_Connect_Generic {
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
 				'link_existing_users' => 0,
+				'create_if_does_not_exist'=>1,
 				'redirect_user_back' => 0,
 				'redirect_on_logout' => 1,
 				'enable_logging'  => 0,

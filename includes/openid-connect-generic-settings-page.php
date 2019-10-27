@@ -167,6 +167,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
+			'create_if_does_not_exist'   => array(
+				'title'       => __( 'Create user if does not exist' ),
+				'description' => __( 'If the user identity is not link to an existing Wordpress user, it is created. If this setting is not enabled and if the user authenticates with an account which is not link to an existing Wordpress user then the authentication failed' ),
+				'type'        => 'checkbox',
+				'section'     => 'user_settings',
+				
+			),
 			'redirect_user_back'   => array(
 				'title'       => __( 'Redirect Back to Origin Page' ),
 				'description' => __( 'After a successful OpenID Connect authentication, this will redirect the user back to the page on which they clicked the OpenID Connect login button. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.' ),
@@ -274,6 +281,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			// make sure each key exists in the settings array
 			if ( ! isset( $this->settings->{ $key } ) ) {
 				$this->settings->{ $key } = null;
+				
 			}
 
 			// determine appropriate output callback
@@ -401,7 +409,8 @@ class OpenID_Connect_Generic_Settings_Page {
 		<input type="checkbox"
 		       id="<?php print esc_attr( $field['key'] ); ?>"
 		       name="<?php print esc_attr( $field['name'] ); ?>"
-		       value="1"
+			   value="1",
+			   
 			<?php checked( $this->settings->{ $field['key'] }, 1 ); ?>>
 		<?php
 		$this->do_field_description( $field );
