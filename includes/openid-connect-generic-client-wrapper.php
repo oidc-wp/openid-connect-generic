@@ -298,6 +298,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// get the decoded response from the authentication request result
 		$token_response = $client->get_token_response( $token_result );
 
+		// allow for other plugins to alter data before validation
+		$token_response = apply_filters( 'openid-connect-modify-token-response-before-validation', $token_response );
+
 		if ( is_wp_error( $token_response ) ){
 			$this->error_redirect( $token_response );
 		}
@@ -318,7 +321,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// The access_token must be used to prove access rights to protected resources
 		// e.g. for the userinfo endpoint
 		$id_token_claim = $client->get_id_token_claim( $token_response );
-		
+
+		// allow for other plugins to alter data before validation
+		$id_token_claim = apply_filters( 'openid-connect-modify-id-token-claim-before-validation', $id_token_claim );
+
 		if ( is_wp_error( $id_token_claim ) ){
 			$this->error_redirect( $id_token_claim );
 		}
