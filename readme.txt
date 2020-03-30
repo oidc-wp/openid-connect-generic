@@ -50,6 +50,10 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Changelog ==
 
+= 3.5.1 =
+
+* Fix: @daggerhart - New approach to state management using transients.
+
 = 3.5.0 =
 
 * Readme fix: @thijskh - Fix syntax error in example openid-connect-generic-login-button-text
