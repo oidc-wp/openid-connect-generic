@@ -232,53 +232,31 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Generate a new state, save it to the states option with a timestamp,
-	 *  and return it.
+	 * Generate a new state, save it as a transient,
+	 *  and return the state hash.
 	 *
 	 * @return string
 	 */
 	function new_state() {
-		$states = get_option( 'openid-connect-generic-valid-states', array() );
-
 		// new state w/ timestamp
-		$new_state            = md5( mt_rand() . microtime( true ) );
-		$states[ $new_state ] = time();
+		$state = md5( mt_rand() . microtime( true ) );
+		$expire = time() + $this->state_time_limit;
+		set_transient( 'openid-connect-generic-state--' . $state, $state, $expire );
 
-		// save state
-		update_option( 'openid-connect-generic-valid-states', $states );
-
-		return $new_state;
+		return $state;
 	}
 
 	/**
-	 * Check the validity of a given state
+	 * Check the existence of a given state transient.
 	 *
 	 * @param $state
 	 * 
 	 * @return bool
 	 */
 	function check_state( $state ) {
-		$states = get_option( 'openid-connect-generic-valid-states', array() );
-		$valid  = false;
+		$valid = get_transient( 'openid-connect-generic-state--' . $state );
 
-		// remove any expired states
-		foreach ( $states as $code => $timestamp ) {
-			if ( ( $timestamp + $this->state_time_limit ) < time() ) {
-				unset( $states[ $code ] );
-			}
-		}
-
-		// see if the current state is still within the list of valid states
-		if ( isset( $states[ $state ] ) ) {
-			// state is valid, remove it
-			unset( $states[ $state ] );
-			$valid = true;
-		}
-
-		// save our altered states
-		update_option( 'openid-connect-generic-valid-states', $states );
-
-		return $valid;
+		return !!$valid;
 	}
 
 	/**
