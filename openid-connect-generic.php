@@ -3,7 +3,7 @@
 Plugin Name: OpenID Connect Generic
 Plugin URI: https://github.com/daggerhart/openid-connect-generic
 Description:  Connect to an OpenID Connect generic client using Authorization Code Flow
-Version: 3.5.0
+Version: 3.5.1
 Author: daggerhart
 Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
@@ -30,6 +30,7 @@ Notes
   - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
   - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
   - openid-connect-generic-user-logged-in     - 1 arg: $user, fires when user is logged in.
+  - openid-connect-generic-cron-daily         - daily cron action
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
@@ -45,7 +46,7 @@ Notes
 
 class OpenID_Connect_Generic {
 	// plugin version
-	const VERSION = '3.5.0';
+	const VERSION = '3.5.1';
 
 	// plugin settings
 	private $settings;
@@ -110,6 +111,9 @@ class OpenID_Connect_Generic {
 		// add a shortcode to get the auth url
 		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
 
+		// add actions to our scheduled cron jobs
+		add_action( 'openid-connect-generic-cron-daily', [ $this, 'cron_states_garbage_collection'] );
+
 		$this->upgrade();
 
 		if ( is_admin() ){
@@ -153,6 +157,7 @@ class OpenID_Connect_Generic {
 
 		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
 			// upgrade required
+			self::setup_cron_jobs();
 
 			// @todo move this to another file for upgrade scripts
 			if ( isset( $settings->ep_login ) ) {
@@ -167,6 +172,44 @@ class OpenID_Connect_Generic {
 			// update the stored version number
 			update_option( 'openid-connect-generic-plugin-version', self::VERSION );
 		}
+	}
+
+	/**
+	 * Expire state transients by attempting to access them and allowing the
+	 * transient's own mechanisms to delete any that have expired.
+	 */
+	function cron_states_garbage_collection() {
+		global $wpdb;
+		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE 'openid-connect-generic-state--%'" );
+
+		if ( !empty( $states ) ) {
+			foreach ( $states as $state ) {
+				get_transient( $state );
+			}
+		}
+	}
+
+	/**
+	 * Ensure cron jobs are added to the schedule.
+	 */
+	static public function setup_cron_jobs() {
+		if ( ! wp_next_scheduled( 'openid-connect-generic-cron-daily' ) ) {
+			wp_schedule_event( time(), 'daily', 'openid-connect-generic-cron-daily' );
+		}
+	}
+
+	/**
+	 * Activation hook.
+	 */
+	static public function activation() {
+		self::setup_cron_jobs();
+	}
+
+	/**
+	 * Deactivation hook.
+	 */
+	static public function deactivation() {
+		wp_clear_scheduled_hook( 'openid-connect-generic-cron-daily' );
 	}
 
 	/**
@@ -253,3 +296,6 @@ class OpenID_Connect_Generic {
 }
 
 OpenID_Connect_Generic::bootstrap();
+
+register_activation_hook( __FILE__, [ 'OpenID_Connect_Generic', 'activation' ] );
+register_deactivation_hook( __FILE__, [ 'OpenID_Connect_Generic', 'deactivation' ] );
