@@ -16,6 +16,9 @@ class OpenID_Connect_Generic_Client {
 	// states are only valid for 3 minutes
 	private $state_time_limit = 180;
 
+	// logger object
+	private $logger;
+
 	/**
 	 * Client constructor
 	 *
@@ -29,7 +32,7 @@ class OpenID_Connect_Generic_Client {
 	 * @param $redirect_uri
 	 * @param $state_time_limit time states are valid in seconds
 	 */
-	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $endpoint_passreset, $redirect_uri, $state_time_limit){
+	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $endpoint_passreset, $redirect_uri, $state_time_limit, $logger) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -39,6 +42,7 @@ class OpenID_Connect_Generic_Client {
 		$this->endpoint_passreset = $endpoint_passreset;
 		$this->redirect_uri = $redirect_uri;
 		$this->state_time_limit = $state_time_limit;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -60,6 +64,7 @@ class OpenID_Connect_Generic_Client {
 			urlencode( $this->redirect_uri )
 		);
 
+		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
 		return apply_filters( 'openid-connect-generic-auth-url', $url );
 	}
 
@@ -151,6 +156,7 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token' );
 
 		// call the server and ask for a token
+		$this->logger->log( $this->endpoint_token, 'request_authentication_token' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ){
@@ -181,6 +187,7 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
 
 		// call the server and ask for new tokens
+		$this->logger->log( $this->endpoint_token, 'request_new_tokens' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ) {
@@ -247,6 +254,7 @@ class OpenID_Connect_Generic_Client {
 		$request['headers']['Host'] = $host;
 
 		// attempt the request including the access token in the query string for backwards compatibility
+		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo' );
 		$response = wp_remote_post( $this->endpoint_userinfo, $request );
 
 		if ( is_wp_error( $response ) ){

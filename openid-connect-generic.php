@@ -99,7 +99,8 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_token,
 			$this->settings->endpoint_passreset,
 			$redirect_uri,
-			$state_time_limit
+			$state_time_limit,
+			$this->logger
 		);
 
 		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
