@@ -104,6 +104,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Get the PasswordReset url from the client
+	 * 
+	 * @return string
+	 */
+	function get_passwordreset_url(){
+		return $this->client->make_passwordreset_url();
+	}
+
+	/**
 	 * Handle retrieval and validation of refresh_token
 	 */
 	function ensure_tokens_still_fresh() {
@@ -278,6 +287,29 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$authentication_request = $client->validate_authentication_request( $_GET );
 		
 		if ( is_wp_error( $authentication_request ) ){
+            // Manage Password Reset case
+            if (strpos($authentication_request->error_data['no-code']['error_description'], 'AADB2C90118') === 0) { // The user has forgotten their password.
+                $this->logger->log( "AADB2C90118" );
+                wp_redirect( $this->get_passwordreset_url() );
+                exit;
+            } elseif (strpos($authentication_request->error_data['no-code']['error_description'], 'AADB2C90091') === 0) { // Cancel Password Reset & SignUp
+                $this->logger->log( "AADB2C90091" );
+                // redirect back to the origin page if enabled
+                $redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
+
+                if( $this->settings->redirect_user_back && !empty( $redirect_url ) ) {
+                    do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
+                    setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+                    $this->logger->log( "Redirect to redirect_user_back: {$redirect_url}" );
+                    wp_redirect( $redirect_url );
+                }
+                // otherwise, go home!
+                else {
+                    $this->logger->log( "Redirect to home: ".home_url() );
+                    wp_redirect( home_url() );
+                }
+                exit;
+            }
 			$this->error_redirect( $authentication_request );
 		}
 		

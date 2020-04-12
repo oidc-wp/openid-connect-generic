@@ -89,6 +89,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'endpoint_passreset'    => array(
+				'title'       => __( 'Password Reset Endpoint URL' ),
+				'description' => __( 'Identify provider password reset endpoint.' ),
+				'example'     => 'https://example.com/oauth2/authorize',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
 			'endpoint_end_session'    => array(
 				'title'       => __( 'End Session Endpoint URL' ),
 				'description' => __( 'Identify provider logout endpoint.' ),

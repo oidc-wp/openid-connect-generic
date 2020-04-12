@@ -97,6 +97,7 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
+			$this->settings->endpoint_passreset,
 			$redirect_uri,
 			$state_time_limit
 		);
@@ -259,6 +260,7 @@ class OpenID_Connect_Generic {
 				'endpoint_login'    => '',
 				'endpoint_userinfo' => '',
 				'endpoint_token'    => '',
+				'endpoint_passreset'    => '',
 				'endpoint_end_session' => '',
 
 				// non-standard settings

@@ -8,6 +8,7 @@ class OpenID_Connect_Generic_Client {
 	private $endpoint_login;
 	private $endpoint_userinfo;
 	private $endpoint_token;
+	private $endpoint_passreset;
 
 	// login flow "ajax" endpoint
 	private $redirect_uri;
@@ -24,16 +25,18 @@ class OpenID_Connect_Generic_Client {
 	 * @param $endpoint_login
 	 * @param $endpoint_userinfo
 	 * @param $endpoint_token
+     * @param $endpoint_passreset
 	 * @param $redirect_uri
 	 * @param $state_time_limit time states are valid in seconds
 	 */
-	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit){
+	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $endpoint_passreset, $redirect_uri, $state_time_limit){
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
 		$this->endpoint_login = $endpoint_login;
 		$this->endpoint_userinfo = $endpoint_userinfo;
 		$this->endpoint_token = $endpoint_token;
+		$this->endpoint_passreset = $endpoint_passreset;
 		$this->redirect_uri = $redirect_uri;
 		$this->state_time_limit = $state_time_limit;
 	}
@@ -50,6 +53,28 @@ class OpenID_Connect_Generic_Client {
 		}
 		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
 			$this->endpoint_login,
+			$separator,
+			urlencode( $this->scope ),
+			urlencode( $this->client_id ),
+			$this->new_state(),
+			urlencode( $this->redirect_uri )
+		);
+
+		return apply_filters( 'openid-connect-generic-auth-url', $url );
+	}
+
+	/**
+	 * Create a single use PasswordReset url
+	 *
+	 * @return string
+	 */
+	function make_passwordreset_url() {
+		$separator = '?';
+		if ( stripos( $this->endpoint_passreset, '?' ) !== FALSE ) {
+			$separator = '&';
+		}
+		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
+			$this->endpoint_passreset,
 			$separator,
 			urlencode( $this->scope ),
 			urlencode( $this->client_id ),
