@@ -633,6 +633,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return \WP_Error | \WP_User
 	 */
 	function create_new_user( $subject_identity, $user_claim ) {
+		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
+
 		// default username & email to the subject identity
 		$username = $subject_identity;
 		$email    = $subject_identity;
@@ -732,7 +734,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.' ), $create_user );
 		}
 		
-		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 		$user_data = array(
 			'user_login' => $username,
 			'user_pass' => wp_generate_password( 32, true, true ),
