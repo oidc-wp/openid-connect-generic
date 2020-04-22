@@ -23,6 +23,8 @@ Notes
   - openid-connect-generic-auth-url            - modify the authentication url
   - openid-connect-generic-alter-user-claim    - modify the user_claim before a new user is created
   - openid-connect-generic-alter-user-data     - modify user data before a new user is created
+  - openid-connect-modify-token-response-before-validation - modify the token response before validation
+  - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
 
   Actions
   - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
