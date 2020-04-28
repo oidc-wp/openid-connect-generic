@@ -1,6 +1,10 @@
 
 # OpenId Connect Generic Changelog
 
+**3.6.0**
+
+* Update the access token when it is refreshed
+
 **3.4.1**
 
 * Minor documentation update and additional error checking.
