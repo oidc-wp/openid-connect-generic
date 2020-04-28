@@ -107,7 +107,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Handle retrieval and validation of refresh_token
 	 */
 	function ensure_tokens_still_fresh() {
-		if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() ) {
 			return;
 		}
 
@@ -442,7 +442,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ){
 		// hey, we made it!
 		// let's remember the tokens for future reference
-		$this->save_user_meta($user->ID, $token_response, $id_token_claim, $user_claim);
+        $this->save_user_meta($user->ID, $token_response, $id_token_claim, $user_claim);
 
 		// Create the WP session, so we know its token
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
@@ -467,7 +467,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	function save_refresh_token( $manager, $token, $token_response ) {
 		$session = $manager->get($token);
 		$now = current_time( 'timestamp' , true );
-		$session[$this->cookie_token_refresh_key] = array(
+        $session[$this->cookie_token_refresh_key] = array(
 			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
 			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false,
 			'refresh_expires' => false,
@@ -480,7 +480,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$session[$this->cookie_token_refresh_key]['refresh_expires'] = $refresh_expires;
 			}
 		}
-		$manager->update($token, $session);
+        $manager->update($token, $session);
 		return;
 	}
 
