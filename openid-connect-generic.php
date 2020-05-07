@@ -183,11 +183,12 @@ class OpenID_Connect_Generic {
 	 */
 	function cron_states_garbage_collection() {
 		global $wpdb;
-		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE 'openid-connect-generic-state--%'" );
+		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE '_transient_openid-connect-generic-state--%'" );
 
 		if ( !empty( $states ) ) {
 			foreach ( $states as $state ) {
-				get_transient( $state );
+			    $transient = str_replace("_transient_", "", $state);
+                get_transient( $transient );
 			}
 		}
 	}
