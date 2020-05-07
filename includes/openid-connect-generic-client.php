@@ -240,8 +240,7 @@ class OpenID_Connect_Generic_Client {
 	function new_state() {
 		// new state w/ timestamp
 		$state = md5( mt_rand() . microtime( true ) );
-		$expire = time() + $this->state_time_limit;
-		set_transient( 'openid-connect-generic-state--' . $state, $state, $expire );
+		set_transient( 'openid-connect-generic-state--' . $state, $state, $this->state_time_limit );
 
 		return $state;
 	}
