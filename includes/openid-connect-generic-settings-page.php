@@ -361,6 +361,10 @@ class OpenID_Connect_Generic_Settings_Page {
 				<strong><?php _e( 'Login Button Shortcode' ); ?></strong>
 				<code>[openid_connect_generic_login_button]</code>
 			</p>
+			<p class="description">
+				<strong><?php _e( 'Authentication URL Shortcode' ); ?></strong>
+				<code>[openid_connect_generic_auth_url]</code>
+			</p>
 
 			<?php if ( $this->settings->enable_logging ) { ?>
 				<h2><?php _e( 'Logs' ); ?></h2>

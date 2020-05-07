@@ -142,7 +142,7 @@ class OpenID_Connect_Generic_Option_Logger {
 			'type'    => $type,
 			'time'    => time(),
 			'user_ID' => get_current_user_id(),
-			'uri'     => $_SERVER['REQUEST_URI'],
+			'uri'     => preg_replace('/code=([^&]+)/i', 'code=', $_SERVER['REQUEST_URI']),
 			'data'    => $data,
 		);
 
