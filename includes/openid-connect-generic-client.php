@@ -55,10 +55,10 @@ class OpenID_Connect_Generic_Client {
 		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
 			$this->endpoint_login,
 			$separator,
-			urlencode( $this->scope ),
-			urlencode( $this->client_id ),
+			rawurlencode( $this->scope ),
+			rawurlencode( $this->client_id ),
 			$this->new_state(),
-			urlencode( $this->redirect_uri )
+			rawurlencode( $this->redirect_uri )
 		);
 
 		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
