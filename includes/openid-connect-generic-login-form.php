@@ -133,7 +133,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	function make_login_button() {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
-		$href = $this->client_wrapper->get_authentication_url();
+		$href = apply_filters( 'openid-connect-generic-login-button-url', $this->client_wrapper->get_authentication_url() );
 
 		ob_start();
 		?>
