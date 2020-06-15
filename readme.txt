@@ -57,6 +57,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 * Fix: @cs1m0n - Only increment username during new user creation if the "Link existing user" setting is enabled.
 * Fix: @xRy-42 - Allow periods and spaces in usernames to match what WordPress core allows.
 * Feature: @benochen - New setting named "Create user if does not exist" determines whether new users are created during login attempts.
+* Improvement: @flat235 - Username transliteration and normalization.
 
 = 3.5.1 =
 

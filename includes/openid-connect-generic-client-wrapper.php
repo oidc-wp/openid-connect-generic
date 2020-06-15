@@ -544,15 +544,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// copy the username for incrementing
 		$username = $normalized_username;
 
-		if (!$this->settings->link_existing_users) {
-		  // original user gets "name"
-		  // second user gets "name2"
-		  // etc
-		  $count = 1;
-		  while ( username_exists( $username ) ) {
-			$count ++;
-			$username = $normalized_username . $count;
-		  }
+		if ( ! $this->settings->link_existing_users ) {
+			// original user gets "name"
+			// second user gets "name2"
+			// etc
+			$count = 1;
+			while ( username_exists( $username ) ) {
+				$count ++;
+				$username = $normalized_username . $count;
+			}
 		}
 
 		return $username;
