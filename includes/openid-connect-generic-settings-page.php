@@ -27,10 +27,10 @@ class OpenID_Connect_Generic_Settings_Page {
 		$this->settings             = $settings;
 		$this->logger               = $logger;
 		$this->settings_field_group = $this->settings->get_option_name() . '-group';
-		
+
 		/*
 		 * Simple settings fields simply have:
-		 * 
+		 *
 		 * - title
 		 * - description
 		 * - type ( checkbox | text | select )
@@ -225,7 +225,7 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		// register our settings
 		add_action( 'admin_init', array( $settings_page, 'admin_init' ) );
-		
+
 		return $settings_page;
 	}
 
@@ -262,7 +262,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			array( $this, 'user_settings_description' ),
 			$this->options_page_name
 		);
-		
+
 		add_settings_section( 'authorization_settings',
 			__( 'Authorization Settings' ),
 			array( $this, 'authorization_settings_description' ),
@@ -322,7 +322,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		foreach ( $this->settings_fields as $key => $field ) {
 			if ( isset( $input[ $key ] ) ) {
 				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
-			} 
+			}
 			else {
 				$options[ $key ] = '';
 			}
@@ -349,7 +349,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				settings_fields( $this->settings_field_group );
 				do_settings_sections( $this->options_page_name );
 				submit_button();
-				
+
 				// simple debug to view settings array
 				if ( isset( $_GET['debug'] ) ) {
 					var_dump( $this->settings->get_values() );
@@ -452,11 +452,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function client_settings_description() {
 		_e( 'Enter your OpenID Connect identity provider settings' );
 	}
-	
+
 	public function user_settings_description() {
 		_e( 'Modify the interaction between OpenID Connect and WordPress users' );
 	}
-	
+
 	public function authorization_settings_description() {
 		_e( 'Control the authorization mechanics of the site' );
 	}

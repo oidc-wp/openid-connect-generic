@@ -3,25 +3,25 @@
  * Simple class for logging messages to the options table
  */
 class OpenID_Connect_Generic_Option_Logger {
-	
+
 	// wp option name/key
 	private $option_name;
-	
+
 	// default message type
 	private $default_message_type;
-	
+
 	// the number of items to keep in the log
 	private $log_limit;
-	
-	// whether or not the 
+
+	// whether or not the
 	private $logging_enabled;
-	
+
 	// internal cache of logs
 	private $logs;
 
 	/**
 	 * Setup the logger according to the needs of the instance
-	 * 
+	 *
 	 * @param string $option_name
 	 * @param string $default_message_type
 	 * @param bool|TRUE $logging_enabled
@@ -36,7 +36,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 	/**
 	 * Subscribe logger to a set of filters
-	 * 
+	 *
 	 * @param $filter_names
 	 * @param int $priority
 	 */
@@ -44,7 +44,7 @@ class OpenID_Connect_Generic_Option_Logger {
 		if ( ! is_array( $filter_names ) ) {
 			$filter_names = array( $filter_names );
 		}
-		
+
 		foreach ( $filter_names as $filter ){
 			add_filter( $filter, array( $this, 'log_hook' ), $priority );
 		}
@@ -52,7 +52,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 	/**
 	 * Subscribe logger to a set of actions
-	 * 
+	 *
 	 * @param $action_names
 	 * @param $priority
 	 */
@@ -67,8 +67,8 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Log the data 
-	 * 
+	 * Log the data
+	 *
 	 * @param null $arg1
 	 * @return null
 	 */
@@ -76,10 +76,10 @@ class OpenID_Connect_Generic_Option_Logger {
 		$this->log( func_get_args(), current_filter() );
 		return $arg1;
 	}
-	
+
 	/**
 	 * Save an array of data to the logs
-	 * 
+	 *
 	 * @param $data mixed
 	 * @return bool
 	 */
@@ -90,13 +90,13 @@ class OpenID_Connect_Generic_Option_Logger {
 			$logs = $this->upkeep_logs( $logs );
 			return $this->save_logs( $logs );
 		}
-		
+
 		return false;
 	}
 
 	/**
 	 * Retrieve all log messages
-	 * 
+	 *
 	 * @return array
 	 */
 	public function get_logs() {
@@ -109,7 +109,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 	/**
 	 * Get the name of the option where this log is stored
-	 * 
+	 *
 	 * @return string
 	 */
 	public function get_option_name(){
@@ -128,7 +128,7 @@ class OpenID_Connect_Generic_Option_Logger {
 		// determine the type of message
 		if ( empty( $type ) ) {
 			$this->default_message_type;
-			
+
 			if ( is_array( $data ) && isset( $data['type'] ) ){
 				$type = $data['type'];
 			}
@@ -148,7 +148,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 		return $message;
 	}
-	
+
 	/**
 	 * Keep our log count under the limit
 	 *
@@ -161,14 +161,14 @@ class OpenID_Connect_Generic_Option_Logger {
 		if ( $items_to_remove > 0 ){
 			// keep only the last $log_limit messages from the end
 			$logs = array_slice( $logs, ( $items_to_remove * -1) );
-		} 
-		
+		}
+
 		return $logs;
 	}
 
 	/**
 	 * Save the log messages
-	 * 
+	 *
 	 * @param $logs
 	 * @return bool
 	 */
@@ -187,7 +187,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 	/**
 	 * Get a simple html table of all the logs
-	 * 
+	 *
 	 * @param array $logs
 	 * @return string
 	 */
@@ -196,9 +196,9 @@ class OpenID_Connect_Generic_Option_Logger {
 			$logs = $this->get_logs();
 		}
 		$logs = array_reverse( $logs );
-		
+
 		ini_set( 'xdebug.var_display_max_depth', -1 );
-		
+
 		ob_start();
 		?>
 		<style type="text/css">
@@ -232,7 +232,7 @@ class OpenID_Connect_Generic_Option_Logger {
 							<?php print $log['uri']; ?>
 						</div>
 					</td>
-					
+
 					<td class="col-data"><pre><?php var_dump( $log['data'] ); ?></pre></td>
 				</tr>
 			<?php } ?>
@@ -240,7 +240,7 @@ class OpenID_Connect_Generic_Option_Logger {
 		</table>
 		<?php
 		$output = ob_get_clean();
-		
+
 		return $output;
 	}
 }
