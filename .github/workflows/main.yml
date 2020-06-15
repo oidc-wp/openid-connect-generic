@@ -1,0 +1,28 @@
+name: Deploy to WordPress.org
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  tag:
+    name: New tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+        # - name: Validate composer.json and composer.lock
+        #   run: composer validate
+
+        # - name: Install dependencies
+        #   run: composer install --prefer-dist --no-progress --no-suggest --no-dev
+
+      # - name: Build
+      #   run: |
+      #     npm install
+      #     npm run build
+      - name: WordPress Plugin Deploy
+        uses: 10up/action-wordpress-plugin-deploy@1.4.0
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SLUG: daggerhart-openid-connect-generic
