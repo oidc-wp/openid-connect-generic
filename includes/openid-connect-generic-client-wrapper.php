@@ -532,10 +532,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// normalize the data a bit
-		$desired_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', iconv( 'UTF-8', 'ASCII//TRANSLIT',  $desired_username ) ) );
+		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT',  $desired_username );
+		if ( empty( $transliterated_username ) ) {
+			return new WP_Error( 'username-transliteration-failed', __( "Username $desired_username could not be transliterated" ), $desired_username );
+		}
+		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
+		if ( empty( $normalized_username ) ) {
+			return new WP_Error( 'username-normalization-failed', __( "Username $transliterated_username could not be normalized" ), $transliterated_username );
+		}
 
 		// copy the username for incrementing
-		$username = $desired_username;
+		$username = $normalized_username;
 
 		if (!$this->settings->link_existing_users) {
 		  // original user gets "name"
@@ -544,7 +551,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		  $count = 1;
 		  while ( username_exists( $username ) ) {
 			$count ++;
-			$username = $desired_username . $count;
+			$username = $normalized_username . $count;
 		  }
 		}
 
