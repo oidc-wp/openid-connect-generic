@@ -3,7 +3,7 @@
 Plugin Name: OpenID Connect Generic
 Plugin URI: https://github.com/daggerhart/openid-connect-generic
 Description:  Connect to an OpenID Connect generic client using Authorization Code Flow
-Version: 3.5.1
+Version: 3.6.0
 Author: daggerhart
 Author URI: http://www.daggerhart.com
 License: GPLv2 Copyright (c) 2015 daggerhart
@@ -33,6 +33,8 @@ Notes
   - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
   - openid-connect-generic-user-logged-in     - 1 arg: $user, fires when user is logged in.
   - openid-connect-generic-cron-daily         - daily cron action
+  - openid-connect-generic-state-not-found    - the given state does not exist in the database, regardless of its expiration.
+  - openid-connect-generic-state-expired      - the given state exists, but expired before this login attempt.
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
@@ -48,7 +50,7 @@ Notes
 
 class OpenID_Connect_Generic {
 	// plugin version
-	const VERSION = '3.5.1';
+	const VERSION = '3.6.0';
 
 	// plugin settings
 	private $settings;
@@ -278,7 +280,7 @@ class OpenID_Connect_Generic {
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
 				'link_existing_users' => 0,
-				'create_if_does_not_exist'=>1,
+				'create_if_does_not_exist' => 1,
 				'redirect_user_back' => 0,
 				'redirect_on_logout' => 1,
 				'enable_logging'  => 0,

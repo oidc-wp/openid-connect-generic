@@ -172,7 +172,6 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'If the user identity is not link to an existing Wordpress user, it is created. If this setting is not enabled and if the user authenticates with an account which is not link to an existing Wordpress user then the authentication failed' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
-				
 			),
 			'redirect_user_back'   => array(
 				'title'       => __( 'Redirect Back to Origin Page' ),
@@ -281,7 +280,6 @@ class OpenID_Connect_Generic_Settings_Page {
 			// make sure each key exists in the settings array
 			if ( ! isset( $this->settings->{ $key } ) ) {
 				$this->settings->{ $key } = null;
-				
 			}
 
 			// determine appropriate output callback
@@ -413,8 +411,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		<input type="checkbox"
 		       id="<?php print esc_attr( $field['key'] ); ?>"
 		       name="<?php print esc_attr( $field['name'] ); ?>"
-			   value="1",
-			   
+		       value="1"
 			<?php checked( $this->settings->{ $field['key'] }, 1 ); ?>>
 		<?php
 		$this->do_field_description( $field );

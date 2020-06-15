@@ -50,6 +50,14 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Changelog ==
 
+= 3.6.0 =
+
+* Improvement: @RobjS - Improved error messages during login state failure.
+* Improvement: @RobjS - New developer filter for login form button URL.
+* Fix: @cs1m0n - Only increment username during new user creation if the "Link existing user" setting is enabled.
+* Fix: @xRy-42 - Allow periods and spaces in usernames to match what WordPress core allows.
+* Feature: @benochen - New setting named "Create user if does not exist" determines whether new users are created during login attempts.
+
 = 3.5.1 =
 
 * Fix: @daggerhart - New approach to state management using transients.
