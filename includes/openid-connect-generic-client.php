@@ -15,6 +15,9 @@ class OpenID_Connect_Generic_Client {
 	// states are only valid for 3 minutes
 	private $state_time_limit = 180;
 
+	// logger object
+	private $logger;
+
 	/**
 	 * Client constructor
 	 *
@@ -27,7 +30,7 @@ class OpenID_Connect_Generic_Client {
 	 * @param $redirect_uri
 	 * @param $state_time_limit time states are valid in seconds
 	 */
-	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit){
+	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger){
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -36,6 +39,7 @@ class OpenID_Connect_Generic_Client {
 		$this->endpoint_token = $endpoint_token;
 		$this->redirect_uri = $redirect_uri;
 		$this->state_time_limit = $state_time_limit;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -51,12 +55,13 @@ class OpenID_Connect_Generic_Client {
 		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
 			$this->endpoint_login,
 			$separator,
-			urlencode( $this->scope ),
-			urlencode( $this->client_id ),
+			rawurlencode( $this->scope ),
+			rawurlencode( $this->client_id ),
 			$this->new_state(),
-			urlencode( $this->redirect_uri )
+			rawurlencode( $this->redirect_uri )
 		);
 
+		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
 		return apply_filters( 'openid-connect-generic-auth-url', $url );
 	}
 
@@ -78,14 +83,19 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-code', 'No authentication code present in the request.', $request );
 		}
 
-		// check the client request state 
-		if ( ! isset( $request['state'] ) || ! $this->check_state( $request['state'] ) ){
+		// check the client request state
+		if( ! isset( $request['state']) ) {
+			do_action( 'openid-connect-generic-no-state-provided' );
 			return new WP_Error( 'missing-state', __( 'Missing state.' ), $request );
+		}
+
+		if ( ! $this->check_state( $request['state'] ) ) {
+			return new WP_Error( 'invalid-state', __( 'Invalid state.' ), $request );
 		}
 
 		return $request;
 	}
-	
+
 	/**
 	 * Get the authorization code from the request
 	 *
@@ -126,6 +136,7 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token' );
 
 		// call the server and ask for a token
+		$this->logger->log( $this->endpoint_token, 'request_authentication_token' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ){
@@ -156,6 +167,7 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
 
 		// call the server and ask for new tokens
+		$this->logger->log( $this->endpoint_token, 'request_new_tokens' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ) {
@@ -222,6 +234,7 @@ class OpenID_Connect_Generic_Client {
 		$request['headers']['Host'] = $host;
 
 		// attempt the request including the access token in the query string for backwards compatibility
+		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo' );
 		$response = wp_remote_post( $this->endpoint_userinfo, $request );
 
 		if ( is_wp_error( $response ) ){
@@ -232,58 +245,47 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Generate a new state, save it to the states option with a timestamp,
-	 *  and return it.
+	 * Generate a new state, save it as a transient,
+	 *  and return the state hash.
 	 *
 	 * @return string
 	 */
 	function new_state() {
-		$states = get_option( 'openid-connect-generic-valid-states', array() );
-
 		// new state w/ timestamp
-		$new_state            = md5( mt_rand() . microtime( true ) );
-		$states[ $new_state ] = time();
+		$state = md5( mt_rand() . microtime( true ) );
+		set_transient( 'openid-connect-generic-state--' . $state, $state, $this->state_time_limit );
 
-		// save state
-		update_option( 'openid-connect-generic-valid-states', $states );
-
-		return $new_state;
+		return $state;
 	}
 
 	/**
-	 * Check the validity of a given state
+	 * Check the existence of a given state transient.
 	 *
 	 * @param $state
-	 * 
+	 *
 	 * @return bool
 	 */
 	function check_state( $state ) {
-		$states = get_option( 'openid-connect-generic-valid-states', array() );
-		$valid  = false;
 
-		// remove any expired states
-		foreach ( $states as $code => $timestamp ) {
-			if ( ( $timestamp + $this->state_time_limit ) < time() ) {
-				unset( $states[ $code ] );
-			}
+		$state_found = true;
+
+		if ( ! get_option( '_transient_openid-connect-generic-state--' . $state ) ) {
+			do_action( 'openid-connect-generic-state-not-found', $state );
+			$state_found = false;
 		}
 
-		// see if the current state is still within the list of valid states
-		if ( isset( $states[ $state ] ) ) {
-			// state is valid, remove it
-			unset( $states[ $state ] );
-			$valid = true;
+		$valid = get_transient( 'openid-connect-generic-state--' . $state );
+
+		if ( ! $valid && $state_found ) {
+			do_action( 'openid-connect-generic-state-expired', $state );
 		}
 
-		// save our altered states
-		update_option( 'openid-connect-generic-valid-states', $states );
-
-		return $valid;
+		return !!$valid;
 	}
 
 	/**
 	 * Ensure that the token meets basic requirements
-	 * 
+	 *
 	 * @param $token_response
 	 *
 	 * @return bool|\WP_Error
