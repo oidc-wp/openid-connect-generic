@@ -83,14 +83,19 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-code', 'No authentication code present in the request.', $request );
 		}
 
-		// check the client request state 
-		if ( ! isset( $request['state'] ) || ! $this->check_state( $request['state'] ) ){
+		// check the client request state
+		if( ! isset( $request['state']) ) {
+			do_action( 'openid-connect-generic-no-state-provided' );
 			return new WP_Error( 'missing-state', __( 'Missing state.' ), $request );
+		}
+
+		if ( ! $this->check_state( $request['state'] ) ) {
+			return new WP_Error( 'invalid-state', __( 'Invalid state.' ), $request );
 		}
 
 		return $request;
 	}
-	
+
 	/**
 	 * Get the authorization code from the request
 	 *
@@ -257,18 +262,30 @@ class OpenID_Connect_Generic_Client {
 	 * Check the existence of a given state transient.
 	 *
 	 * @param $state
-	 * 
+	 *
 	 * @return bool
 	 */
 	function check_state( $state ) {
+
+		$state_found = true;
+
+		if ( ! get_option( '_transient_openid-connect-generic-state--' . $state ) ) {
+			do_action( 'openid-connect-generic-state-not-found', $state );
+			$state_found = false;
+		}
+
 		$valid = get_transient( 'openid-connect-generic-state--' . $state );
+
+		if ( ! $valid && $state_found ) {
+			do_action( 'openid-connect-generic-state-expired', $state );
+		}
 
 		return !!$valid;
 	}
 
 	/**
 	 * Ensure that the token meets basic requirements
-	 * 
+	 *
 	 * @param $token_response
 	 *
 	 * @return bool|\WP_Error
