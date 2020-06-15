@@ -529,7 +529,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// normalize the data a bit
-		$desired_username = strtolower( preg_replace( '/[^a-zA-Z\_0-9]/', '', iconv( 'UTF-8', 'ASCII//TRANSLIT',  $desired_username ) ) );
+		$desired_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', iconv( 'UTF-8', 'ASCII//TRANSLIT',  $desired_username ) ) );
 
 		// copy the username for incrementing
 		$username = $desired_username;
