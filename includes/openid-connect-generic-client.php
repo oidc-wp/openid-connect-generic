@@ -45,20 +45,28 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Create a single use authentication url
 	 *
+	 * @param array $atts An optional array of override/feature attributes.
+	 *
 	 * @return string
 	 */
-	function make_authentication_url() {
+	function make_authentication_url( $atts = array() ) {
+
+		$endpoint_login = ( ! empty( $atts['endpoint_login'] ) ) ? $atts['endpoint_login'] : $this->endpoint_login;
+		$scope = ( ! empty( $atts['scope'] ) ) ? $atts['scope'] : $this->scope;
+		$client_id = ( ! empty( $atts['client_id'] ) ) ? $atts['client_id'] : $this->client_id;
+		$redirect_uri = ( ! empty( $atts['redirect_uri'] ) ) ? $atts['redirect_uri'] : $this->redirect_uri;
+    
 		$separator = '?';
 		if ( stripos( $this->endpoint_login, '?' ) !== FALSE ) {
 			$separator = '&';
 		}
 		$url = sprintf( '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
-			$this->endpoint_login,
+			$endpoint_login,
 			$separator,
-			rawurlencode( $this->scope ),
-			rawurlencode( $this->client_id ),
+			rawurlencode( $scope ),
+			rawurlencode( $client_id ),
 			$this->new_state(),
-			rawurlencode( $this->redirect_uri )
+			rawurlencode( $redirect_uri )
 		);
 
 		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
