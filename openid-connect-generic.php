@@ -277,6 +277,7 @@ class OpenID_Connect_Generic {
 				// plugin settings
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
+				'token_refresh_enable' => 1,
 				'link_existing_users' => 0,
 				'redirect_user_back' => 0,
 				'redirect_on_logout' => 1,
