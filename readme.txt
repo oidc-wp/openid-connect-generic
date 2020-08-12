@@ -1,10 +1,11 @@
 === OpenID Connect Generic Client ===
-Contributors: daggerhart
+Contributors: daggerhart, tnolte
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
-Requires at least: 4
-Tested up to: 5.2.2
+Requires at least: 4.9
+Tested up to: 5.4.2
 Stable tag: trunk
+Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +50,12 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.7.0 =
+
+* Feature: @timnolte - Ability to enable/disable token refresh. Useful for IDPs that don't support token refresh.
+* Feature: @timnolte - Support custom redirect URL(`redirect_to`) with the authentication URL & login button shortcodes.
+  - Supports additional attribute overrides including login `button_text`, `endpoint_login`, `scope`, `redirect_uri`.
 
 = 3.6.0 =
 

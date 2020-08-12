@@ -9,6 +9,11 @@
       "name": "Jonathan Daggerhart",
       "email": "jonathan@daggerhart.com",
       "homepage": "https://github.com/daggerhart"
+    },
+    {
+      "name": "Tim Nolte",
+      "email": "tim.nolte@ndigitals.com",
+      "homepage": "https://github.com/timnolte"
     }
   ],
   "keywords": [
@@ -19,7 +24,7 @@
     "issues": "https://github.com/daggerhart/openid-connect-generic/issues"
   },
   "require": {
-    "php": ">=5.3.3",
+    "php": ">=5.6.0",
     "composer/installers": "~1.0"
   }
 }
