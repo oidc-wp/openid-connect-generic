@@ -128,12 +128,20 @@ class OpenID_Connect_Generic_Login_Form {
 
 	/**
 	 * Create a login button (link)
+	 * 
+	 * @param array $atts Array of optional attributes to override login buton 
+	 * functionality when used by shortcode.
 	 *
 	 * @return string
 	 */
-	function make_login_button() {
-		$text = apply_filters( 'openid-connect-generic-login-button-text', __( 'Login with OpenID Connect' ) );
-		$href = apply_filters( 'openid-connect-generic-login-button-url', $this->client_wrapper->get_authentication_url() );
+	function make_login_button( $atts = array() ) {
+		$button_text = __( 'Login with OpenID Connect' );
+		if ( ! empty( $atts['button_text'] ) ) {
+			$button_text = $atts['button_text'];
+		}
+    
+		$text = apply_filters( 'openid-connect-generic-login-button-text', $button_text );
+		$href = $this->client_wrapper->get_authentication_url( $atts );
 
 		ob_start();
 		?>

@@ -95,11 +95,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	/**
 	 * Get the authentication url from the client
+	 * 
+	 * @param array $atts The optional attributes array when called via a shortcode.
 	 *
 	 * @return string
 	 */
-	function get_authentication_url(){
-		return $this->client->make_authentication_url();
+	function get_authentication_url( $atts = array() ){
+
+		if ( ! empty( $atts['redirect_to'] ) ) {
+			// Set the request query parameter used to set the cookie redirect.
+			$_REQUEST['redirect_to'] = $atts['redirect_to'];
+			$login_form = new OpenID_Connect_Generic_Login_Form( $this->settings, $this );
+			$login_form->handle_redirect_cookie();
+		}
+    
+		return $this->client->make_authentication_url( $atts );
+
 	}
 
 	/**
