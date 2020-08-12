@@ -457,6 +457,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param $token_response
 	 */
 	function save_refresh_token( $manager, $token, $token_response ) {
+		if ( ! $this->settings->token_refresh_enable ) {
+			return;
+		}
 		$session = $manager->get($token);
 		$now = current_time( 'timestamp' , true );
 		$session[$this->cookie_token_refresh_key] = array(
