@@ -1,13 +1,29 @@
 <?php
-/*
-Plugin Name: OpenID Connect Generic
-Plugin URI: https://github.com/daggerhart/openid-connect-generic
-Description:  Connect to an OpenID Connect generic client using Authorization Code Flow
-Version: 3.6.0
-Author: daggerhart
-Author URI: http://www.daggerhart.com
-License: GPLv2 Copyright (c) 2015 daggerhart
-*/
+/**
+ * OpenID Connect Generic Client
+ *
+ * This plugin provides the ability to authenticate users with Identity 
+ * Providers using the OpenID Connect OAuth2 API with Authorization Code Flow.
+ *
+ * @category  Authentication
+ * @package   OpenID_Connect_Generic
+ * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
+ * @author    Tim Nolte <tim.nolte@ndigitals.com>
+ * @copyright 2015-2020 daggerhart
+ * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
+ * @link      https://github.com/daggerhart
+ *
+ * @wordpress-plugin
+ * Plugin Name:       OpenID Connect Generic
+ * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
+ * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
+ * Version:           3.6.0
+ * Author:            daggerhart
+ * Author URI:        http://www.daggerhart.com
+ * License:           GPL-2.0+
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * GitHub Plugin URI: https://github.com/daggerhart/openid-connect-generic
+ */
 
 /*
 Notes
@@ -50,7 +66,7 @@ Notes
 
 class OpenID_Connect_Generic {
 	// plugin version
-	const VERSION = '3.6.0';
+	const VERSION = '3.7.0';
 
 	// plugin settings
 	private $settings;
@@ -279,6 +295,7 @@ class OpenID_Connect_Generic {
 				// plugin settings
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
+				'token_refresh_enable' => 1,
 				'link_existing_users' => 0,
 				'create_if_does_not_exist' => 1,
 				'redirect_user_back' => 0,

@@ -161,6 +161,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'number',
 				'section'     => 'client_settings',
 			),
+			'token_refresh_enable'   => array(
+				'title'       => __( 'Enable Refresh Token' ),
+				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
 			'link_existing_users'   => array(
 				'title'       => __( 'Link Existing Users' ),
 				'description' => __( 'If a WordPress account already exists with the same identity as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.' ),
