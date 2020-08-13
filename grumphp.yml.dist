@@ -1,0 +1,38 @@
+# grumphp.yml
+parameters:
+  git_dir: .
+  bin_dir: 'vendor/bin'
+  stop_on_failure: true
+  process_timeout: 120
+  parallel:
+    enabled: true
+    max_workers: 32
+  fixer:
+    enabled: false
+    fix_by_default: false
+  tasks:
+    git_blacklist:
+      keywords:
+        - 'wp_die('
+        - 'die('
+    git_branch_name:
+      blacklist:
+        - 'main'
+        - 'master'
+        - 'dev*'
+      allow_detached_head: false
+    git_commit_message:
+      allow_empty_message: false
+      enforce_capitalized_subject: true
+    phpcs:
+      standard: './phpcs.xml.dist'
+      report: 'summary'
+      ignore_patterns:
+        - '/^assets\/(.*)/'
+    phpstan:
+      configuration: './phpstan.neon.dist'
+      level: max
+      ignore_patterns:
+        - '/^assets\/(.*)/'
+      memory_limit: '-1'
+    securitychecker: ~

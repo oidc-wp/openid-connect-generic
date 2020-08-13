@@ -21,7 +21,7 @@ class OpenID_Connect_Generic_Settings_Page {
 
 	/**
 	 * @param OpenID_Connect_Generic_Option_Settings $settings
-	 * @param OpenID_Connect_Generic_Option_Logger $logger
+	 * @param OpenID_Connect_Generic_Option_Logger   $logger
 	 */
 	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings             = $settings;
@@ -219,11 +219,11 @@ class OpenID_Connect_Generic_Settings_Page {
 
 	/**
 	 * @param \OpenID_Connect_Generic_Option_Settings $settings
-	 * @param \OpenID_Connect_Generic_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Logger   $logger
 	 *
 	 * @return \OpenID_Connect_Generic_Settings_Page
 	 */
-	static public function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
+	static public function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$settings_page = new self( $settings, $logger );
 
 		// add our options page the the admin menu
@@ -245,37 +245,46 @@ class OpenID_Connect_Generic_Settings_Page {
 			__( 'OpenID Connect Client' ),
 			'manage_options',
 			$this->options_page_name,
-			array( $this, 'settings_page' ) );
+			array( $this, 'settings_page' )
+		);
 	}
 
 	/**
 	 * Implements hook admin_init to register our settings
 	 */
 	public function admin_init() {
-		register_setting( $this->settings_field_group, $this->settings->get_option_name(), array(
-			$this,
-			'sanitize_settings'
-		) );
+		register_setting(
+			$this->settings_field_group,
+			$this->settings->get_option_name(),
+			array(
+				$this,
+				'sanitize_settings',
+			)
+		);
 
-		add_settings_section( 'client_settings',
+		add_settings_section(
+			'client_settings',
 			__( 'Client Settings' ),
 			array( $this, 'client_settings_description' ),
 			$this->options_page_name
 		);
 
-		add_settings_section( 'user_settings',
+		add_settings_section(
+			'user_settings',
 			__( 'WordPress User Settings' ),
 			array( $this, 'user_settings_description' ),
 			$this->options_page_name
 		);
 
-		add_settings_section( 'authorization_settings',
+		add_settings_section(
+			'authorization_settings',
 			__( 'Authorization Settings' ),
 			array( $this, 'authorization_settings_description' ),
 			$this->options_page_name
 		);
 
-		add_settings_section( 'log_settings',
+		add_settings_section(
+			'log_settings',
 			__( 'Log Settings' ),
 			array( $this, 'log_settings_description' ),
 			$this->options_page_name
@@ -305,7 +314,9 @@ class OpenID_Connect_Generic_Settings_Page {
 			}
 
 			// add the field
-			add_settings_field( $key, $field['title'],
+			add_settings_field(
+				$key,
+				$field['title'],
 				array( $this, $callback ),
 				$this->options_page_name,
 				$field['section'],
@@ -328,8 +339,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		foreach ( $this->settings_fields as $key => $field ) {
 			if ( isset( $input[ $key ] ) ) {
 				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
-			}
-			else {
+			} else {
 				$options[ $key ] = '';
 			}
 		}
@@ -343,7 +353,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function settings_page() {
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
-		if ( $this->settings->alternate_redirect_uri ){
+		if ( $this->settings->alternate_redirect_uri ) {
 			$redirect_uri = site_url( '/openid-connect-authorize' );
 		}
 		?>
@@ -397,10 +407,10 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_text_field( $field ) {
 		?>
 		<input type="<?php print esc_attr( $field['type'] ); ?>"
-		       id="<?php print esc_attr( $field['key'] ); ?>"
-		       class="large-text"
-		       name="<?php print esc_attr( $field['name'] ); ?>"
-		       value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
+			   id="<?php print esc_attr( $field['key'] ); ?>"
+			   class="large-text"
+			   name="<?php print esc_attr( $field['name'] ); ?>"
+			   value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php
 		$this->do_field_description( $field );
 	}
@@ -415,9 +425,9 @@ class OpenID_Connect_Generic_Settings_Page {
 		?>
 		<input type="hidden" name="<?php print esc_attr( $field['name'] ); ?>" value="0">
 		<input type="checkbox"
-		       id="<?php print esc_attr( $field['key'] ); ?>"
-		       name="<?php print esc_attr( $field['name'] ); ?>"
-		       value="1"
+			   id="<?php print esc_attr( $field['key'] ); ?>"
+			   name="<?php print esc_attr( $field['name'] ); ?>"
+			   value="1"
 			<?php checked( $this->settings->{ $field['key'] }, 1 ); ?>>
 		<?php
 		$this->do_field_description( $field );
@@ -430,7 +440,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		$current_value = isset( $this->settings->{ $field['key'] } ) ? $this->settings->{ $field['key'] } : '';
 		?>
 		<select name="<?php print esc_attr( $field['name'] ); ?>">
-			<?php foreach ( $field['options'] as $value => $text ): ?>
+			<?php foreach ( $field['options'] as $value => $text ) : ?>
 				<option value="<?php print esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php print esc_html( $text ); ?></option>
 			<?php endforeach; ?>
 		</select>

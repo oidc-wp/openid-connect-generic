@@ -22,11 +22,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Inject necessary objects and services into the client
 	 *
-	 * @param \OpenID_Connect_Generic_Client $client
+	 * @param \OpenID_Connect_Generic_Client          $client
 	 * @param \OpenID_Connect_Generic_Option_Settings $settings
-	 * @param \OpenID_Connect_Generic_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Logger   $logger
 	 */
-	function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
+	function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->client = $client;
 		$this->settings = $settings;
 		$this->logger = $logger;
@@ -35,13 +35,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Hook the client into WP
 	 *
-	 * @param \OpenID_Connect_Generic_Client $client
+	 * @param \OpenID_Connect_Generic_Client          $client
 	 * @param \OpenID_Connect_Generic_Option_Settings $settings
-	 * @param \OpenID_Connect_Generic_Option_Logger $logger
+	 * @param \OpenID_Connect_Generic_Option_Logger   $logger
 	 *
 	 * @return \OpenID_Connect_Generic_Client_Wrapper
 	 */
-	static public function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
+	static public function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$client_wrapper  = new self( $client, $settings, $logger );
 
 		// integrated logout
@@ -60,7 +60,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 		}
 
-		if ( $settings->alternate_redirect_uri ){
+		if ( $settings->alternate_redirect_uri ) {
 			// provide an alternate route for authentication_request_callback
 			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
 			add_rewrite_tag( '%openid-connect-authorize%', '1' );
@@ -69,7 +69,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// verify token for any logged in user
 		if ( is_user_logged_in() ) {
-			add_action( 'wp_loaded', array($client_wrapper, 'ensure_tokens_still_fresh'));
+			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
 		return $client_wrapper;
@@ -82,10 +82,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return mixed
 	 */
-	function alternate_redirect_uri_parse_request( $query ){
+	function alternate_redirect_uri_parse_request( $query ) {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
-		     $query->query_vars['openid-connect-authorize'] === '1' )
-		{
+			 $query->query_vars['openid-connect-authorize'] === '1' ) {
 			$this->authentication_request_callback();
 			exit;
 		}
@@ -95,12 +94,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	/**
 	 * Get the authentication url from the client
-	 * 
+	 *
 	 * @param array $atts The optional attributes array when called via a shortcode.
 	 *
 	 * @return string
 	 */
-	function get_authentication_url( $atts = array() ){
+	function get_authentication_url( $atts = array() ) {
 
 		if ( ! empty( $atts['redirect_to'] ) ) {
 			// Set the request query parameter used to set the cookie redirect.
@@ -108,7 +107,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$login_form = new OpenID_Connect_Generic_Login_Form( $this->settings, $this );
 			$login_form->handle_redirect_cookie();
 		}
-    
+
 		return $this->client->make_authentication_url( $atts );
 
 	}
@@ -131,17 +130,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return;
 		}
 
-		$current_time = current_time( 'timestamp', true );
+		$current_time = time();
 		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
 
-		$next_access_token_refresh_time = $refresh_token_info[ 'next_access_token_refresh_time' ];
+		$next_access_token_refresh_time = $refresh_token_info['next_access_token_refresh_time'];
 
 		if ( $current_time < $next_access_token_refresh_time ) {
 			return;
 		}
 
-		$refresh_token = $refresh_token_info[ 'refresh_token' ];
-		$refresh_expires = $refresh_token_info[ 'refresh_expires' ];
+		$refresh_token = $refresh_token_info['refresh_token'];
+		$refresh_expires = $refresh_token_info['refresh_expires'];
 
 		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
 			wp_logout();
@@ -183,7 +182,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		wp_redirect(
 			wp_login_url() .
 			'?login-error=' . $error->get_error_code() .
-		    '&message=' . urlencode( $error->get_error_message() )
+			'&message=' . urlencode( $error->get_error_message() )
 		);
 		exit;
 	}
@@ -193,7 +192,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return bool | WP_Error
 	 */
-	function get_error(){
+	function get_error() {
 		return $this->error;
 	}
 
@@ -231,12 +230,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = '';
 		}
 
-		$token_response = $user->get('openid-connect-generic-last-token-response');
-		if (! $token_response ) {
+		$token_response = $user->get( 'openid-connect-generic-last-token-response' );
+		if ( ! $token_response ) {
 			// happens if non-openid login was used
 			return $redirect_url;
-		}
-		else if ( ! parse_url( $redirect_url, PHP_URL_HOST ) ) {
+		} else if ( ! parse_url( $redirect_url, PHP_URL_HOST ) ) {
 			// convert to absolute url if needed. site_url() to be friendly with non-standard (Bedrock) layout
 			$redirect_url = site_url( $redirect_url );
 		}
@@ -244,15 +242,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$claim = $user->get( 'openid-connect-generic-last-id-token-claim' );
 
 		if ( isset( $claim['iss'] ) && $claim['iss'] == 'https://accounts.google.com' ) {
-			/* Google revoke endpoint
+			/*
+			 Google revoke endpoint
 			   1. expects the *access_token* to be passed as "token"
 			   2. does not support redirection (post_logout_redirect_uri)
 			   So just redirect to regular WP logout URL.
 			   (we would *not* disconnect the user from any Google service even if he was
 			   initially disconnected to them) */
 			return $redirect_url;
-		}
-		else {
+		} else {
 			return $url . sprintf( 'id_token_hint=%s&post_logout_redirect_uri=%s', $token_response['id_token'], urlencode( $redirect_url ) );
 		}
 	}
@@ -266,7 +264,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return mixed
 	 */
 	function alter_request( $request, $op ) {
-		if ( !empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
+		if ( ! empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
 
@@ -287,14 +285,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// start the authentication flow
 		$authentication_request = $client->validate_authentication_request( $_GET );
 
-		if ( is_wp_error( $authentication_request ) ){
+		if ( is_wp_error( $authentication_request ) ) {
 			$this->error_redirect( $authentication_request );
 		}
 
 		// retrieve the authentication code from the authentication request
 		$code = $client->get_authentication_code( $authentication_request );
 
-		if ( is_wp_error( $code ) ){
+		if ( is_wp_error( $code ) ) {
 			$this->error_redirect( $code );
 		}
 
@@ -311,7 +309,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// allow for other plugins to alter data before validation
 		$token_response = apply_filters( 'openid-connect-modify-token-response-before-validation', $token_response );
 
-		if ( is_wp_error( $token_response ) ){
+		if ( is_wp_error( $token_response ) ) {
 			$this->error_redirect( $token_response );
 		}
 
@@ -335,32 +333,32 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// allow for other plugins to alter data before validation
 		$id_token_claim = apply_filters( 'openid-connect-modify-id-token-claim-before-validation', $id_token_claim );
 
-		if ( is_wp_error( $id_token_claim ) ){
+		if ( is_wp_error( $id_token_claim ) ) {
 			$this->error_redirect( $id_token_claim );
 		}
 
 		// validate our id_token has required values
 		$valid = $client->validate_id_token_claim( $id_token_claim );
 
-		if ( is_wp_error( $valid ) ){
+		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );
 		}
 
 		// if userinfo endpoint is set, exchange the token_response for a user_claim
-		if ( !empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] )) {
+		if ( ! empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] ) ) {
 			$user_claim = $client->get_user_claim( $token_response );
 		} else {
 			$user_claim = $id_token_claim;
 		}
 
-		if ( is_wp_error( $user_claim ) ){
+		if ( is_wp_error( $user_claim ) ) {
 			$this->error_redirect( $user_claim );
 		}
 
 		// validate our user_claim has required values
 		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
 
-		if ( is_wp_error( $valid ) ){
+		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );
 		}
 
@@ -378,12 +376,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				if ( is_wp_error( $user ) ) {
 					$this->error_redirect( $user );
 				}
+			} else {
+				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not link to an existing WordPress user' ), $user_claim ) );
 			}
-			else {
-				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( "User identity is not link to an existing WordPress user"), $user_claim ) );
-			}
-		}
-		else {
+		} else {
 			// allow plugins / themes to take action using current claims on existing user (e.g. update role)
 			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 		}
@@ -391,12 +387,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// validate the found / created user
 		$valid = $this->validate_user( $user );
 
-		if ( is_wp_error( $valid ) ){
+		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );
 		}
 
 		// login the found / created user
-		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity  );
+		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 
 		do_action( 'openid-connect-generic-user-logged-in', $user );
 
@@ -406,7 +402,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// redirect back to the origin page if enabled
 		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
 
-		if( $this->settings->redirect_user_back && !empty( $redirect_url ) ) {
+		if ( $this->settings->redirect_user_back && ! empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
 			setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 			wp_redirect( $redirect_url );
@@ -426,7 +422,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return true|\WP_Error
 	 */
-	function validate_user( $user ){
+	function validate_user( $user ) {
 		// ensure our found user is a real WP_User
 		if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
 			return new WP_Error( 'invalid-user', __( 'Invalid user' ), $user );
@@ -440,7 +436,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param $user
 	 */
-	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ){
+	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
 		// hey, we made it!
 		// let's remember the tokens for future reference
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
@@ -456,7 +452,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->save_refresh_token( $manager, $token, $token_response );
 
 		// you did great, have a cookie!
-		wp_set_auth_cookie( $user->ID, false, '', $token);
+		wp_set_auth_cookie( $user->ID, false, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
 	}
 
@@ -471,22 +467,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $this->settings->token_refresh_enable ) {
 			return;
 		}
-		$session = $manager->get($token);
-		$now = current_time( 'timestamp' , true );
-		$session[$this->cookie_token_refresh_key] = array(
+		$session = $manager->get( $token );
+		$now = time();
+		$session[ $this->cookie_token_refresh_key ] = array(
 			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
-			'refresh_token' => isset( $token_response[ 'refresh_token' ] ) ? $token_response[ 'refresh_token' ] : false,
+			'refresh_token' => isset( $token_response['refresh_token'] ) ? $token_response['refresh_token'] : false,
 			'refresh_expires' => false,
 		);
-		if ( isset( $token_response[ 'refresh_expires_in' ] ) ) {
-			$refresh_expires_in = $token_response[ 'refresh_expires_in' ];
-			if ($refresh_expires_in > 0) {
+		if ( isset( $token_response['refresh_expires_in'] ) ) {
+			$refresh_expires_in = $token_response['refresh_expires_in'];
+			if ( $refresh_expires_in > 0 ) {
 				// leave enough time for the actual refresh request to go through
 				$refresh_expires = $now + $refresh_expires_in - 5;
-				$session[$this->cookie_token_refresh_key]['refresh_expires'] = $refresh_expires;
+				$session[ $this->cookie_token_refresh_key ]['refresh_expires'] = $refresh_expires;
 			}
 		}
-		$manager->update($token, $session);
+		$manager->update( $token, $session );
 		return;
 	}
 
@@ -497,16 +493,18 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return false|\WP_User
 	 */
-	function get_user_by_identity( $subject_identity ){
+	function get_user_by_identity( $subject_identity ) {
 		// look for user by their openid-connect-generic-subject-identity value
-		$user_query = new WP_User_Query( array(
-			'meta_query' => array(
-				array(
-					'key'   => 'openid-connect-generic-subject-identity',
-					'value' => $subject_identity,
-				)
+		$user_query = new WP_User_Query(
+			array(
+				'meta_query' => array(
+					array(
+						'key'   => 'openid-connect-generic-subject-identity',
+						'value' => $subject_identity,
+					),
+				),
 			)
-		) );
+		);
 
 		// if we found an existing users, grab the first one returned
 		if ( $user_query->get_total() > 0 ) {
@@ -526,26 +524,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	private function get_username_from_claim( $user_claim ) {
 		// allow settings to take first stab at username
-		if ( !empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
-			$desired_username =  $user_claim[ $this->settings->identity_key ];
-		}
-		else if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
+		if ( ! empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
+			$desired_username = $user_claim[ $this->settings->identity_key ];
+		} else if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
 			$desired_username = $user_claim['preferred_username'];
-		}
-		else if ( isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
+		} else if ( isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
 			$desired_username = $user_claim['name'];
-		}
-		else if ( isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
+		} else if ( isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
 			$tmp = explode( '@', $user_claim['email'] );
 			$desired_username = $tmp[0];
-		}
-		else {
+		} else {
 			// nothing to build a name from
 			return new WP_Error( 'no-username', __( 'No appropriate username found' ), $user_claim );
 		}
 
 		// normalize the data a bit
-		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT',  $desired_username );
+		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
 		if ( empty( $transliterated_username ) ) {
 			return new WP_Error( 'username-transliteration-failed', __( "Username $desired_username could not be transliterated" ), $desired_username );
 		}
@@ -581,8 +575,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private function get_nickname_from_claim( $user_claim ) {
 		$desired_nickname = null;
 		// allow settings to take first stab at nickname
-		if ( !empty( $this->settings->nickname_key ) && isset( $user_claim[ $this->settings->nickname_key ] ) ) {
-			$desired_nickname =  $user_claim[ $this->settings->nickname_key ];
+		if ( ! empty( $this->settings->nickname_key ) && isset( $user_claim[ $this->settings->nickname_key ] ) ) {
+			$desired_nickname = $user_claim[ $this->settings->nickname_key ];
 		}
 		return $desired_nickname;
 	}
@@ -600,21 +594,26 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$string = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
-			foreach ( $matches[ 0 ] as $match ) {
-				$key = substr($match[ 0 ], 1, -1);
-				$string .= substr( $format, $i, $match[ 1 ] - $i );
+			foreach ( $matches[0] as $match ) {
+				$key = substr( $match[0], 1, -1 );
+				$string .= substr( $format, $i, $match[1] - $i );
 				if ( ! isset( $user_claim[ $key ] ) ) {
 					if ( $error_on_missing_key ) {
-                                                return new WP_Error( 'incomplete-user-claim', __( 'User claim incomplete' ),
-								    array('message'=>'Unable to find key: '.$key.' in user_claim',
-									  'hint'=>'Verify OpenID Scope includes a scope with the attributes you need',
-									  'user_claim'=>$user_claim,
-									  'format'=>$format) );
+												return new WP_Error(
+													'incomplete-user-claim',
+													__( 'User claim incomplete' ),
+													array(
+														'message' => 'Unable to find key: ' . $key . ' in user_claim',
+														'hint' => 'Verify OpenID Scope includes a scope with the attributes you need',
+														'user_claim' => $user_claim,
+														'format' => $format,
+													)
+												);
 					}
 				} else {
 					$string .= $user_claim[ $key ];
 				}
-				$i = $match[ 1 ] + strlen( $match[ 0 ] );
+				$i = $match[1] + strlen( $match[0] );
 			}
 		}
 		$string .= substr( $format, $i );
@@ -686,7 +685,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			$values_missing = true;
-		} else if ( $_nickname !== null) {
+		} else if ( $_nickname !== null ) {
 			$nickname = $_nickname;
 		}
 
@@ -698,7 +697,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// attempt another request for userinfo if some values are missing
-		if ( $values_missing && isset( $token_response['access_token'] ) && !empty( $this->settings->endpoint_userinfo) ) {
+		if ( $values_missing && isset( $token_response['access_token'] ) && ! empty( $this->settings->endpoint_userinfo ) ) {
 			$user_claim_result = $this->client->request_userinfo( $token_response['access_token'] );
 
 			// make sure we didn't get an error
@@ -726,7 +725,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			return $_nickname;
-		} else if ( $_nickname === null) {
+		} else if ( $_nickname === null ) {
 			$nickname = $username;
 		}
 
@@ -738,8 +737,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// before trying to create the user, first check if a user with the same email already exists
-		if( $this->settings->link_existing_users ) {
-			if ( $this->settings->identify_with_username) {
+		if ( $this->settings->link_existing_users ) {
+			if ( $this->settings->identify_with_username ) {
 				$uid = username_exists( $username );
 			} else {
 				$uid = email_exists( $email );
@@ -765,8 +764,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			'user_email' => $email,
 			'display_name' => $displayname,
 			'nickname' => $nickname,
-			'first_name' => isset( $user_claim[ 'given_name' ] ) ? $user_claim[ 'given_name' ]: '',
-			'last_name' => isset( $user_claim[ 'family_name' ] ) ? $user_claim[ 'family_name' ]: '',
+			'first_name' => isset( $user_claim['given_name'] ) ? $user_claim['given_name'] : '',
+			'last_name' => isset( $user_claim['family_name'] ) ? $user_claim['family_name'] : '',
 		);
 		$user_data = apply_filters( 'openid-connect-generic-alter-user-data', $user_data, $user_claim );
 

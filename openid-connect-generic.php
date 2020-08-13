@@ -2,13 +2,12 @@
 /**
  * OpenID Connect Generic Client
  *
- * This plugin provides the ability to authenticate users with Identity 
+ * This plugin provides the ability to authenticate users with Identity
  * Providers using the OpenID Connect OAuth2 API with Authorization Code Flow.
  *
  * @category  Authentication
  * @package   OpenID_Connect_Generic
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @author    Tim Nolte <tim.nolte@ndigitals.com>
  * @copyright 2015-2020 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  * @link      https://github.com/daggerhart
@@ -20,6 +19,8 @@
  * Version:           3.6.0
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
+ * Text Domain:       daggerhart-openid-connect-generic
+ * Domain Path:       /languages
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * GitHub Plugin URI: https://github.com/daggerhart/openid-connect-generic
@@ -64,32 +65,65 @@ Notes
 */
 
 
+/**
+ * OpenID_Connect_Generic class.
+ * Defines plugin initialization functionality.
+ *
+ * @package OpenID_Connect_Generic
+ */
 class OpenID_Connect_Generic {
-	// plugin version
+
+	/**
+	 * Plugin version.
+	 *
+	 * @var
+	 */
 	const VERSION = '3.7.0';
 
-	// plugin settings
+	/**
+	 * Plugin settings.
+	 *
+	 * @var OpenID_Connect_Generic_Option_Settings
+	 */
 	private $settings;
 
-	// plugin logs
+	/**
+	 * Plugin logs.
+	 *
+	 * @var OpenID_Connect_Generic_Option_Logger
+	 */
 	private $logger;
 
-	// openid connect generic client
+	/**
+	 * Openid Connect Generic client
+	 *
+	 * @var OpenID_Connect_Generic_Client
+	 */
 	private $client;
 
-	// settings admin page
+	/**
+	 * Settings admin page.
+	 *
+	 * @var OpenID_Connect_Generic_Option_Settings
+	 */
 	private $settings_page;
 
-	// login form adjustments
+	/**
+	 * Login form adjustments.
+	 *
+	 * @var OpenID_Connect_Generic_Login_Form
+	 */
 	private $login_form;
 
 	/**
 	 * Setup the plugin
 	 *
-	 * @param OpenID_Connect_Generic_Option_Settings $settings
-	 * @param OpenID_Connect_Generic_Option_Logger $logger
+	 * @param OpenID_Connect_Generic_Option_Settings $settings The settings object.
+	 * @param OpenID_Connect_Generic_Option_Logger   $logger   The loggin object.
+	 *
+	 * @return void
 	 */
-	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ){
+	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
 	}
@@ -97,17 +131,17 @@ class OpenID_Connect_Generic {
 	/**
 	 * WP Hook 'init'
 	 */
-	function init(){
+	function init() {
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
-		if ( $this->settings->alternate_redirect_uri ){
+		if ( $this->settings->alternate_redirect_uri ) {
 			$redirect_uri = site_url( '/openid-connect-authorize' );
 		}
 
 		$state_time_limit = 180;
-		if ($this->settings->state_time_limit) {
-			$state_time_limit = intval($this->settings->state_time_limit);
+		if ( $this->settings->state_time_limit ) {
+			$state_time_limit = intval( $this->settings->state_time_limit );
 		}
 
 		$this->client = new OpenID_Connect_Generic_Client(
@@ -133,11 +167,11 @@ class OpenID_Connect_Generic {
 		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
 
 		// add actions to our scheduled cron jobs
-		add_action( 'openid-connect-generic-cron-daily', [ $this, 'cron_states_garbage_collection'] );
+		add_action( 'openid-connect-generic-cron-daily', array( $this, 'cron_states_garbage_collection' ) );
 
 		$this->upgrade();
 
-		if ( is_admin() ){
+		if ( is_admin() ) {
 			$this->settings_page = OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 		}
 	}
@@ -149,7 +183,7 @@ class OpenID_Connect_Generic {
 	function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			// our client endpoint relies on the wp admind ajax endpoint
-			if ( ! defined( 'DOING_AJAX') || ! DOING_AJAX || ! isset( $_GET['action'] ) || $_GET['action'] != 'openid-connect-authorize' ) {
+			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || $_GET['action'] != 'openid-connect-authorize' ) {
 				auth_redirect();
 			}
 		}
@@ -162,7 +196,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return mixed
 	 */
-	function enforce_privacy_feeds( $content ){
+	function enforce_privacy_feeds( $content ) {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			$content = 'Private site';
 		}
@@ -172,7 +206,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Handle plugin upgrades
 	 */
-	function upgrade(){
+	function upgrade() {
 		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
 		$settings = $this->settings;
 
@@ -203,10 +237,10 @@ class OpenID_Connect_Generic {
 		global $wpdb;
 		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE '_transient_openid-connect-generic-state--%'" );
 
-		if ( !empty( $states ) ) {
+		if ( ! empty( $states ) ) {
 			foreach ( $states as $state ) {
-			    $transient = str_replace("_transient_", "", $state);
-                get_transient( $transient );
+				$transient = str_replace( '_transient_', '', $state );
+				get_transient( $transient );
 			}
 		}
 	}
@@ -242,7 +276,7 @@ class OpenID_Connect_Generic {
 	static public function autoload( $class ) {
 		$prefix = 'OpenID_Connect_Generic_';
 
-		if ( stripos($class, $prefix) !== 0 ) {
+		if ( stripos( $class, $prefix ) !== 0 ) {
 			return;
 		}
 
@@ -251,9 +285,8 @@ class OpenID_Connect_Generic {
 		// internal files are all lowercase and use dashes in filenames
 		if ( false === strpos( $filename, '\\' ) ) {
 			$filename = strtolower( str_replace( '_', '-', $filename ) );
-		}
-		else {
-			$filename  = str_replace('\\', DIRECTORY_SEPARATOR, $filename);
+		} else {
+			$filename  = str_replace( '\\', DIRECTORY_SEPARATOR, $filename );
 		}
 
 		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
@@ -266,7 +299,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Instantiate the plugin and hook into WP
 	 */
-	static public function bootstrap(){
+	static public function bootstrap() {
 		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
@@ -314,12 +347,12 @@ class OpenID_Connect_Generic {
 		// privacy hooks
 		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
 		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
-		add_filter( 'the_excerpt_rss',  array( $plugin, 'enforce_privacy_feeds' ), 999 );
+		add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 	}
 }
 
 OpenID_Connect_Generic::bootstrap();
 
-register_activation_hook( __FILE__, [ 'OpenID_Connect_Generic', 'activation' ] );
-register_deactivation_hook( __FILE__, [ 'OpenID_Connect_Generic', 'deactivation' ] );
+register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
+register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );

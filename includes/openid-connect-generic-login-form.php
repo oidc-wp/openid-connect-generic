@@ -9,12 +9,12 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @param $settings
 	 * @param $client_wrapper
 	 */
-	function __construct( $settings, $client_wrapper ){
+	function __construct( $settings, $client_wrapper ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
 
 		// maybe set redirect cookie on formular page
-		add_action('login_form_login', [$this, 'handle_redirect_cookie']);
+		add_action( 'login_form_login', array( $this, 'handle_redirect_cookie' ) );
 	}
 
 	/**
@@ -23,7 +23,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return \OpenID_Connect_Generic_Login_Form
 	 */
-	static public function register( $settings, $client_wrapper ){
+	static public function register( $settings, $client_wrapper ) {
 		$login_form = new self( $settings, $client_wrapper );
 
 		// alter the login form as dictated by settings
@@ -40,19 +40,16 @@ class OpenID_Connect_Generic_Login_Form {
 	/**
 	 * Auto Login redirect
 	 */
-	function handle_redirect_login_type_auto()
-	{
+	function handle_redirect_login_type_auto() {
 		if ( $GLOBALS['pagenow'] == 'wp-login.php'
 			&& ( $this->settings->login_type == 'auto' || ! empty( $_GET['force_redirect'] ) )
-			&& ( ! isset( $_GET[ 'action' ] ) || $_GET[ 'action' ] !== 'logout' )
-			&& ! isset( $_POST['wp-submit'] ) )
-		{
-			if (  ! isset( $_GET['login-error'] ) ) {
-			    $this->handle_redirect_cookie();
+			&& ( ! isset( $_GET['action'] ) || $_GET['action'] !== 'logout' )
+			&& ! isset( $_POST['wp-submit'] ) ) {
+			if ( ! isset( $_GET['login-error'] ) ) {
+				$this->handle_redirect_cookie();
 				wp_redirect( $this->client_wrapper->get_authentication_url() );
 				exit;
-			}
-			else {
+			} else {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
@@ -61,16 +58,14 @@ class OpenID_Connect_Generic_Login_Form {
 	/**
 	 * Handle login related redirects
 	 */
-	function handle_redirect_cookie()
-	{
-		if ( $GLOBALS['pagenow'] == 'wp-login.php' && isset( $_GET[ 'action' ] ) && $_GET[ 'action' ] === 'logout' ) {
+	function handle_redirect_cookie() {
+		if ( $GLOBALS['pagenow'] == 'wp-login.php' && isset( $_GET['action'] ) && $_GET['action'] === 'logout' ) {
 			return;
 		}
 
 		// record the URL of this page if set to redirect back to origin page
-		if ( $this->settings->redirect_user_back )
-		{
-			$redirect_expiry = current_time('timestamp') + DAY_IN_SECONDS;
+		if ( $this->settings->redirect_user_back ) {
+			$redirect_expiry = current_time( 'timestamp' ) + DAY_IN_SECONDS;
 
 			// default redirect to the homepage
 			$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
@@ -80,7 +75,7 @@ class OpenID_Connect_Generic_Login_Form {
 				$redirect_url = admin_url();
 
 				if ( isset( $_REQUEST['redirect_to'] ) ) {
-					$redirect_url = esc_url_raw( $_REQUEST[ 'redirect_to' ] );
+					$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
 				}
 			}
 
@@ -119,8 +114,8 @@ class OpenID_Connect_Generic_Login_Form {
 		ob_start();
 		?>
 		<div id="login_error">
-			<strong><?php _e( 'ERROR'); ?>: </strong>
-			<?php print esc_html($error_message); ?>
+			<strong><?php _e( 'ERROR' ); ?>: </strong>
+			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -128,8 +123,8 @@ class OpenID_Connect_Generic_Login_Form {
 
 	/**
 	 * Create a login button (link)
-	 * 
-	 * @param array $atts Array of optional attributes to override login buton 
+	 *
+	 * @param array $atts Array of optional attributes to override login buton
 	 * functionality when used by shortcode.
 	 *
 	 * @return string
@@ -139,7 +134,7 @@ class OpenID_Connect_Generic_Login_Form {
 		if ( ! empty( $atts['button_text'] ) ) {
 			$button_text = $atts['button_text'];
 		}
-    
+
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $button_text );
 		$href = $this->client_wrapper->get_authentication_url( $atts );
 
