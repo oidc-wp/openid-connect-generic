@@ -1,5 +1,9 @@
 # OpenId Connect Generic Changelog
 
+3.7.1
+
+* Fix: Release Version Number.
+
 3.7.0
 
 * Feature: @timnolte - Ability to enable/disable token refresh. Useful for IDPs that don't support token refresh.
