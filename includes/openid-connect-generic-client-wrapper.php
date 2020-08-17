@@ -4,27 +4,49 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	private $client;
 
-	// settings object
+	/**
+	 * The settings object.
+	 *
+	 * @var OpenID_Connect_Generic_Option_Settings
+	 */
 	private $settings;
 
-	// logger object
+	/**
+	 * The logger object.
+	 *
+	 * @var OpenID_Connect_Generic_Option_Logger
+	 */
 	private $logger;
 
-	// token refresh info cookie key
+	/**
+	 * The token refresh info cookie key.
+	 *
+	 * @var string
+	 */
 	private $cookie_token_refresh_key = 'openid-connect-generic-refresh';
 
-	// user redirect cookie key
+	/**
+	 * The user redirect cookie key.
+	 *
+	 * @var string
+	 */
 	public $cookie_redirect_key = 'openid-connect-generic-redirect';
 
-	// WP_Error if there was a problem, or false if no error
+	/**
+	 * The return error onject.
+	 *
+	 * @example WP_Error if there was a problem, or false if no error
+	 *
+	 * @var bool|WP_Error
+	 */
 	private $error = false;
 
 	/**
-	 * Inject necessary objects and services into the client
+	 * Inject necessary objects and services into the client.
 	 *
-	 * @param \OpenID_Connect_Generic_Client          $client
-	 * @param \OpenID_Connect_Generic_Option_Settings $settings
-	 * @param \OpenID_Connect_Generic_Option_Logger   $logger
+	 * @param OpenID_Connect_Generic_Client          $client   A plugin client object instance.
+	 * @param OpenID_Connect_Generic_Option_Settings $settings A plugin settings object instance.
+	 * @param OpenID_Connect_Generic_Option_Logger   $logger   A plugin logger object instance.
 	 */
 	function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->client = $client;
@@ -33,18 +55,18 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
-	 * Hook the client into WP
+	 * Hook the client into WordPress.
 	 *
-	 * @param \OpenID_Connect_Generic_Client          $client
-	 * @param \OpenID_Connect_Generic_Option_Settings $settings
-	 * @param \OpenID_Connect_Generic_Option_Logger   $logger
+	 * @param \OpenID_Connect_Generic_Client          $client   The plugin client instance.
+	 * @param \OpenID_Connect_Generic_Option_Settings $settings The plugin settings instance.
+	 * @param \OpenID_Connect_Generic_Option_Logger   $logger   The plugin logger instance.
 	 *
 	 * @return \OpenID_Connect_Generic_Client_Wrapper
 	 */
 	static public function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$client_wrapper  = new self( $client, $settings, $logger );
 
-		// integrated logout
+		// Integrated logout.
 		if ( $settings->endpoint_end_session ) {
 			add_filter( 'allowed_redirect_hosts', array( $client_wrapper, 'update_allowed_redirect_hosts' ), 99, 1 );
 			add_filter( 'logout_redirect', array( $client_wrapper, 'get_end_session_logout_redirect_url' ), 99, 3 );

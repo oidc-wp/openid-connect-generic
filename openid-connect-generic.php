@@ -5,8 +5,8 @@
  * This plugin provides the ability to authenticate users with Identity
  * Providers using the OpenID Connect OAuth2 API with Authorization Code Flow.
  *
- * @category  Authentication
  * @package   OpenID_Connect_Generic
+ * @category  General
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
  * @copyright 2015-2020 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
@@ -67,9 +67,11 @@ Notes
 
 /**
  * OpenID_Connect_Generic class.
+ *
  * Defines plugin initialization functionality.
  *
  * @package OpenID_Connect_Generic
+ * @category  General
  */
 class OpenID_Connect_Generic {
 
@@ -104,7 +106,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Settings admin page.
 	 *
-	 * @var OpenID_Connect_Generic_Option_Settings
+	 * @var OpenID_Connect_Generic_Settings_Page
 	 */
 	private $settings_page;
 
@@ -114,6 +116,13 @@ class OpenID_Connect_Generic {
 	 * @var OpenID_Connect_Generic_Login_Form
 	 */
 	private $login_form;
+
+	/**
+	 * Client wrapper.
+	 *
+	 * @var OpenID_Connect_Generic_Client_Wrapper
+	 */
+	private $client_wrapper;
 
 	/**
 	 * Setup the plugin
@@ -129,7 +138,9 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * WP Hook 'init'
+	 * WordPress Hook 'init'.
+	 *
+	 * @return void
 	 */
 	function init() {
 
@@ -163,10 +174,10 @@ class OpenID_Connect_Generic {
 
 		$this->login_form = OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
 
-		// add a shortcode to get the auth url
+		// Add a shortcode to get the auth URL.
 		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
 
-		// add actions to our scheduled cron jobs
+		// Add actions to our scheduled cron jobs.
 		add_action( 'openid-connect-generic-cron-daily', array( $this, 'cron_states_garbage_collection' ) );
 
 		$this->upgrade();
@@ -182,17 +193,17 @@ class OpenID_Connect_Generic {
 	 */
 	function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			// our client endpoint relies on the wp admind ajax endpoint
-			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || $_GET['action'] != 'openid-connect-authorize' ) {
+			// The client endpoint relies on the wp admind ajax endpoint.
+			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
 				auth_redirect();
 			}
 		}
 	}
 
 	/**
-	 * Enforce privacy settings for rss feeds
+	 * Enforce privacy settings for rss feeds.
 	 *
-	 * @param $content
+	 * @param string $content The content.
 	 *
 	 * @return mixed
 	 */
@@ -211,7 +222,7 @@ class OpenID_Connect_Generic {
 		$settings = $this->settings;
 
 		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
-			// upgrade required
+			// An upgrade is required.
 			self::setup_cron_jobs();
 
 			// @todo move this to another file for upgrade scripts
@@ -224,7 +235,7 @@ class OpenID_Connect_Generic {
 				$settings->save();
 			}
 
-			// update the stored version number
+			// Update the stored version number.
 			update_option( 'openid-connect-generic-plugin-version', self::VERSION );
 		}
 	}
@@ -269,9 +280,9 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * Simple autoloader
+	 * Simple autoloader.
 	 *
-	 * @param $class
+	 * @param string $class The class name.
 	 */
 	static public function autoload( $class ) {
 		$prefix = 'OpenID_Connect_Generic_';
@@ -282,7 +293,7 @@ class OpenID_Connect_Generic {
 
 		$filename = $class . '.php';
 
-		// internal files are all lowercase and use dashes in filenames
+		// Internal files are all lowercase and use dashes in filenames.
 		if ( false === strpos( $filename, '\\' ) ) {
 			$filename = strtolower( str_replace( '_', '-', $filename ) );
 		} else {
@@ -304,9 +315,9 @@ class OpenID_Connect_Generic {
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			'openid_connect_generic_settings',
-			// default settings values
+			// Default settings values.
 			array(
-				// oauth client settings
+				// OAuth client settings.
 				'login_type'        => 'button',
 				'client_id'         => '',
 				'client_secret'     => '',
@@ -316,7 +327,7 @@ class OpenID_Connect_Generic {
 				'endpoint_token'    => '',
 				'endpoint_end_session' => '',
 
-				// non-standard settings
+				// Non-standard settings.
 				'no_sslverify'    => 0,
 				'http_request_timeout' => 5,
 				'identity_key'    => 'preferred_username',
@@ -325,7 +336,7 @@ class OpenID_Connect_Generic {
 				'displayname_format' => '',
 				'identify_with_username' => false,
 
-				// plugin settings
+				// Plugin settings.
 				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
 				'token_refresh_enable' => 1,
@@ -344,7 +355,7 @@ class OpenID_Connect_Generic {
 
 		add_action( 'init', array( $plugin, 'init' ) );
 
-		// privacy hooks
+		// Privacy hooks.
 		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
 		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );

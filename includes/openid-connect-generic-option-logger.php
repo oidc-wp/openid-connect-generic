@@ -1,44 +1,81 @@
 <?php
 /**
- * Simple class for logging messages to the options table
+ * Plugin logging class.
+ *
+ * @package   OpenID_Connect_Generic
+ * @category  Logging
+ * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
+ * @copyright 2015-2020 daggerhart
+ * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
+ */
+
+/**
+ * OpenID_Connect_Generic_Option_Logger class.
+ *
+ * Simple class for logging messages to the options table.
+ *
+ * @package  OpenID_Connect_Generic
+ * @category Logging
  */
 class OpenID_Connect_Generic_Option_Logger {
 
-	// wp option name/key
+	/**
+	 * Thw WordPress option name/key.
+	 *
+	 * @var string
+	 */
 	private $option_name;
 
-	// default message type
+	/**
+	 * The default message type.
+	 *
+	 * @var string
+	 */
 	private $default_message_type;
 
-	// the number of items to keep in the log
+	/**
+	 * The number of items to keep in the log.
+	 *
+	 * @var int
+	 */
 	private $log_limit;
 
-	// whether or not the
+	/**
+	 * Whether or not logging is enabled.
+	 *
+	 * @var bool
+	 */
 	private $logging_enabled;
 
-	// internal cache of logs
+	/**
+	 * Internal cache of logs.
+	 *
+	 * @var array
+	 */
 	private $logs;
 
 	/**
-	 * Setup the logger according to the needs of the instance
+	 * Setup the logger according to the needs of the instance.
 	 *
-	 * @param string    $option_name
-	 * @param string    $default_message_type
-	 * @param bool|TRUE $logging_enabled
-	 * @param int       $log_limit
+	 * @param string    $option_name          The plugin log WordPress option name.
+	 * @param string    $default_message_type The log message type.
+	 * @param bool|TRUE $logging_enabled      Whether logging is enabled.
+	 * @param int       $log_limit            The log entry limit.
 	 */
 	function __construct( $option_name, $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
 		$this->option_name = $option_name;
 		$this->default_message_type = $default_message_type;
-		$this->logging_enabled = (bool) $logging_enabled;
-		$this->log_limit = (int) $log_limit;
+		$this->logging_enabled = boolval( $logging_enabled );
+		$this->log_limit = intval( $log_limit );
 	}
 
 	/**
-	 * Subscribe logger to a set of filters
+	 * Subscribe logger to a set of filters.
 	 *
-	 * @param $filter_names
-	 * @param int          $priority
+	 * @param array|string $filter_names The array, or string, of the name(s) of an filter(s) to hook the logger into.
+	 * @param int          $priority     The WordPress filter priority level.
+	 *
+	 * @return void
 	 */
 	function log_filters( $filter_names, $priority = 10 ) {
 		if ( ! is_array( $filter_names ) ) {
@@ -51,10 +88,12 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Subscribe logger to a set of actions
+	 * Subscribe logger to a set of actions.
 	 *
-	 * @param $action_names
-	 * @param $priority
+	 * @param array|string $action_names The array, or string, of the name(s) of an action(s) to hook the logger into.
+	 * @param int          $priority     The WordPress action priority level.
+	 *
+	 * @return void
 	 */
 	function log_actions( $action_names, $priority ) {
 		if ( ! is_array( $action_names ) ) {
@@ -67,10 +106,11 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Log the data
+	 * Log the data.
 	 *
-	 * @param null $arg1
-	 * @return null
+	 * @param mixed $arg1 The hook argument.
+	 *
+	 * @return mixed
 	 */
 	function log_hook( $arg1 = null ) {
 		$this->log( func_get_args(), current_filter() );
@@ -78,13 +118,15 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Save an array of data to the logs
+	 * Save an array of data to the logs.
 	 *
-	 * @param $data mixed
+	 * @param mixed $data The data to be logged.
+	 * @param mixed $type The type of log message.
+	 *
 	 * @return bool
 	 */
 	public function log( $data, $type = null ) {
-		if ( (bool) $this->logging_enabled ) {
+		if ( boolval( $this->logging_enabled ) ) {
 			$logs = $this->get_logs();
 			$logs[] = $this->make_message( $data, $type );
 			$logs = $this->upkeep_logs( $logs );
@@ -95,12 +137,12 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Retrieve all log messages
+	 * Retrieve all log messages.
 	 *
 	 * @return array
 	 */
 	public function get_logs() {
-		if ( is_null( $this->logs ) ) {
+		if ( empty( $this->logs ) ) {
 			$this->logs = get_option( $this->option_name, array() );
 		}
 
@@ -108,7 +150,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Get the name of the option where this log is stored
+	 * Get the name of the option where this log is stored.
 	 *
 	 * @return string
 	 */
@@ -117,17 +159,17 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Create a message array containing the data and other information
+	 * Create a message array containing the data and other information.
 	 *
-	 * @param $data mixed
-	 * @param $type
+	 * @param mixed $data The log message data.
+	 * @param mixed $type The log message type.
 	 *
 	 * @return array
 	 */
 	private function make_message( $data, $type ) {
-		// determine the type of message
+		// Determine the type of message.
 		if ( empty( $type ) ) {
-			$this->default_message_type;
+			$type = $this->default_message_type;
 
 			if ( is_array( $data ) && isset( $data['type'] ) ) {
 				$type = $data['type'];
@@ -136,7 +178,7 @@ class OpenID_Connect_Generic_Option_Logger {
 			}
 		}
 
-		// construct our message
+		// Construct the message.
 		$message = array(
 			'type'    => $type,
 			'time'    => time(),
@@ -149,16 +191,17 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Keep our log count under the limit
+	 * Keep the log count under the limit.
 	 *
-	 * @param $message array - extra data about the message
+	 * @param array $logs The plugin logs.
+	 *
 	 * @return array
 	 */
 	private function upkeep_logs( $logs ) {
 		$items_to_remove = count( $logs ) - $this->log_limit;
 
 		if ( $items_to_remove > 0 ) {
-			// keep only the last $log_limit messages from the end
+			// Only keep the last $log_limit messages from the end.
 			$logs = array_slice( $logs, ( $items_to_remove * -1 ) );
 		}
 
@@ -166,28 +209,32 @@ class OpenID_Connect_Generic_Option_Logger {
 	}
 
 	/**
-	 * Save the log messages
+	 * Save the log messages.
 	 *
-	 * @param $logs
+	 * @param array $logs The array of log messages.
+	 *
 	 * @return bool
 	 */
 	private function save_logs( $logs ) {
-		// save our logs
+		// Save the logs.
 		$this->logs = $logs;
 		return update_option( $this->option_name, $logs, false );
 	}
 
 	/**
-	 * Clear all log messages
+	 * Clear all log messages.
+	 *
+	 * @return void
 	 */
 	public function clear_logs() {
 		$this->save_logs( array() );
 	}
 
 	/**
-	 * Get a simple html table of all the logs
+	 * Get a simple html table of all the logs.
 	 *
-	 * @param array $logs
+	 * @param array $logs The array of log messages.
+	 *
 	 * @return string
 	 */
 	public function get_logs_table( $logs = array() ) {
@@ -220,7 +267,7 @@ class OpenID_Connect_Generic_Option_Logger {
 						</div>
 						<div>
 							<label><?php _e( 'Date' ); ?>: </label>
-							<?php print date( 'Y-m-d H:i:s', $log['time'] ); ?>
+							<?php print gmdate( 'Y-m-d H:i:s', $log['time'] ); ?>
 						</div>
 						<div>
 							<label><?php _e( 'User' ); ?>: </label>
