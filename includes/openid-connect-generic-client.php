@@ -480,7 +480,7 @@ class OpenID_Connect_Generic_Client {
 	 * Make sure the user_claim has all required values, and that the subject
 	 * identity matches of the id_token matches that of the user_claim.
 	 *
-	 * @param array $user_claim     The authentication user claim.
+	 * @param array $user_claim     The authenticated user claim.
 	 * @param array $id_token_claim The ID token claim.
 	 *
 	 * @return bool|WP_Error
