@@ -31,7 +31,7 @@ parameters:
         - '/^assets\/(.*)/'
     phpstan:
       configuration: './phpstan.neon.dist'
-      level: max
+      level: 5
       ignore_patterns:
         - '/^assets\/(.*)/'
       memory_limit: '-1'

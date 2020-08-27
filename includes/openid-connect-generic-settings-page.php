@@ -85,7 +85,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Option_Logger   $logger   A plugin logger object instance.
 	 *
-	 * @return \OpenID_Connect_Generic_Settings_Page
+	 * @return void
 	 */
 	static public function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$settings_page = new self( $settings, $logger );
@@ -95,8 +95,6 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		// Register our settings.
 		add_action( 'admin_init', array( $settings_page, 'admin_init' ) );
-
-		return $settings_page;
 	}
 
 	/**

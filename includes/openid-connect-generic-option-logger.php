@@ -243,7 +243,7 @@ class OpenID_Connect_Generic_Option_Logger {
 		}
 		$logs = array_reverse( $logs );
 
-		ini_set( 'xdebug.var_display_max_depth', -1 );
+		ini_set( 'xdebug.var_display_max_depth', '-1' );
 
 		ob_start();
 		?>

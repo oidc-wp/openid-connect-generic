@@ -141,7 +141,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Get the authentication url from the client.
 	 *
-	 * @param array $atts The optional attributes array when called via a shortcode.
+	 * @param array<string> $atts The optional attributes array when called via a shortcode.
 	 *
 	 * @return string
 	 */
@@ -249,11 +249,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Add the end_session endpoint to WordPress core's whitelist of redirect hosts.
 	 *
-	 * @param array $allowed The allowed redirect host names.
+	 * @param array<string> $allowed The allowed redirect host names.
 	 *
-	 * @return array|bool
+	 * @return array<string>|bool
 	 */
-	function update_allowed_redirect_hosts( array $allowed ) {
+	function update_allowed_redirect_hosts( $allowed ) {
 		$host = parse_url( $this->settings->endpoint_end_session, PHP_URL_HOST );
 		if ( ! $host ) {
 			return false;
@@ -311,8 +311,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Modify outgoing requests according to settings.
 	 *
-	 * @param array  $request   The outgoing request array.
-	 * @param string $operation The request operation name.
+	 * @param array<mixed> $request   The outgoing request array.
+	 * @param string       $operation The request operation name.
 	 *
 	 * @return mixed
 	 */
@@ -429,7 +429,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 					$this->error_redirect( $user );
 				}
 			} else {
-				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not link to an existing WordPress user' ), $user_claim ) );
+				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user' ), $user_claim ) );
 			}
 		} else {
 			// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
@@ -468,7 +468,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Validate the potential WP_User.
 	 *
-	 * @param WP_User $user The user object.
+	 * @param WP_User|WP_Error|false $user The user object.
 	 *
 	 * @return true|WP_Error
 	 */
@@ -514,9 +514,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * Save refresh token to WP session tokens
 	 *
-	 * @param WP_Session_Tokens $manager        A user session tokens manager.
-	 * @param string            $token          The current users session token.
-	 * @param array             $token_response The authentication token response.
+	 * @param WP_Session_Tokens   $manager        A user session tokens manager.
+	 * @param string              $token          The current users session token.
+	 * @param array|WP_Error|null $token_response The authentication token response.
 	 */
 	function save_refresh_token( $manager, $token, $token_response ) {
 		if ( ! $this->settings->token_refresh_enable ) {
@@ -578,6 +578,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string|WP_Error|null
 	 */
 	private function get_username_from_claim( $user_claim ) {
+
+		// @var string $desired_username
+		$desired_username = '';
+
 		// Allow settings to take first stab at username.
 		if ( ! empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
 			$desired_username = $user_claim[ $this->settings->identity_key ];
@@ -594,13 +598,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Normalize the data a bit.
+		// @var string $transliterated_username The username converted to ASCII from UTF-8.
 		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
 		if ( empty( $transliterated_username ) ) {
-			return new WP_Error( 'username-transliteration-failed', printf( __( 'Username %1$s could not be transliterated' ), $desired_username ), $desired_username );
+			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated' ), $desired_username ), $desired_username );
 		}
 		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
 		if ( empty( $normalized_username ) ) {
-			return new WP_Error( 'username-normalization-failed', printf( __( 'Username %1$s could not be normalized' ), $transliterated_username ), $transliterated_username );
+			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized' ), $transliterated_username ), $transliterated_username );
 		}
 
 		// Copy the username for incrementing.
@@ -623,7 +628,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param array $user_claim The IDP authenticated user claim data.
 	 *
-	 * @return string|null
+	 * @return string|WP_Error|null
 	 */
 	private function get_nickname_from_claim( $user_claim ) {
 		$desired_nickname = null;
@@ -631,6 +636,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! empty( $this->settings->nickname_key ) && isset( $user_claim[ $this->settings->nickname_key ] ) ) {
 			$desired_nickname = $user_claim[ $this->settings->nickname_key ];
 		}
+
+		if ( empty( $desired_nickname ) ) {
+			return new WP_Error( 'no-nickname', sprintf( __( 'No nickname found in user claim using key: %1$s.' ), $this->settings->nickname_key ), $this->settings->nickname_key );
+		}
+
 		return $desired_nickname;
 	}
 

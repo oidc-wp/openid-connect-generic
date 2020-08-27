@@ -53,7 +53,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Client_Wrapper  $client_wrapper A plugin client wrapper object instance.
 	 *
-	 * @return OpenID_Connect_Generic_Login_Form
+	 * @return void
 	 */
 	static public function register( $settings, $client_wrapper ) {
 		$login_form = new self( $settings, $client_wrapper );
@@ -65,8 +65,6 @@ class OpenID_Connect_Generic_Login_Form {
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
 
 		$login_form->handle_redirect_login_type_auto();
-
-		return $login_form;
 	}
 
 	/**

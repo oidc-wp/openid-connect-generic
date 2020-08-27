@@ -158,9 +158,9 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Validate the request for login authentication
 	 *
-	 * @param array $request The authentication request results.
+	 * @param array<string> $request The authentication request results.
 	 *
-	 * @return array|WP_Error
+	 * @return array<string>|WP_Error
 	 */
 	function validate_authentication_request( $request ) {
 		// Look for an existing error of some kind.
@@ -189,20 +189,24 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Get the authorization code from the request
 	 *
-	 * @param array $request The authentication request results.
+	 * @param array<string>|WP_Error $request The authentication request results.
 	 *
 	 * @return string|WP_Error
 	 */
 	function get_authentication_code( $request ) {
+		if ( ! isset( $request['code'] ) ) {
+			return new WP_Error( 'missing-authentication-code', __( 'Missing authentication code.' ), $request );
+		}
+
 		return $request['code'];
 	}
 
 	/**
 	 * Using the authorization_code, request an authentication token from the IDP.
 	 *
-	 * @param string $code The authorization code.
+	 * @param string|WP_Error $code The authorization code.
 	 *
-	 * @return array|WP_Error
+	 * @return array<mixed>|WP_Error
 	 */
 	function request_authentication_token( $code ) {
 
@@ -270,9 +274,9 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Extract and decode the token body of a token response
 	 *
-	 * @param array $token_result The token response.
+	 * @param array<mixed>|WP_Error $token_result The token response.
 	 *
-	 * @return array|WP_Error|null
+	 * @return array<mixed>|WP_Error|null
 	 */
 	function get_token_response( $token_result ) {
 		if ( ! isset( $token_result['body'] ) ) {

@@ -69,28 +69,32 @@ class OpenID_Connect_Generic_Option_Settings {
 	/**
 	 * Stored option values array.
 	 *
-	 * @var array
+	 * @var array<mixed>
 	 */
 	private $values;
 
 	/**
 	 * Default plugin settings values.
 	 *
-	 * @var array
+	 * @var array<mixed>
 	 */
 	private $default_settings;
 
 	/**
 	 * The class constructor.
 	 *
-	 * @param string    $option_name       The option name/key.
-	 * @param array     $default_settings  The default plugin settings values.
-	 * @param bool|TRUE $granular_defaults The granular defaults.
+	 * @param string       $option_name       The option name/key.
+	 * @param array<mixed> $default_settings  The default plugin settings values.
+	 * @param bool         $granular_defaults The granular defaults.
 	 */
 	function __construct( $option_name, $default_settings = array(), $granular_defaults = true ) {
 		$this->option_name = $option_name;
 		$this->default_settings = $default_settings;
-		$this->values = get_option( $this->option_name, $this->default_settings );
+		$this->values = array();
+
+		if ( ! empty( $this->option_name ) ) {
+			get_option( $this->option_name, $this->default_settings );
+		}
 
 		if ( $granular_defaults ) {
 			$this->values = array_replace_recursive( $this->default_settings, $this->values );

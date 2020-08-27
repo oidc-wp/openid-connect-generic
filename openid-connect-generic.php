@@ -104,20 +104,6 @@ class OpenID_Connect_Generic {
 	private $client;
 
 	/**
-	 * Settings admin page.
-	 *
-	 * @var OpenID_Connect_Generic_Settings_Page
-	 */
-	private $settings_page;
-
-	/**
-	 * Login form adjustments.
-	 *
-	 * @var OpenID_Connect_Generic_Login_Form
-	 */
-	private $login_form;
-
-	/**
 	 * Client wrapper.
 	 *
 	 * @var OpenID_Connect_Generic_Client_Wrapper
@@ -172,7 +158,7 @@ class OpenID_Connect_Generic {
 			return;
 		}
 
-		$this->login_form = OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
+		OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
 
 		// Add a shortcode to get the auth URL.
 		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
@@ -183,13 +169,15 @@ class OpenID_Connect_Generic {
 		$this->upgrade();
 
 		if ( is_admin() ) {
-			$this->settings_page = OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
+			OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 		}
 	}
 
 	/**
 	 * Check if privacy enforcement is enabled, and redirect users that aren't
 	 * logged in.
+	 *
+	 * @return void
 	 */
 	function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
@@ -216,6 +204,8 @@ class OpenID_Connect_Generic {
 
 	/**
 	 * Handle plugin upgrades
+	 *
+	 * @return void
 	 */
 	function upgrade() {
 		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
@@ -243,6 +233,8 @@ class OpenID_Connect_Generic {
 	/**
 	 * Expire state transients by attempting to access them and allowing the
 	 * transient's own mechanisms to delete any that have expired.
+	 *
+	 * @return void
 	 */
 	function cron_states_garbage_collection() {
 		global $wpdb;
@@ -258,6 +250,8 @@ class OpenID_Connect_Generic {
 
 	/**
 	 * Ensure cron jobs are added to the schedule.
+	 *
+	 * @return void
 	 */
 	static public function setup_cron_jobs() {
 		if ( ! wp_next_scheduled( 'openid-connect-generic-cron-daily' ) ) {
@@ -267,6 +261,8 @@ class OpenID_Connect_Generic {
 
 	/**
 	 * Activation hook.
+	 *
+	 * @return void
 	 */
 	static public function activation() {
 		self::setup_cron_jobs();
@@ -274,6 +270,8 @@ class OpenID_Connect_Generic {
 
 	/**
 	 * Deactivation hook.
+	 *
+	 * @return void
 	 */
 	static public function deactivation() {
 		wp_clear_scheduled_hook( 'openid-connect-generic-cron-daily' );
@@ -283,6 +281,8 @@ class OpenID_Connect_Generic {
 	 * Simple autoloader.
 	 *
 	 * @param string $class The class name.
+	 *
+	 * @return void
 	 */
 	static public function autoload( $class ) {
 		$prefix = 'OpenID_Connect_Generic_';
@@ -308,9 +308,16 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * Instantiate the plugin and hook into WP
+	 * Instantiate the plugin and hook into WordPress.
+	 *
+	 * @return void
 	 */
 	static public function bootstrap() {
+		/**
+		 * This is a documented valid call for spl_autoload_register.
+		 *
+		 * @link https://www.php.net/manual/en/function.spl-autoload-register.php#71155
+		 */
 		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(

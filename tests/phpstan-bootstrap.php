@@ -12,3 +12,8 @@
 
 // Define WordPress language directory.
 defined( 'WP_LANG_DIR' ) || define( 'WP_LANG_DIR', 'wordpress/src/wp-includes/languages/' );
+
+defined( 'COOKIE_DOMAIN' ) || define( 'COOKIE_DOMAIN', 'localhost' );
+defined( 'COOKIEPATH' ) || define( 'COOKIEPATH', '/');
+
+

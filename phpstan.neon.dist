@@ -7,7 +7,7 @@ includes:
   # Include this extension
   # - vendor/szepeviktor/phpstan-wordpress/extension.neon
 parameters:
-  level: max
+  level: 5
   inferPrivatePropertyTypeFromConstructor: true
   bootstrapFiles:
     - tests/phpstan-bootstrap.php
