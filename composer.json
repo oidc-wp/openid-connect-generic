@@ -50,6 +50,7 @@
 		"phpstan/phpstan": "*",
 		"phpstan/extension-installer": "^1.0",
 		"szepeviktor/phpstan-wordpress": "*",
+		"php-stubs/wordpress-stubs": "~5.4.2",
 		"roave/security-advisories": "dev-master",
 		"mnsami/composer-custom-directory-installer": "~1.0",
 		"wordpress/wordpress": "~5.4.2",
