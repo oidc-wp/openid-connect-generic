@@ -197,7 +197,7 @@ class OpenID_Connect_Generic {
 	 */
 	function enforce_privacy_feeds( $content ) {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			$content = 'Private site';
+			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
 		}
 		return $content;
 	}
