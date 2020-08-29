@@ -1,0 +1,118 @@
+# Travis CI Configuration File
+
+# Tell Travis CI which distro to use
+dist: trusty
+
+sudo: false
+
+# Tell Travis CI we're using PHP
+language: php
+
+# Tell Travis CI which notifications to send
+notifications:
+  email:
+    on_success: never
+    on_failure: change
+
+# whitelist branches for the "push" build check
+branches:
+  only:
+    - main
+    - /^dev\-release\/.*$/
+    - /^feature\/.*$/
+    - /^fix\/.*$/
+
+# Git clone depth
+# By default Travis CI clones repositories to a depth of 50 commits
+git:
+  depth: 1
+
+cache:
+  directories:
+    - vendor
+    - $HOME/.composer/cache
+
+# Define a matrix of additional build configurations
+# The versions listed above will automatically create our first configuration,
+# so it doesn't need to be re-defined below.
+matrix:
+  fast_finish: true
+  include:
+    - name: Coding Standards
+      php: 7.3
+      env: WP_MODE=single WP_VERSION=5.4.* PHP_LINT=1 COVERAGE=1
+    - name: Static Code Analysis
+      php: 7.3
+      env: WP_MODE=single WP_VERSION=5.4.* PHP_ANALYZE=1
+    - name: Latest Stable
+      php: 7.3
+      env: WP_MODE=single WP_VERSION=5.4.* PHP_UNIT=1
+    - name: Preferred Minimum requirements
+      php: 7.2
+      env: WP_MODE=single WP_VERSION=5.3.* PHP_UNIT=1
+    - name: Minimum requirements
+      php: 7.1
+      env: WP_MODE=single WP_VERSION=5.2.* PHP_UNIT=1
+    - name: Bleeding Edge
+      php: 7.4
+      env: WP_MODE=single WP_VERSION=dev-master PHP_UNIT=1
+    - name: Multisite Compatibility
+      php: 7.3
+      env: WP_MODE=multi WP_VERSION=5.4.* PHP_UNIT=1
+  allow_failures:
+    - name: Bleeding Edge
+
+addons:
+  apt:
+    packages:
+      - nodejs
+
+before_install:
+  - npm install -g npm@6.14
+  - npm install -g grunt-cli
+  - composer require "wordpress/wordpress:${WP_VERSION}" --dev --prefer-source --no-update
+
+install:
+  - composer update --prefer-source --no-interaction --dev --optimize-autoloader
+  - npm install
+
+before_script:
+  - export PATH="$HOME/.composer/vendor/bin:$PATH"
+  # Setup WordPress coding standards
+  - |
+    if [[ "$PHP_LINT" == "1" ]]; then
+      composer global require wp-coding-standards/wpcs
+    fi
+  # Setup unit testing environment
+  - |
+    if [[ "$PHP_UNIT" == "1" ]]; then
+      # bash scripts/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
+      if [[ $TRAVIS_PHP_VERSION == "7.4" ]]; then
+        composer global require "phpunit/php-code-coverage=dev-master"
+        composer global require "sebastian/global-state:dev-master"
+        composer global require "phpunit/phpunit=dev-master"
+      else
+        composer global require "phpunit/phpunit=7.*"
+      fi
+    fi
+
+script:
+  - |
+    if [[ "$PHP_LINT" == "1" ]]; then
+      if [[ "$WP_MODE" == "single" ]]; then WP_MULTISITE=0 npm run lint; fi
+    fi
+  - |
+    if [[ "$PHP_ANALYZE" == "1" ]]; then
+      if [[ "$WP_MODE" == "single" ]]; then WP_MULTISITE=0 npm run analyze; fi
+    fi
+  - |
+    if [[ "$PHP_UNIT" == "1" ]]; then
+      if [[ "$WP_MODE" == "multi" ]]; then WP_MULTISITE=1 npm run test; fi
+      if [[ "$WP_MODE" == "single" ]]; then WP_MULTISITE=0 npm run test; fi
+    fi
+
+after_success:
+  - |
+    if [[ "$COVERAGE" == "1" ]]; then
+      bash <(curl -s https://codecov.io/bash)
+    fi
