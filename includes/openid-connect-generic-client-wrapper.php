@@ -194,7 +194,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			wp_logout();
 
 			if ( $this->settings->redirect_on_logout ) {
-				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.' ) ) );
+				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
 			}
 
 			return;
@@ -429,7 +429,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 					$this->error_redirect( $user );
 				}
 			} else {
-				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user' ), $user_claim ) );
+				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user.', 'daggerhart-openid-connect-generic' ), $user_claim ) );
 			}
 		} else {
 			// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
@@ -475,7 +475,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	function validate_user( $user ) {
 		// Ensure the found user is a real WP_User.
 		if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
-			return new WP_Error( 'invalid-user', __( 'Invalid user' ), $user );
+			return new WP_Error( 'invalid-user', __( 'Invalid user.', 'daggerhart-openid-connect-generic' ), $user );
 		}
 
 		return true;
@@ -594,18 +594,18 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$desired_username = $tmp[0];
 		} else {
 			// Nothing to build a name from.
-			return new WP_Error( 'no-username', __( 'No appropriate username found' ), $user_claim );
+			return new WP_Error( 'no-username', __( 'No appropriate username found.', 'daggerhart-openid-connect-generic' ), $user_claim );
 		}
 
 		// Normalize the data a bit.
 		// @var string $transliterated_username The username converted to ASCII from UTF-8.
 		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
 		if ( empty( $transliterated_username ) ) {
-			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated' ), $desired_username ), $desired_username );
+			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
 		}
 		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
 		if ( empty( $normalized_username ) ) {
-			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized' ), $transliterated_username ), $transliterated_username );
+			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized.', 'daggerhart-openid-connect-generic' ), $transliterated_username ), $transliterated_username );
 		}
 
 		// Copy the username for incrementing.
@@ -638,7 +638,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		if ( empty( $desired_nickname ) ) {
-			return new WP_Error( 'no-nickname', sprintf( __( 'No nickname found in user claim using key: %1$s.' ), $this->settings->nickname_key ), $this->settings->nickname_key );
+			return new WP_Error( 'no-nickname', sprintf( __( 'No nickname found in user claim using key: %1$s.', 'daggerhart-openid-connect-generic' ), $this->settings->nickname_key ), $this->settings->nickname_key );
 		}
 
 		return $desired_nickname;
@@ -665,7 +665,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 					if ( $error_on_missing_key ) {
 						return new WP_Error(
 							'incomplete-user-claim',
-							__( 'User claim incomplete' ),
+							__( 'User claim incomplete.', 'daggerhart-openid-connect-generic' ),
 							array(
 								'message'    => 'Unable to find key: ' . $key . ' in user_claim',
 								'hint'       => 'Verify OpenID Scope includes a scope with the attributes you need',
@@ -767,7 +767,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 			// Make sure we didn't get an error.
 			if ( is_wp_error( $user_claim_result ) ) {
-				return new WP_Error( 'bad-user-claim-result', __( 'Bad user claim result' ), $user_claim_result );
+				return new WP_Error( 'bad-user-claim-result', __( 'Bad user claim result.', 'daggerhart-openid-connect-generic' ), $user_claim_result );
 			}
 
 			$user_claim = json_decode( $user_claim_result['body'], true );
@@ -822,7 +822,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', true, $user_claim );
 
 		if ( ! $create_user ) {
-			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.' ), $create_user );
+			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.', 'daggerhart-openid-connect-generic' ), $create_user );
 		}
 
 		$user_data = array(
@@ -841,7 +841,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Make sure we didn't fail in creating the user.
 		if ( is_wp_error( $uid ) ) {
-			return new WP_Error( 'failed-user-creation', __( 'Failed user creation.' ), $uid );
+			return new WP_Error( 'failed-user-creation', __( 'Failed user creation.', 'daggerhart-openid-connect-generic' ), $uid );
 		}
 
 		// Retrieve our new user.

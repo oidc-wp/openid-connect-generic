@@ -50,10 +50,12 @@
 		"build": "npm run grunt build",
 		"wp-env": "wp-env",
 		"wp": "wp-env run cli wp",
-		"makepot": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
+		"i18n:check": "npm run grunt checktextdomain",
+		"i18n:make": "npm run grunt i18n",
+		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
 		"lint": "npm run lint:php",
 		"lint:php": "composer run-script phpcs .",
-		"lint-fix:php": "composer run-script phpcbf .",
+		"lint:php:fix": "composer run-script phpcbf .",
 		"analyze": "npm run analyze:php",
 		"analyze:php": "composer run-script phpstan analyze ."
 	}

@@ -24,6 +24,9 @@ parameters:
     git_commit_message:
       allow_empty_message: false
       enforce_capitalized_subject: true
+    grunt:
+      task: checktextdomain
+      triggered_by: [php]
     phpcs:
       standard: './phpcs.xml.dist'
       report: 'summary'
