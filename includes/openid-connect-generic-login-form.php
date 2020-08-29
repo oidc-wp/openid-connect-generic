@@ -153,7 +153,7 @@ class OpenID_Connect_Generic_Login_Form {
 		ob_start();
 		?>
 		<div id="login_error">
-			<strong><?php _e( 'ERROR' ); ?>: </strong>
+			<strong><?php printf( _e( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), $error_code ); ?>: </strong>
 			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php
@@ -169,7 +169,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @return string
 	 */
 	function make_login_button( $atts = array() ) {
-		$button_text = __( 'Login with OpenID Connect' );
+		$button_text = __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
 		if ( ! empty( $atts['button_text'] ) ) {
 			$button_text = $atts['button_text'];
 		}

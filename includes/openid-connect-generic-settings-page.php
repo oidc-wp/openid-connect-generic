@@ -105,8 +105,8 @@ class OpenID_Connect_Generic_Settings_Page {
 	 */
 	public function admin_menu() {
 		add_options_page(
-			__( 'OpenID Connect - Generic Client' ),
-			__( 'OpenID Connect Client' ),
+			__( 'OpenID Connect - Generic Client', 'daggerhart-openid-connect-generic' ),
+			__( 'OpenID Connect Client', 'daggerhart-openid-connect-generic' ),
 			'manage_options',
 			$this->options_page_name,
 			array( $this, 'settings_page' )
@@ -130,28 +130,28 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		add_settings_section(
 			'client_settings',
-			__( 'Client Settings' ),
+			__( 'Client Settings', 'daggerhart-openid-connect-generic' ),
 			array( $this, 'client_settings_description' ),
 			$this->options_page_name
 		);
 
 		add_settings_section(
 			'user_settings',
-			__( 'WordPress User Settings' ),
+			__( 'WordPress User Settings', 'daggerhart-openid-connect-generic' ),
 			array( $this, 'user_settings_description' ),
 			$this->options_page_name
 		);
 
 		add_settings_section(
 			'authorization_settings',
-			__( 'Authorization Settings' ),
+			__( 'Authorization Settings', 'daggerhart-openid-connect-generic' ),
 			array( $this, 'authorization_settings_description' ),
 			$this->options_page_name
 		);
 
 		add_settings_section(
 			'log_settings',
-			__( 'Log Settings' ),
+			__( 'Log Settings', 'daggerhart-openid-connect-generic' ),
 			array( $this, 'log_settings_description' ),
 			$this->options_page_name
 		);
@@ -209,167 +209,167 @@ class OpenID_Connect_Generic_Settings_Page {
 		 */
 		$fields = array(
 			'login_type'        => array(
-				'title'       => __( 'Login Type' ),
-				'description' => __( 'Select how the client (login form) should provide login options.' ),
+				'title'       => __( 'Login Type', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Select how the client (login form) should provide login options.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'select',
 				'options'     => array(
-					'button' => __( 'OpenID Connect button on login form' ),
-					'auto'   => __( 'Auto Login - SSO' ),
+					'button' => __( 'OpenID Connect button on login form', 'daggerhart-openid-connect-generic' ),
+					'auto'   => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
 				),
 				'section'     => 'client_settings',
 			),
 			'client_id'         => array(
-				'title'       => __( 'Client ID' ),
-				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.' ),
+				'title'       => __( 'Client ID', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'my-wordpress-client-id',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'client_secret'     => array(
-				'title'       => __( 'Client Secret Key' ),
-				'description' => __( 'Arbitrary secret key the server expects from this client. Can be anything, but should be very unique.' ),
+				'title'       => __( 'Client Secret Key', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Arbitrary secret key the server expects from this client. Can be anything, but should be very unique.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'scope'             => array(
-				'title'       => __( 'OpenID Scope' ),
-				'description' => __( 'Space separated list of scopes this client should access.' ),
+				'title'       => __( 'OpenID Scope', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Space separated list of scopes this client should access.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'email profile openid offline_access',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'endpoint_login'    => array(
-				'title'       => __( 'Login Endpoint URL' ),
-				'description' => __( 'Identify provider authorization endpoint.' ),
+				'title'       => __( 'Login Endpoint URL', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider authorization endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/authorize',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'endpoint_userinfo' => array(
-				'title'       => __( 'Userinfo Endpoint URL' ),
-				'description' => __( 'Identify provider User information endpoint.' ),
+				'title'       => __( 'Userinfo Endpoint URL', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider User information endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/UserInfo',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'endpoint_token'    => array(
-				'title'       => __( 'Token Validation Endpoint URL' ),
-				'description' => __( 'Identify provider token endpoint.' ),
+				'title'       => __( 'Token Validation Endpoint URL', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider token endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/token',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'endpoint_end_session'    => array(
-				'title'       => __( 'End Session Endpoint URL' ),
-				'description' => __( 'Identify provider logout endpoint.' ),
+				'title'       => __( 'End Session Endpoint URL', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider logout endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/logout',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'identity_key'     => array(
-				'title'       => __( 'Identity Key' ),
-				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".' ),
+				'title'       => __( 'Identity Key', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'preferred_username',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'no_sslverify'      => array(
-				'title'       => __( 'Disable SSL Verify' ),
-				'description' => __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.<br><strong>Not recommended for production sites.</strong>' ),
+				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
+				'description' => sprintf( __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.%1$sNot recommended for production sites.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong>', '</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
 			'http_request_timeout'      => array(
-				'title'       => __( 'HTTP Request Timeout' ),
-				'description' => __( 'Set the timeout for requests made to the IDP. Default value is 5.' ),
+				'title'       => __( 'HTTP Request Timeout', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Set the timeout for requests made to the IDP. Default value is 5.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 30,
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'enforce_privacy'   => array(
-				'title'       => __( 'Enforce Privacy' ),
-				'description' => __( 'Require users be logged in to see the site.' ),
+				'title'       => __( 'Enforce Privacy', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Require users be logged in to see the site.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
 			'alternate_redirect_uri'   => array(
-				'title'       => __( 'Alternate Redirect URI' ),
-				'description' => __( 'Provide an alternative redirect route. Useful if your server is causing issues with the default admin-ajax method. You must flush rewrite rules after changing this setting. This can be done by saving the Permalinks settings page.' ),
+				'title'       => __( 'Alternate Redirect URI', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Provide an alternative redirect route. Useful if your server is causing issues with the default admin-ajax method. You must flush rewrite rules after changing this setting. This can be done by saving the Permalinks settings page.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
 			'nickname_key'     => array(
-				'title'       => __( 'Nickname Key' ),
-				'description' => __( 'Where in the user claim array to find the user\'s nickname. Possible standard values: preferred_username, name, or sub.' ),
+				'title'       => __( 'Nickname Key', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Where in the user claim array to find the user\'s nickname. Possible standard values: preferred_username, name, or sub.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'preferred_username',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'email_format'     => array(
-				'title'       => __( 'Email Formatting' ),
-				'description' => __( 'String from which the user\'s email address is built. Specify "{email}" as long as the user claim contains an email claim.' ),
+				'title'       => __( 'Email Formatting', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'String from which the user\'s email address is built. Specify "{email}" as long as the user claim contains an email claim.', 'daggerhart-openid-connect-generic' ),
 				'example'     => '{email}',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'displayname_format'     => array(
-				'title'       => __( 'Display Name Formatting' ),
-				'description' => __( 'String from which the user\'s display name is built.' ),
+				'title'       => __( 'Display Name Formatting', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'String from which the user\'s display name is built.', 'daggerhart-openid-connect-generic' ),
 				'example'     => '{given_name} {family_name}',
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
 			'identify_with_username'     => array(
-				'title'       => __( 'Identify with User Name' ),
-				'description' => __( 'If checked, the user\'s identity will be determined by the user name instead of the email address.' ),
+				'title'       => __( 'Identify with User Name', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If checked, the user\'s identity will be determined by the user name instead of the email address.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
 			'state_time_limit'     => array(
-				'title'       => __( 'State time limit' ),
-				'description' => __( 'State valid time in seconds. Defaults to 180' ),
+				'title'       => __( 'State time limit', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'State valid time in seconds. Defaults to 180', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'number',
 				'section'     => 'client_settings',
 			),
 			'token_refresh_enable'   => array(
-				'title'       => __( 'Enable Refresh Token' ),
-				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.' ),
+				'title'       => __( 'Enable Refresh Token', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
 			'link_existing_users'   => array(
-				'title'       => __( 'Link Existing Users' ),
-				'description' => __( 'If a WordPress account already exists with the same identity as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.' ),
+				'title'       => __( 'Link Existing Users', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If a WordPress account already exists with the same identity as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
 			'create_if_does_not_exist'   => array(
-				'title'       => __( 'Create user if does not exist' ),
-				'description' => __( 'If the user identity is not link to an existing Wordpress user, it is created. If this setting is not enabled and if the user authenticates with an account which is not link to an existing Wordpress user then the authentication failed' ),
+				'title'       => __( 'Create user if does not exist', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If the user identity is not link to an existing Wordpress user, it is created. If this setting is not enabled and if the user authenticates with an account which is not link to an existing Wordpress user then the authentication failed', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
 			'redirect_user_back'   => array(
-				'title'       => __( 'Redirect Back to Origin Page' ),
-				'description' => __( 'After a successful OpenID Connect authentication, this will redirect the user back to the page on which they clicked the OpenID Connect login button. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.' ),
+				'title'       => __( 'Redirect Back to Origin Page', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'After a successful OpenID Connect authentication, this will redirect the user back to the page on which they clicked the OpenID Connect login button. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
 			'redirect_on_logout'   => array(
-				'title'       => __( 'Redirect to the login screen session is expired' ),
-				'description' => __( 'When enabled, this will automatically redirect the user back to the WordPress login page if their access token has expired.' ),
+				'title'       => __( 'Redirect to the login screen when session is expired', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'When enabled, this will automatically redirect the user back to the WordPress login page if their access token has expired.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'user_settings',
 			),
 			'enable_logging'    => array(
-				'title'       => __( 'Enable Logging' ),
-				'description' => __( 'Very simple log messages for debugging purposes.' ),
+				'title'       => __( 'Enable Logging', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Very simple log messages for debugging purposes.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'log_settings',
 			),
 			'log_limit'         => array(
-				'title'       => __( 'Log Limit' ),
-				'description' => __( 'Number of items to keep in the log. These logs are stored as an option in the database, so space is limited.' ),
+				'title'       => __( 'Log Limit', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Number of items to keep in the log. These logs are stored as an option in the database, so space is limited.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'number',
 				'section'     => 'log_settings',
 			),
@@ -429,23 +429,23 @@ class OpenID_Connect_Generic_Settings_Page {
 				?>
 			</form>
 
-			<h4><?php _e( 'Notes' ); ?></h4>
+			<h4><?php _e( 'Notes', 'daggerhart-openid-connect-generic' ); ?></h4>
 
 			<p class="description">
-				<strong><?php _e( 'Redirect URI' ); ?></strong>
+				<strong><?php _e( 'Redirect URI', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code><?php print $redirect_uri; ?></code>
 			</p>
 			<p class="description">
-				<strong><?php _e( 'Login Button Shortcode' ); ?></strong>
+				<strong><?php _e( 'Login Button Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code>[openid_connect_generic_login_button]</code>
 			</p>
 			<p class="description">
-				<strong><?php _e( 'Authentication URL Shortcode' ); ?></strong>
+				<strong><?php _e( 'Authentication URL Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code>[openid_connect_generic_auth_url]</code>
 			</p>
 
 			<?php if ( $this->settings->enable_logging ) { ?>
-				<h2><?php _e( 'Logs' ); ?></h2>
+				<h2><?php _e( 'Logs', 'daggerhart-openid-connect-generic' ); ?></h2>
 				<div id="logger-table-wrapper">
 					<?php print $this->logger->get_logs_table(); ?>
 				</div>
@@ -524,7 +524,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		<p class="description">
 			<?php print $field['description']; ?>
 			<?php if ( isset( $field['example'] ) ) : ?>
-				<br/><strong><?php _e( 'Example' ); ?>: </strong>
+				<br/><strong><?php _e( 'Example', 'daggerhart-openid-connect-generic' ); ?>: </strong>
 				<code><?php print $field['example']; ?></code>
 			<?php endif; ?>
 		</p>
@@ -537,7 +537,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function client_settings_description() {
-		_e( 'Enter your OpenID Connect identity provider settings' );
+		_e( 'Enter your OpenID Connect identity provider settings.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -546,7 +546,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function user_settings_description() {
-		_e( 'Modify the interaction between OpenID Connect and WordPress users' );
+		_e( 'Modify the interaction between OpenID Connect and WordPress users.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -555,7 +555,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function authorization_settings_description() {
-		_e( 'Control the authorization mechanics of the site' );
+		_e( 'Control the authorization mechanics of the site.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -564,6 +564,6 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function log_settings_description() {
-		_e( 'Log information about login attempts through OpenID Connect Generic' );
+		_e( 'Log information about login attempts through OpenID Connect Generic.', 'daggerhart-openid-connect-generic' );
 	}
 }

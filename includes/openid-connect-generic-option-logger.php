@@ -262,19 +262,19 @@ class OpenID_Connect_Generic_Option_Logger {
 				<tr>
 					<td class="col-details">
 						<div>
-							<label><?php _e( 'Type' ); ?>: </label>
+							<label><?php _e( 'Type', 'daggerhart-openid-connect-generic' ); ?>: </label>
 							<?php print $log['type']; ?>
 						</div>
 						<div>
-							<label><?php _e( 'Date' ); ?>: </label>
+							<label><?php _e( 'Date', 'daggerhart-openid-connect-generic' ); ?>: </label>
 							<?php print gmdate( 'Y-m-d H:i:s', $log['time'] ); ?>
 						</div>
 						<div>
-							<label><?php _e( 'User' ); ?>: </label>
+							<label><?php _e( 'User', 'daggerhart-openid-connect-generic' ); ?>: </label>
 							<?php print ( get_userdata( $log['user_ID'] ) ) ? get_userdata( $log['user_ID'] )->user_login : '0'; ?>
 						</div>
 						<div>
-							<label><?php _e( 'URI ' ); ?>: </label>
+							<label><?php _e( 'URI ', 'daggerhart-openid-connect-generic' ); ?>: </label>
 							<?php print $log['uri']; ?>
 						</div>
 					</td>

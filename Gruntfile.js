@@ -96,7 +96,7 @@ module.exports = function (grunt) {
 				options: {
 					updateDomains: true
 				},
-				src: ['*.php', '**/*.php', '!node_modules/**', '!tests/**', '!scripts/**', '!wordpress/**']
+				src: ['*.php', '**/*.php', '!node_modules/**', '!tests/**', '!scripts/**', '!vendor/**', '!wordpress/**']
 			},
 		},
 
@@ -124,8 +124,9 @@ module.exports = function (grunt) {
 					mainFile: 'openid-connect-generic.php',                     // Main project file.
 					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
 					potHeaders: {
-						poedit: true,                 // Includes common Poedit headers.
-						'x-poedit-keywordslist': true // Include a list of all possible gettext functions.
+						poedit: true,                   // Includes common Poedit headers.
+						'report-msgid-bugs-to': 'https://github.com/daggerhart/openid-connect-generic/issues',
+						'x-poedit-keywordslist': true   // Include a list of all possible gettext functions.
 					},                                // Headers to add to the generated POT file.
 					type: 'wp-plugin',                // Type of project (wp-plugin or wp-theme).
 					updateTimestamp: true,            // Whether the POT-Creation-Date should be updated without other changes.
@@ -191,7 +192,7 @@ module.exports = function (grunt) {
 	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain', 'phpcs']);
+	grunt.registerTask('test', ['checktextdomain']);
 	grunt.registerTask('build', ['gitinfo', 'test', 'clean', 'i18n', 'readme', 'copy']);
 	//grunt.registerTask( 'deploy', [ 'checkbranch:master', 'checkrepo', 'build' ] );
 	grunt.registerTask('deploy', ['checkrepo', 'build']);
