@@ -1,6 +1,6 @@
 {
 	"name": "openid-connect-generic",
-	"version": "3.7.0",
+	"version": "3.7.1",
 	"description": "OpenID Connect generic WordPress plugin.",
 	"main": "Gruntfile.js",
 	"repository": {
@@ -20,11 +20,16 @@
 	"dependencies": {
 		"dev-require": "^0.1.0"
 	},
+	"engines": {
+		"node": "12.18.3",
+		"npm": "6.14.8"
+	},
 	"devDependencies": {
 		"@floatwork/grunt-po2mo": "^0.3.0",
 		"@ndigitals/grunt-checkrepo": "^0.2.0",
 		"@wordpress/env": "^1.6.0",
 		"@wordpress/scripts": "^12.1.0",
+		"check-node-version": "4.0.3",
 		"grunt": "~1.0.4",
 		"grunt-checkbranch": "^1.0.4",
 		"grunt-checktextdomain": "^1.0.1",
@@ -36,6 +41,8 @@
 		"grunt-wp-i18n": "^1.0.3",
 		"grunt-wp-readme-to-markdown": "~2.0.0",
 		"load-grunt-tasks": "^3.5",
+		"node": "^12.18.3",
+		"npm": "^6.14.8",
 		"puppeteer": "^1.20.0",
 		"typescript": "^3.9.7"
 	},
@@ -49,6 +56,8 @@
 		"grunt": "node_modules/.bin/grunt",
 		"test": "npm run grunt test",
 		"build": "npm run grunt build",
+		"check-engines": "wp-scripts check-engines",
+		"check-licenses": "wp-scripts check-licenses",
 		"wp-env": "wp-env",
 		"wp": "wp-env run cli wp",
 		"i18n:check": "npm run grunt checktextdomain",
