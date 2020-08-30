@@ -1,7 +1,9 @@
 # grumphp.yml
 parameters:
   git_dir: .
-  bin_dir: 'vendor/bin'
+  bin_dir:
+    - 'node_modules/.bin'
+    - 'vendor/bin'
   stop_on_failure: true
   process_timeout: 120
   parallel:

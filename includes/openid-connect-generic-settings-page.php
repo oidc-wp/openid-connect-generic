@@ -223,12 +223,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'my-wordpress-client-id',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_CLIENT_ID' ),
 				'section'     => 'client_settings',
 			),
 			'client_secret'     => array(
 				'title'       => __( 'Client Secret Key', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Arbitrary secret key the server expects from this client. Can be anything, but should be very unique.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_CLIENT_SECRET' ),
 				'section'     => 'client_settings',
 			),
 			'scope'             => array(
@@ -243,6 +245,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Identify provider authorization endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/authorize',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_LOGIN_URL' ),
 				'section'     => 'client_settings',
 			),
 			'endpoint_userinfo' => array(
@@ -250,6 +253,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Identify provider User information endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/UserInfo',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ),
 				'section'     => 'client_settings',
 			),
 			'endpoint_token'    => array(
@@ -257,6 +261,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Identify provider token endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/token',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_TOKEN_URL' ),
 				'section'     => 'client_settings',
 			),
 			'endpoint_end_session'    => array(
@@ -264,6 +269,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Identify provider logout endpoint.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com/oauth2/logout',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ),
 				'section'     => 'client_settings',
 			),
 			'identity_key'     => array(
@@ -465,10 +471,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_text_field( $field ) {
 		?>
 		<input type="<?php print esc_attr( $field['type'] ); ?>"
-			   id="<?php print esc_attr( $field['key'] ); ?>"
-			   class="large-text"
-			   name="<?php print esc_attr( $field['name'] ); ?>"
-			   value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
+				<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) ) ? ' disabled' : ''; ?>
+			  id="<?php print esc_attr( $field['key'] ); ?>"
+			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) ) ? ' disabled' : ''; ?>"
+			  name="<?php print esc_attr( $field['name'] ); ?>"
+			  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php
 		$this->do_field_description( $field );
 	}

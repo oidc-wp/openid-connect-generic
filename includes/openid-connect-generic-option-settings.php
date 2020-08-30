@@ -81,6 +81,20 @@ class OpenID_Connect_Generic_Option_Settings {
 	private $default_settings;
 
 	/**
+	 * List of settings that can be defined by environment variables.
+	 *
+	 * @var array<string,string>
+	 */
+	private $environment_settings = array(
+		'client_id'            => 'OIDC_CLIENT_ID',
+		'client_secret'        => 'OIDC_CLIENT_SECRET',
+		'endpoint_login'       => 'OIDC_ENDPOINT_LOGIN_URL',
+		'endpoint_userinfo'    => 'OIDC_ENDPOINT_USERINFO_URL',
+		'endpoint_token'       => 'OIDC_ENDPOINT_TOKEN_URL',
+		'endpoint_end_session' => 'OIDC_ENDPOINT_LOGOUT_URL',
+	);
+
+	/**
 	 * The class constructor.
 	 *
 	 * @param string       $option_name       The option name/key.
@@ -172,6 +186,15 @@ class OpenID_Connect_Generic_Option_Settings {
 	 * @return void
 	 */
 	function save() {
+
+		// For each defined environment variable/constant be sure it isn't saved to the database.
+		foreach ( $this->environment_settings as $key => $constant ) {
+			if ( defined( $constant ) ) {
+				$this->__unset( $key );
+			}
+		}
+
 		update_option( $this->option_name, $this->values );
+
 	}
 }
