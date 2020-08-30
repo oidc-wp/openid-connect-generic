@@ -1,7 +1,7 @@
 # grumphp.yml
 parameters:
   git_dir: .
-  bin_dir:
+  bin-dir:
     - 'node_modules/.bin'
     - 'vendor/bin'
   stop_on_failure: true
