@@ -1,9 +1,6 @@
 # grumphp.yml
-parameters:
-  git_dir: .
-  bin-dir:
-    - 'node_modules/.bin'
-    - 'vendor/bin'
+grumphp:
+  hide_circumvention_tip: true
   stop_on_failure: true
   process_timeout: 120
   parallel:
@@ -12,6 +9,11 @@ parameters:
   fixer:
     enabled: false
     fix_by_default: false
+  environment:
+    variables:
+      GRUMPHP_BIN_DIR: 'vendor/bin'
+    paths:
+      - 'node_modules/.bin'
   tasks:
     git_blacklist:
       keywords:
@@ -26,18 +28,25 @@ parameters:
     git_commit_message:
       allow_empty_message: false
       enforce_capitalized_subject: true
-    grunt:
-      task: checktextdomain
+      enforce_no_subject_punctuations: true
+      enforce_no_subject_trailing_period: true
+    npm_script:
+      script: 'i18n:check'
+      is_run_task: true
       triggered_by: [php]
+      metadata:
+        label: 'i18n Check'
     phpcs:
       standard: './phpcs.xml.dist'
       report: 'summary'
       ignore_patterns:
         - '/^assets\/(.*)/'
+      triggered_by: [php]
     phpstan:
       configuration: './phpstan.neon.dist'
       level: 5
       ignore_patterns:
         - '/^assets\/(.*)/'
       memory_limit: '-1'
+      triggered_by: [php]
     securitychecker: ~
