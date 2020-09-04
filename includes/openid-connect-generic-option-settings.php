@@ -93,7 +93,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		$this->values = array();
 
 		if ( ! empty( $this->option_name ) ) {
-			get_option( $this->option_name, $this->default_settings );
+			$this->values = (array) get_option( $this->option_name, $this->default_settings );
 		}
 
 		if ( $granular_defaults ) {
