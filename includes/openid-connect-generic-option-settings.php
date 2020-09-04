@@ -110,6 +110,13 @@ class OpenID_Connect_Generic_Option_Settings {
 			$this->values = (array) get_option( $this->option_name, $this->default_settings );
 		}
 
+		// For each defined environment variable/constant be sure the settings key is set.
+		foreach ( $this->environment_settings as $key => $constant ) {
+			if ( defined( $constant ) ) {
+				$this->__set( $key, constant( $constant ) );
+			}
+		}
+
 		if ( $granular_defaults ) {
 			$this->values = array_replace_recursive( $this->default_settings, $this->values );
 		}
