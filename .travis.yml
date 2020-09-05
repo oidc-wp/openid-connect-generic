@@ -29,7 +29,6 @@ git:
 
 cache:
   directories:
-    - vendor
     - $HOME/.composer/cache
 
 # Define a matrix of additional build configurations
