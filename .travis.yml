@@ -29,7 +29,6 @@ git:
 
 cache:
   directories:
-    - vendor
     - $HOME/.composer/cache
 
 # Define a matrix of additional build configurations
@@ -76,7 +75,7 @@ before_install:
   - composer require "wordpress/wordpress:${WP_VERSION}" --dev --prefer-source --no-update
 
 install:
-  - composer update --prefer-source --no-interaction --dev --optimize-autoloader
+  - composer update --prefer-source --no-interaction --optimize-autoloader
   - npm install
 
 before_script:

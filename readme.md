@@ -21,6 +21,7 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 - [Frequently Asked Questions](#frequently-asked-questions)
     - [What is the client's Redirect URI?](#what-is-the-clients-redirect-uri)
     - [Can I change the client's Redirect URI?](#can-i-change-the-clients-redirect-uri)
+- [Configuration Environment Variables/Constants](#configuration-environment-variables-constants)
 - [Hooks](#hooks)
     - [Filters](#filters)
         - [openid-connect-generic-alter-request](#openid-connect-generic-alter-request)
@@ -72,6 +73,15 @@ an alternate redirect URI that does not include a query string.
 On the settings page for this plugin (Dashboard > Settings > OpenID Connect Generic) there is a checkbox for 
 **Alternate Redirect URI**. When checked, the plugin will use the Redirect URI 
 `https://example.com/openid-connect-authorize`.
+
+## Configuration Environment Variables/Constants
+
+- Client ID: `OIDC_CLIENT_ID`
+- Client Secret Key: `OIDC_CLIENT_SECRET`
+- Login Endpoint URL: `OIDC_ENDPOINT_LOGIN_URL`
+- Userinfo Endpoint URL: `OIDC_ENDPOINT_USERINFO_URL`
+- Token Validation Endpoint URL: `OIDC_ENDPOINT_TOKEN_URL`
+- End Session Endpoint URL: `OIDC_ENDPOINT_LOGOUT_URL`
 
 ## Hooks
 

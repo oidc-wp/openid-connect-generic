@@ -1,7 +1,7 @@
 === OpenID Connect Generic Client ===
 Contributors: daggerhart, tnolte
 Donate link: http://www.daggerhart.com/
-Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
+Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 4.9
 Tested up to: 5.4.2
 Stable tag: trunk
@@ -15,7 +15,7 @@ A simple client that provides SSO or opt-in authentication against a generic OAu
 
 This plugin allows to authenticate users against OpenID Connect OAuth2 API with Authorization Code Flow.
 Once installed, it can be configured to automatically authenticate users (SSO), or provide a "Login with OpenID Connect"
-button on the login form. After consent has been obtained, an existing user is automatically logged into WordPress, while 
+button on the login form. After consent has been obtained, an existing user is automatically logged into WordPress, while
 new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
@@ -50,6 +50,16 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.8.0 =
+
+* Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
+* Improvement: @timnolte - NPM version requirements for development.
+* Improvement: @timnolte - Travis CI build fixes.
+* Improvement: @timnolte - GrumPHP configuration updates for code contributions.
+* Improvement: @timnolte - Refactored to meet WordPress coding standards.
+* Improvement: @timnolte - Refactored to provide localization.
+* Improvement: @timnolte - Refactored to provide a Docker-based local development environment.
 
 = 3.7.1 =
 
@@ -119,7 +129,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 = 3.1.0 =
 
-* Feature: @rwasef1830 - Refresh tokens 
+* Feature: @rwasef1830 - Refresh tokens
 * Feature: @rwasef1830 - Integrated logout support with end_session endpoint
 * Feature: May use an alternate redirect_uri that doesn't rely on admin-ajax
 * Feature: @ahatherly - Support for IDP behind reverse proxy
@@ -136,8 +146,8 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 = 3.0.7 =
 
-* Bug fix: @wgengarelly - When requesting userinfo, send the access token using the Authorization header field as recommended in 
-section 5.3.1 of the specs. 
+* Bug fix: @wgengarelly - When requesting userinfo, send the access token using the Authorization header field as recommended in
+section 5.3.1 of the specs.
 
 = 3.0.6 =
 
