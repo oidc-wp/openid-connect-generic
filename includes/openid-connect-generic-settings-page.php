@@ -173,6 +173,10 @@ class OpenID_Connect_Generic_Settings_Page {
 					$callback = 'do_select';
 					break;
 
+				case 'textarea':
+					$callback = 'do_textarea';
+					break;
+
 				case 'text':
 				default:
 					$callback = 'do_text_field';
@@ -291,6 +295,18 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Require users be logged in to see the site.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
+			),
+			'unprotected_urls'   => array(
+				'title'       => __( 'Unprotected URLs', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Skip privacy for the URLs in the list separated by comma.', 'daggerhart-openid-connect-generic'  ),
+				'type'        => 'textarea',
+				'section'     => 'authorization_settings'
+			),
+			'protected_urls'   => array(
+				'title'       => __( 'Protected URLs', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Enforce privacy just for the URLs in the list separated by comma.', 'daggerhart-openid-connect-generic'  ),
+				'type'        => 'textarea',
+				'section'     => 'authorization_settings'
 			),
 			'alternate_redirect_uri'   => array(
 				'title'       => __( 'Alternate Redirect URI', 'daggerhart-openid-connect-generic' ),
@@ -452,6 +468,19 @@ class OpenID_Connect_Generic_Settings_Page {
 
 			<?php } ?>
 		</div>
+		
+		<script>
+			if ( document.getElementById('enforce_privacy').checked )
+				jQuery('#protected_urls').closest('tr').hide();
+			else
+				jQuery('#unprotected_urls').closest('tr').hide();
+
+			jQuery('#enforce_privacy').click(function() {
+				jQuery("#protected_urls").closest('tr').toggle();
+				jQuery("#unprotected_urls").closest('tr').toggle();
+			});
+		</script>
+
 		<?php
 	}
 
@@ -469,6 +498,20 @@ class OpenID_Connect_Generic_Settings_Page {
 			   class="large-text"
 			   name="<?php print esc_attr( $field['name'] ); ?>"
 			   value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
+		<?php
+		$this->do_field_description( $field );
+	}
+
+	/**
+	 * Output a standard textarea
+	 *
+	 * @param $field
+	 */
+	public function do_textarea( $field ) {
+		?>
+		<textarea id="<?php print esc_attr( $field['key'] ); ?>"
+		       class="large-text" rows="5"
+		       name="<?php print esc_attr( $field['name'] ); ?>"><?php print esc_attr( $this->settings->{ $field['key'] } ); ?></textarea>
 		<?php
 		$this->do_field_description( $field );
 	}

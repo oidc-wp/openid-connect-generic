@@ -174,17 +174,61 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * Check if privacy enforcement is enabled, and redirect users that aren't
-	 * logged in.
-	 *
-	 * @return void
+	 * Check the privacy enforcement setting and other conditions to redirect the user
 	 */
 	function enforce_privacy_redirect() {
-		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			// The client endpoint relies on the wp admind ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
-				auth_redirect();
-			}
+		if ( $this->settings->enforce_privacy
+		     && ! OpenID_Connect_Generic::is_unprotected_url()
+		     && ! is_user_logged_in() )
+			OpenID_Connect_Generic::redirect_to_login_page();
+
+		else if ( ! $this->settings->enforce_privacy
+		          && OpenID_Connect_Generic::is_protected_url()
+		          && ! is_user_logged_in() )
+			OpenID_Connect_Generic::redirect_to_login_page();
+	}
+
+	/**
+	 * Check if URL is on the list of unprotected URLs
+	 */
+	function is_unprotected_url() {
+		global $wp;
+		
+		$url = home_url(add_query_arg(array($_GET), $wp->request));
+
+		$unprotected_urls = array_map('trim', 
+			apply_filters('openid-connect-generic-unprotected-urls', 
+				explode(",", $this->settings->unprotected_urls)
+			)
+		);
+
+		return in_array( $url, $unprotected_urls );
+	}
+
+	/**
+	 * Check if URL is on the list of protected URLs
+	 */
+	function is_protected_url() {
+		global $wp;
+		
+		$url = home_url(add_query_arg(array($_GET), $wp->request));
+
+		$protected_urls = array_map('trim', 
+			apply_filters('openid-connect-generic-protected-urls', 
+				explode(",", $this->settings->protected_urls)
+			)
+		);
+		
+		return in_array( $url, $protected_urls );
+	}
+
+	/**
+	 * Redirect to the authentication page
+	 */
+	function redirect_to_login_page() {
+		// The client endpoint relies on the wp admind ajax endpoint.
+		if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
+			auth_redirect();
 		}
 	}
 
@@ -345,6 +389,8 @@ class OpenID_Connect_Generic {
 
 				// Plugin settings.
 				'enforce_privacy' => 0,
+				'unprotected_urls' => '',
+				'protected_urls' => '',
 				'alternate_redirect_uri' => 0,
 				'token_refresh_enable' => 1,
 				'link_existing_users' => 0,
