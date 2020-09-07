@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<phpunit
+	bootstrap="tests/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	>
+	<testsuites>
+		<testsuite name="Includes">
+			<directory suffix="_test.php">./tests/phpunit/includes/</directory>
+		</testsuite>
+	</testsuites>
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="true">
+			<directory suffix=".php">src/</directory>
+			<!-- <file>/path/to/file</file> -->
+			<exclude>
+				<directory suffix=".php">src/views</directory>
+				<!-- <file>/path/to/file</file> -->
+			</exclude>
+		</whitelist>
+	</filter>
+	<logging>
+		<log type="coverage-clover" target="clover.xml"/>
+	</logging>
+</phpunit>

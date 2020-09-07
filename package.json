@@ -1,0 +1,62 @@
+{
+	"name": "openid-connect-generic",
+	"version": "3.7.0",
+	"description": "OpenID Connect generic WordPress plugin.",
+	"main": "Gruntfile.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/daggerhart/openid-connect-generic"
+	},
+	"keywords": [
+		"wordpress",
+		"openid"
+	],
+	"author": "Jonathan Daggerhart",
+	"license": "GPL-2.0-only",
+	"bugs": {
+		"url": "https://github.com/daggerhart/openid-connect-generic/issues"
+	},
+	"homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
+	"dependencies": {
+		"dev-require": "^0.1.0"
+	},
+	"devDependencies": {
+		"@floatwork/grunt-po2mo": "^0.3.0",
+		"@ndigitals/grunt-checkrepo": "^0.2.0",
+		"@wordpress/env": "^1.6.0",
+		"@wordpress/scripts": "^12.1.0",
+		"grunt": "~1.0.4",
+		"grunt-checkbranch": "^1.0.4",
+		"grunt-checktextdomain": "^1.0.1",
+		"grunt-contrib-clean": "^2.0.0",
+		"grunt-contrib-copy": "^1.0.0",
+		"grunt-gitinfo": "^0.1.9",
+		"grunt-shell": "^2.1.0",
+		"grunt-wp-i18n": "^1.0.3",
+		"grunt-wp-readme-to-markdown": "~2.0.0",
+		"load-grunt-tasks": "^3.5",
+		"puppeteer": "^1.20.0",
+		"typescript": "^3.9.7"
+	},
+	"wp-env": {
+		"plugin-dir": "daggerhart-openid-connect-generic",
+		"plugin-name": "OpenID Connect Generic",
+		"docker-template": "./docker-compose.override.yml",
+		"welcome-build-command": "npm run env start"
+	},
+	"scripts": {
+		"grunt": "node_modules/.bin/grunt",
+		"test": "npm run grunt test",
+		"build": "npm run grunt build",
+		"wp-env": "wp-env",
+		"wp": "wp-env run cli wp",
+		"i18n:check": "npm run grunt checktextdomain",
+		"i18n:make": "npm run grunt i18n",
+		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
+		"lint": "npm run lint:php",
+		"lint:php": "composer run-script phpcs .",
+		"lint:php:fix": "composer run-script phpcbf .",
+		"analyze": "npm run analyze:php",
+		"analyze:php": "composer run-script phpstan analyze ."
+	}
+}

@@ -1,10 +1,11 @@
 === OpenID Connect Generic Client ===
-Contributors: daggerhart
+Contributors: daggerhart, tnolte
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso 
-Requires at least: 4
-Tested up to: 5.2.2
+Requires at least: 4.9
+Tested up to: 5.4.2
 Stable tag: trunk
+Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +50,25 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.7.1 =
+
+* Fix: Release Version Number.
+
+= 3.7.0 =
+
+* Feature: @timnolte - Ability to enable/disable token refresh. Useful for IDPs that don't support token refresh.
+* Feature: @timnolte - Support custom redirect URL(`redirect_to`) with the authentication URL & login button shortcodes.
+  - Supports additional attribute overrides including login `button_text`, `endpoint_login`, `scope`, `redirect_uri`.
+
+= 3.6.0 =
+
+* Improvement: @RobjS - Improved error messages during login state failure.
+* Improvement: @RobjS - New developer filter for login form button URL.
+* Fix: @cs1m0n - Only increment username during new user creation if the "Link existing user" setting is enabled.
+* Fix: @xRy-42 - Allow periods and spaces in usernames to match what WordPress core allows.
+* Feature: @benochen - New setting named "Create user if does not exist" determines whether new users are created during login attempts.
+* Improvement: @flat235 - Username transliteration and normalization.
 
 = 3.5.1 =
 
