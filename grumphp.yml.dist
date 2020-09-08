@@ -38,7 +38,7 @@ grumphp:
         label: 'i18n Check'
     phpcs:
       standard: './phpcs.xml.dist'
-      report: 'summary'
+      report: 'full'
       ignore_patterns:
         - '/^assets\/(.*)/'
       triggered_by: [php]
