@@ -1,8 +1,10 @@
 {
 	"core": "./wordpress/build",
-	"mappings": {
-		"wp-content/mu-plugins": "./tools/local-env/mu-plugins",
+	"plugins": {
 		"wp-content/plugins/daggerhart-openid-connect-generic": "."
+	},
+	"mappings": {
+		"wp-content/mu-plugins": "./tools/local-env/mu-plugins"
 	},
 	"config": {
 		"PHP_INI_MEMORY_LIMIT": "512M",
