@@ -174,35 +174,6 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
-	 * Check if privacy enforcement is enabled, and redirect users that aren't
-	 * logged in.
-	 *
-	 * @return void
-	 */
-	function enforce_privacy_redirect() {
-		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			// The client endpoint relies on the wp admind ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
-				auth_redirect();
-			}
-		}
-	}
-
-	/**
-	 * Enforce privacy settings for rss feeds.
-	 *
-	 * @param string $content The content.
-	 *
-	 * @return mixed
-	 */
-	function enforce_privacy_feeds( $content ) {
-		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
-		}
-		return $content;
-	}
-
-	/**
 	 * Handle plugin upgrades
 	 *
 	 * @return void
@@ -361,12 +332,7 @@ class OpenID_Connect_Generic {
 		$plugin = new self( $settings, $logger );
 
 		add_action( 'init', array( $plugin, 'init' ) );
-
-		// Privacy hooks.
-		add_action( 'template_redirect', array( $plugin, 'enforce_privacy_redirect' ), 0 );
-		add_filter( 'the_content_feed', array( $plugin, 'enforce_privacy_feeds' ), 999 );
-		add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
-		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
+		OpenID_Connect_Generic_Privacy::register( $settings );
 	}
 }
 

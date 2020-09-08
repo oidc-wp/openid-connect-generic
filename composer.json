@@ -74,6 +74,7 @@
 			"includes/openid-connect-generic-login-form.php",
 			"includes/openid-connect-generic-option-logger.php",
 			"includes/openid-connect-generic-option-settings.php",
+			"includes/openid-connect-generic-privacy.php",
 			"includes/openid-connect-generic-settings-page.php"
 		]
 	},
