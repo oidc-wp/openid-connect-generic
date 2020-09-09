@@ -1,8 +1,6 @@
 {
 	"core": "./wordpress/build",
-	"plugins": {
-		"wp-content/plugins/daggerhart-openid-connect-generic": "."
-	},
+	"plugins": [ "." ],
 	"mappings": {
 		"wp-content/mu-plugins": "./tools/local-env/mu-plugins"
 	},
