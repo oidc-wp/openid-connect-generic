@@ -17,6 +17,7 @@ notifications:
 # whitelist branches for the "push" build check
 branches:
   only:
+    - dev
     - main
     - /^dev\-release\/.*$/
     - /^feature\/.*$/
