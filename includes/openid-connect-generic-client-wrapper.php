@@ -191,6 +191,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$refresh_expires = $refresh_token_info['refresh_expires'];
 
 		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
+			do_action( 'openid-connect-generic-session-expired', wp_get_current_user(), $_SERVER['REQUEST_URI']);
 			wp_logout();
 
 			if ( $this->settings->redirect_on_logout ) {
