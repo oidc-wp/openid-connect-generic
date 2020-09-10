@@ -53,6 +53,10 @@
 		"welcome-build-command": "npm run env start"
 	},
 	"scripts": {
+		"setup": "composer install && npm install && cd wordpress && composer install && npm install && npm run build && cd .. && composer install --optimize-autoloader",
+		"start": "wp-env start",
+		"stop": "wp-env stop",
+		"restart": "npm run wp-env stop && npm run wp-env start",
 		"grunt": "node_modules/.bin/grunt",
 		"test": "npm run grunt test",
 		"build": "npm run grunt build",
