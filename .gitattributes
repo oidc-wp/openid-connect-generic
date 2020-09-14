@@ -1,0 +1,37 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# Force batch scripts to always use CRLF line endings so that if a repo is accessed
+# in Windows via a file share from Linux, the scripts will work.
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf
+
+# Force bash scripts to always use LF line endings so that if a repo is accessed
+# in Unix via a file share from Windows, the scripts will work.
+*.sh text eol=lf
+
+# Ignored directories during export.
+/.wordpress-org export-ignore
+/.github export-ignore
+/scripts export-ignore
+/tests export-ignore
+/tools export-ignore
+
+# Ignored files during export.
+/.editorconfig export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.npmrc export-ignore
+/.nvmrc export-ignore
+/.travis.yml export-ignore
+/.wp-env.json export-ignore
+/composer.json export-ignore
+/composer.lock export-ignore
+/Gruntfile.js export-ignore
+/docker-compose.override.yml export-ignore
+/grumphp.yml.dist export-ignore
+/phpcs.xml.dist export-ignore
+/phpstan.neon.dist export-ignore
+/phpunit.xml.dist export-ignore
+/package.json export-ignore
+/package-lock.json export-ignore

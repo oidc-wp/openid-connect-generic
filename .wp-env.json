@@ -1,0 +1,17 @@
+{
+	"core": "./wordpress/build",
+	"plugins": [ "." ],
+	"mappings": {
+		"wp-content/mu-plugins": "./tools/local-env/mu-plugins"
+	},
+	"config": {
+		"PHP_INI_MEMORY_LIMIT": "512M",
+		"WP_MEMORY_LIMIT": "512M",
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"WP_DEBUG_DISPLAY": true,
+		"SCRIPT_DEBUG": true,
+		"SMTP_HOST": "mailhog",
+		"SMTP_PORT": 1025
+	}
+}

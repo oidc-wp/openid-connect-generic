@@ -1,5 +1,46 @@
-
 # OpenId Connect Generic Changelog
+
+3.8.0
+
+* Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
+* Improvement: @timnolte - NPM version requirements for development.
+* Improvement: @timnolte - Travis CI build fixes.
+* Improvement: @timnolte - GrumPHP configuration updates for code contributions.
+* Improvement: @timnolte - Refactored to meet WordPress coding standards.
+* Improvement: @timnolte - Refactored to provide localization.
+* Improvement: @timnolte - Refactored to provide a Docker-based local development environment.
+
+3.7.1
+
+* Fix: Release Version Number.
+
+3.7.0
+
+* Feature: @timnolte - Ability to enable/disable token refresh. Useful for IDPs that don't support token refresh.
+* Feature: @timnolte - Support custom redirect URL(`redirect_to`) with the authentication URL & login button shortcodes.
+  - Supports additional attribute overrides including login `button_text`, `endpoint_login`, `scope`, `redirect_uri`.
+
+3.6.0
+
+* Improvement: @RobjS - Improved error messages during login state failure.
+* Improvement: @RobjS - New developer filter for login form button URL.
+* Fix: @cs1m0n - Only increment username during new user creation if the "Link existing user" setting is enabled.
+* Fix: @xRy-42 - Allow periods and spaces in usernames to match what WordPress core allows.
+* Feature: @benochen - New setting named "Create user if does not exist" determines whether new users are created during login attempts.
+* Improvement: @flat235 - Username transliteration and normalization.
+
+3.5.1
+
+* Fix: @daggerhart - New approach to state management using transients.
+
+3.5.0
+
+* Readme fix: @thijskh - Fix syntax error in example openid-connect-generic-login-button-text
+* Feature: @slavicd - Allow override of the plugin by posting credentials to wp-login.php
+* Feature: @gassan - New action on use login
+* Fix: @daggerhart - Avoid double question marks in auth url query string
+* Fix: @drzraf - wp-cli bootstrap must not inhibit custom rewrite rules
+* Syntax change: @mullikine - Change PHP keywords to comply with PSR2
 
 **3.4.1**
 
