@@ -603,7 +603,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( empty( $transliterated_username ) ) {
 			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
 		}
-		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
+		$normalized_username = preg_replace( '/[^\s\S0-9 _.\-@]/', '', $transliterated_username );
 		if ( empty( $normalized_username ) ) {
 			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized.', 'daggerhart-openid-connect-generic' ), $transliterated_username ), $transliterated_username );
 		}
