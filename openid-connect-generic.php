@@ -392,5 +392,6 @@ class OpenID_Connect_Generic {
 
 OpenID_Connect_Generic::instance();
 
+require_once( 'includes/functions.php' );
 register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
