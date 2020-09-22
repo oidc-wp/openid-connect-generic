@@ -108,7 +108,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var OpenID_Connect_Generic_Client_Wrapper
 	 */
-	private $client_wrapper;
+	public $client_wrapper;
 
 	/**
 	 * Singleton instance of self
