@@ -241,6 +241,40 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Using username and password from WP login form (authenticate filter).
+	 *
+	 * @param string $username Username given in login form.
+	 * @param string $password Password given in login form.
+	 *
+	 * @return array<mixed>|WP_Error
+	 */
+	function request_authentication_token_by_username_and_password( $username, $password ) {
+		$request = array(
+			'body' => array(
+				'grant_type'    => 'password',
+				'client_id'     => $this->client_id,
+				'client_secret' => $this->client_secret,
+				'username'      => $username,
+				'password'      => $password,
+				'scope'         => $this->scope,
+			),
+		);
+
+		// Allow modifications to the request.
+		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token-by-username-and-password' );
+
+		// Call the server and ask for new tokens.
+		$this->logger->log( $this->endpoint_token, 'request_new_tokens_by_username_and_password' );
+		$response = wp_remote_post( $this->endpoint_token, $request );
+
+		if ( is_wp_error( $response ) ) {
+			$response->add( 'request_authentication_token', __( 'Request for authentication token failed.', 'daggerhart-openid-connect-generic' ) );
+		}
+
+		return $response;
+	}
+
+	/**
 	 * Using the refresh token, request new tokens from the idp
 	 *
 	 * @param string $refresh_token The refresh token previously obtained from token response.

@@ -304,6 +304,18 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
+			'register_authenticate_filter' => array(
+				'title'       => __( 'Register Authenticate Filter', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Enable login by entering username and password on wordpress site without forwarding end user to Identity provider server. The grant_type "password" must be allowed on server.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'section'     => 'authorization_settings',
+			),
+			'authenticate_filter_priority' => array(
+				'title'       => __( 'Authenticate Filter Priority', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Previous options must be checked. The default wordpress authenticate filter has priority 20. The default value here is 15.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'number',
+				'section'     => 'authorization_settings',
+			),
 			'nickname_key'     => array(
 				'title'       => __( 'Nickname Key', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Where in the user claim array to find the user\'s nickname. Possible standard values: preferred_username, name, or sub.', 'daggerhart-openid-connect-generic' ),

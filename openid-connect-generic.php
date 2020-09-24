@@ -351,6 +351,8 @@ class OpenID_Connect_Generic {
 				'create_if_does_not_exist' => 1,
 				'redirect_user_back' => 0,
 				'redirect_on_logout' => 1,
+				'register_authenticate_filter' => 0,
+				'authenticate_filter_priority' => 15,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000,
 			)

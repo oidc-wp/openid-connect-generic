@@ -47,15 +47,17 @@
  *
  * Plugin Settings:
  *
- * @property bool $enforce_privacy          The flag to indicates whether a user us required to be authenticated to access the site.
- * @property bool $alternate_redirect_uri   The flag to indicate whether to use the alternative redirect URI.
- * @property bool $token_refresh_enable     The flag whether to support refresh tokens by IDPs.
- * @property bool $link_existing_users      The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
- * @property bool $create_if_does_not_exist The flag to indicate whether to create new users or not.
- * @property bool $redirect_user_back       The flag to indicate whether to redirect the user back to the page on which they started.
- * @property bool $redirect_on_logout       The flag to indicate whether to redirect to the login screen on session expiration.
- * @property bool $enable_logging           The flag to enable/disable logging.
- * @property int  $log_limit                The maximum number of log entries to keep.
+ * @property bool $enforce_privacy              The flag to indicates whether a user us required to be authenticated to access the site.
+ * @property bool $alternate_redirect_uri       The flag to indicate whether to use the alternative redirect URI.
+ * @property bool $register_authenticate_filter The flag to add authenticate filter. grant_type 'password' should be allowed by user provider.
+ * @property int  $authenticate_filter_priority Authenticate filter priority. Previous option must be checked.
+ * @property bool $token_refresh_enable         The flag whether to support refresh tokens by IDPs.
+ * @property bool $link_existing_users          The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
+ * @property bool $create_if_does_not_exist     The flag to indicate whether to create new users or not.
+ * @property bool $redirect_user_back           The flag to indicate whether to redirect the user back to the page on which they started.
+ * @property bool $redirect_on_logout           The flag to indicate whether to redirect to the login screen on session expiration.
+ * @property bool $enable_logging               The flag to enable/disable logging.
+ * @property int  $log_limit                    The maximum number of log entries to keep.
  */
 class OpenID_Connect_Generic_Option_Settings {
 
