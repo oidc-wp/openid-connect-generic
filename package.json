@@ -74,6 +74,6 @@
 		"lint:php": "vendor/bin/phpcs --report=full .",
 		"lint:php:fix": "vendor/bin/phpcbf .",
 		"analyze": "npm run analyze:php",
-		"analyze:php": "vendor/bin/phpstan analyze ."
+		"analyze:php": "vendor/bin/phpstan analyze"
 	}
 }

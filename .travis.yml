@@ -73,7 +73,6 @@ addons:
 before_install:
   - npm install -g npm@6.14
   - npm install -g grunt-cli
-  - composer require "wordpress/wordpress:${WP_VERSION}" --dev --prefer-source --no-update
 
 install:
   - composer update --prefer-source --no-interaction --optimize-autoloader
@@ -81,21 +80,13 @@ install:
 
 before_script:
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
-  # Setup WordPress coding standards
-  - |
-    if [[ "$PHP_LINT" == "1" ]]; then
-      composer global require wp-coding-standards/wpcs
-    fi
   # Setup unit testing environment
   - |
     if [[ "$PHP_UNIT" == "1" ]]; then
-      # bash scripts/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
-      if [[ $TRAVIS_PHP_VERSION == "7.4" ]]; then
-        composer global require "phpunit/php-code-coverage=dev-master"
-        composer global require "sebastian/global-state:dev-master"
-        composer global require "phpunit/phpunit=dev-master"
+      if [[ "$TRAVIS_PHP_VERSION" == "7.4" ]]; then
+        composer global require "phpunit/php-code-coverage:dev-master" "sebastian/global-state:dev-master" "phpunit/phpunit:dev-master"
       else
-        composer global require "phpunit/phpunit=7.*"
+        composer global require "phpunit/phpunit:7.*"
       fi
     fi
 

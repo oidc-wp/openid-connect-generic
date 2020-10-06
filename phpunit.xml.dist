@@ -15,10 +15,8 @@
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="true">
 			<directory suffix=".php">src/</directory>
-			<!-- <file>/path/to/file</file> -->
 			<exclude>
 				<directory suffix=".php">src/views</directory>
-				<!-- <file>/path/to/file</file> -->
 			</exclude>
 		</whitelist>
 	</filter>

@@ -29,12 +29,6 @@
 		},
 		"optimize-autoloader": true
 	},
-	"repositories": [
-		{
-			"type": "git",
-			"url": "https://github.com/wordpress/wordpress-develop"
-		}
-	],
 	"require": {
 		"php": ">=7.1.0",
 		"composer/installers": "~1.0"
@@ -47,13 +41,11 @@
 		"phpcompatibility/phpcompatibility-wp": "^2.1",
 		"phpmd/phpmd": "^2.6",
 		"phpunit/phpunit": "^7",
-		"phpstan/phpstan": "*",
 		"phpstan/extension-installer": "^1.0",
-		"szepeviktor/phpstan-wordpress": "*",
+		"szepeviktor/phpstan-wordpress": "^0.6.5",
 		"php-stubs/wordpress-stubs": "~5.4.2",
 		"roave/security-advisories": "dev-master",
 		"mnsami/composer-custom-directory-installer": "~1.0",
-		"wordpress/wordpress": "~5.4.2",
 		"dealerdirect/phpcodesniffer-composer-installer": "~0.6",
 		"brain/monkey": "^2.4",
 		"mockery/mockery": "^1.3",
@@ -61,20 +53,10 @@
 		"sensiolabs/security-checker": "^5.0",
 		"phpstan/phpstan-deprecation-rules": "^0.12"
 	},
-	"autoload-dev": {
-		"classmap": [
-			"wordpress/src/"
-		]
-	},
 	"autoload": {
 		"classmap": [
 			"openid-connect-generic.php",
-			"includes/openid-connect-generic-client.php",
-			"includes/openid-connect-generic-client-wrapper.php",
-			"includes/openid-connect-generic-login-form.php",
-			"includes/openid-connect-generic-option-logger.php",
-			"includes/openid-connect-generic-option-settings.php",
-			"includes/openid-connect-generic-settings-page.php"
+			"includes/"
 		]
 	},
 	"scripts": {
@@ -89,14 +71,9 @@
 		],
 		"phpcs": "vendor/bin/phpcs",
 		"phpcbf": "vendor/bin/phpcbf",
-		"phpstan": "\"vendor/bin/phpstan\""
+		"phpstan": "vendor/bin/phpstan"
 	},
 	"extra": {
-		"installer-paths": {
-			"{$name}": [
-				"wordpress/wordpress"
-			]
-		},
 		"phpcodesniffer-search-depth": 5
 	}
 }
