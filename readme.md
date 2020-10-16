@@ -37,6 +37,7 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
         - [openid-connect-generic-user-update](#openid-connect-generic-user-update)
         - [openid-connect-generic-update-user-using-current-claim](#openid-connect-generic-update-user-using-current-claim)
         - [openid-connect-generic-redirect-user-back](#openid-connect-generic-redirect-user-back)
+        - [openid-connect-generic-register-login-form](#openid-connect-generic-register-login-form)
 
 
 ## Installation
@@ -364,6 +365,38 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
         exit();
     }
 }, 10, 2); 
+```
+
+
+#### `openid-connect-generic-register-login-form`
+
+Allow user to add the login form to various pages, such as WooCommerce's checkout page.  It will fire
+whenever the plugin is loaded and pass the login form to the callback.
+
+Provides 1 argument: the login form instance.
+
+```
+add_action ('openid-connect-generic-register-login-form',
+    function ( $login_form ) {
+
+	// show login form at the shopping cart (if not logged in)
+	add_action( 'woocommerce_before_checkout_billing_form',
+                    function () use ( $login_form ) {
+                             $user = wp_get_current_user ();
+                             if (0 == $user->ID) {
+		                // ID 0 is used to indicate user is not logged in.
+                                // Re-use filter logic to generate login page
+               	                print ( $login_form->handle_login_page ('') );
+	                     }
+                     });
+
+        // Add action to set cookie to redirect back to current
+        // (checkout) page after OIDC provided the data
+        add_action( 'woocommerce_before_checkout_billing_form',
+                    array( $login_form, 'handle_redirect_cookie' ) );
+
+    }
+);
 ```
 
 ### User Meta Data

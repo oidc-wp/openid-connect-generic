@@ -61,6 +61,9 @@ class OpenID_Connect_Generic_Login_Form {
 		// Alter the login form as dictated by settings.
 		add_filter( 'login_message', array( $login_form, 'handle_login_page' ), 99 );
 
+		// Allow extensions to hook the login form.
+		do_action( 'openid-connect-generic-register-login-form', $login_form );
+
 		// Add a shortcode for the login button.
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
 
