@@ -108,8 +108,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		if ( $settings->alternate_redirect_uri ) {
 			// Provide an alternate route for authentication_request_callback.
-			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
-			add_rewrite_tag( '%openid-connect-authorize%', '1' );
+				add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
+				add_rewrite_tag( '%openid-connect-authorize%', '1' );
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
 		}
 

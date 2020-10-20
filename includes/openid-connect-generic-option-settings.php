@@ -49,6 +49,7 @@
  *
  * @property bool $enforce_privacy          The flag to indicates whether a user us required to be authenticated to access the site.
  * @property bool $alternate_redirect_uri   The flag to indicate whether to use the alternative redirect URI.
+ * @property bool $keycloak_legacy_backchannel_logout_enable   The flag to enable Keycloak < v12.0.0 Backchannel Logout.
  * @property bool $token_refresh_enable     The flag whether to support refresh tokens by IDPs.
  * @property bool $link_existing_users      The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
  * @property bool $create_if_does_not_exist The flag to indicate whether to create new users or not.
