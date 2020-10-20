@@ -104,12 +104,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 */
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
+			add_action( 'wp_ajax_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
+			add_action( 'wp_ajax_nopriv_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
 		}
 
-		if ( $settings->alternate_redirect_uri ) {
+		if ( $settings->alternate_redirect_uri || $settings->keycloak_legacy_backchannel_logout_enable ) {
 			// Provide an alternate route for authentication_request_callback.
+			if ( $settings->alternate_redirect_uri) {
 				add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
 				add_rewrite_tag( '%openid-connect-authorize%', '1' );
+			}
+			if ( $settings->keycloak_legacy_backchannel_logout_enable) {
+				add_rewrite_rule( '^openid-connect-backchannel-logout/?', 'index.php?openid-connect-backchannel-logout=1', 'top' );
+				add_rewrite_tag( '%openid-connect-backchannel-logout%', '1' );
+			}
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
 		}
 
@@ -132,6 +140,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
 			 '1' === $query->query_vars['openid-connect-authorize'] ) {
 			$this->authentication_request_callback();
+			exit;
+		}
+		if ( isset( $query->query_vars['openid-connect-backchannel-logout'] ) &&
+			 '1' === $query->query_vars['openid-connect-backchannel-logout'] ) {
+			$this->backchannel_logout_request_callback();
 			exit;
 		}
 
@@ -336,6 +349,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function authentication_request_callback() {
 		$client = $this->client;
+$this->logger->log("authxxxx");
 
 		// Start the authentication flow.
 		$authentication_request = $client->validate_authentication_request( $_GET );
@@ -462,6 +476,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			wp_redirect( home_url() );
 		}
 
+		exit;
+	}
+
+	function backchannel_logout_request_callback( ) {
+		$this->logger->log( "Backchannel logout request received" );
 		exit;
 	}
 
