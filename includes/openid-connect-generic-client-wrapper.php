@@ -349,7 +349,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function authentication_request_callback() {
 		$client = $this->client;
-$this->logger->log("authxxxx");
 
 		// Start the authentication flow.
 		$authentication_request = $client->validate_authentication_request( $_GET );
@@ -480,7 +479,44 @@ $this->logger->log("authxxxx");
 	}
 
 	function backchannel_logout_request_callback( ) {
-		$this->logger->log( "Backchannel logout request received" );
+		$client = $this->client;
+
+		// This processes the OIDC Backchannel logout request. The request
+		// is made using the HTTP POST method. The function will fail if
+		// it is called from a request made with a HTTP method other than POST.
+		$request = $_POST;
+
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			$this->logger->log( "FIXME: getting keycloak header not yet implemented" );
+		}
+
+$request_string = json_encode($request);
+$this->logger->log( "BCL request is: {$request_string}" );
+
+
+		// FIXME: token signature should be validated
+
+		$claims = $client->get_logout_token_claim( $request );
+		if ( is_wp_error( $claims ) ) {
+			$this->error_redirect( $claims );
+		}
+$this->logger->log( "BCL claims: {$claims}" );
+
+		// token needs to be validated:
+		// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
+		// 
+		// FIXME: #1 and #2 (decryption and token signature) are not yet done here, 
+		// because we're lacking the necessary infrastructure. 
+		// The token introspection endpoint may be a viable alternative:
+		// https://tools.ietf.org/html/rfc7662
+		//
+
+		// Further validations in Section 2.6
+		$validation = $client->validate_logout_token_claim( $claims );
+		if( is_wp_error( $validation ) ) {
+			$this->error_redirect( $validation );
+		}
+
 		exit;
 	}
 
