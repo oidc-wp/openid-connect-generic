@@ -592,4 +592,15 @@ class OpenID_Connect_Generic_Client {
 		return $id_token_claim['sub'];
 	}
 
+	/**
+	 * Retrieve the session id from the token claims. This is the OpenID Providers's
+	 * session ID, it is not directly related to a wordpress session context.
+	 *
+	 * @param array $token_claims The token claims.
+	 *
+	 * @return mixed
+	 */
+	function get_session_id( $token_claims ) {
+		return $token_claims['sid'];
+	}
 }

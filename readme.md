@@ -371,6 +371,7 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
 This plugin stores meta data about the user for both practical and debugging purposes.
 
 * `openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
+* `openid-connect-generic-last-session-id` - The user's last IDP session ID if provided by the IDP server.
 * `openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
 * `openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
 * `openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.

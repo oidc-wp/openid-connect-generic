@@ -433,6 +433,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		 * Request is authenticated and authorized - start user handling
 		 */
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
+		$session_id = $client->get_session_id( $id_token_claim );
 		$user = $this->get_user_by_identity( $subject_identity );
 
 		if ( ! $user ) {
@@ -457,12 +458,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Login the found / created user.
-		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $session_id );
 
 		do_action( 'openid-connect-generic-user-logged-in', $user );
 
 		// Log our success.
-		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
+		$this->logger->log( "Successful login for: {$user->user_login} (ID: {$user->ID}, sub: {$subject_identity}, sid:{$session_id})", 'login-success' );
 
 		// Redirect back to the origin page if enabled.
 		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
@@ -517,6 +518,30 @@ $this->logger->log( "BCL claims: {$claims}" );
 			$this->error_redirect( $validation );
 		}
 
+		// now that we have valid claims, we can start the actual logout
+		// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.7
+		$subject_identity = $client->get_subject_identity( $claims );
+		$session_id = $client->get_session_id( $claims );
+		$user = null;
+		if( isset( $subject_identity ) ) {
+			$user = $this->get_user_by_identity( $subject_identity );
+		} else if( isset( $session_id ) ) {
+			$user = $this->get_user_by_session_id( $session_id );
+		}
+		if( ! $user && isset( $subject_identity ) ) {
+			// NOTE: The spec demands that if the user has already logged out,
+			// the logout request is successful. We actually fulfil this request
+			// even though it is not obvious: Because the user's 'sub' claim is
+			// stored as a user attribute and remains there after the user logged
+			// out, we'd still find her/him. 
+			// So we only ever get here if the user never logged in before.
+			$this->error_redirect( new WP_Error( '', __( 'User not found', 'daggerhart-openid-connect-generic' ) ) );
+		}
+
+		// get all sessions for user with ID $user_id
+		$sessions = WP_Session_Tokens::get_instance($user->ID);
+		$sessions->destroy_all();
+
 		exit;
 	}
 
@@ -547,11 +572,12 @@ $this->logger->log( "BCL claims: {$claims}" );
 	 *
 	 * @return void
 	 */
-	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
+	function login_user( $user, $token_response, $id_token_claim, $user_claim, $session_id ) {
 		// Store the tokens for future reference.
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		update_user_meta( $user->ID, 'openid-connect-generic-last-session-id', strval( $session_id ) );
 
 		// Create the WP session, so we know its token.
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
@@ -605,12 +631,28 @@ $this->logger->log( "BCL claims: {$claims}" );
 	 */
 	function get_user_by_identity( $subject_identity ) {
 		// Look for user by their openid-connect-generic-subject-identity value.
+		return $this->get_user_by_meta_key( 'openid-connect-generic-subject-identity', $subject_identity );
+	}
+
+	/**
+	 * Get the user that has meta data matching a
+	 *
+	 * @param string $session_id The IDP session id of the user.
+	 *
+	 * @return false|WP_User
+	 */
+	function get_user_by_session_id( $session_id ) {
+		// Look for user by their openid-connect-generic-last-session-id value.
+		return $this->get_user_by_meta_key( 'openid-connect-generic-last-session-id', $session_id );
+	}
+
+	private function get_user_by_meta_key( $meta_key, $meta_value ) {
 		$user_query = new WP_User_Query(
 			array(
 				'meta_query' => array(
 					array(
-						'key'   => 'openid-connect-generic-subject-identity',
-						'value' => $subject_identity,
+						'key'   => $meta_key,
+						'value' => $meta_value,
 					),
 				),
 			)

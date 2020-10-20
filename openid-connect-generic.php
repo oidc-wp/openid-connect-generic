@@ -55,6 +55,7 @@ Notes
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
+  - openid-connect-generic-last-session-id     - the user's most recent IDP session ID if provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
   - openid-connect-generic-last-user-claim     - the user's most recent user_claim
   - openid-connect-generic-last-token-response - the user's most recent token response
