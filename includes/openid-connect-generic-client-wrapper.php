@@ -115,7 +115,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				add_rewrite_tag( '%openid-connect-authorize%', '1' );
 			}
 			if ( $settings->keycloak_legacy_backchannel_logout_enable) {
-				add_rewrite_rule( '^openid-connect-backchannel-logout/?', 'index.php?openid-connect-backchannel-logout=1', 'top' );
+				add_rewrite_rule( '^k_logout/?', 'index.php?openid-connect-backchannel-logout=1', 'top' );
 				add_rewrite_tag( '%openid-connect-backchannel-logout%', '1' );
 			}
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
@@ -365,7 +365,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Attempting to exchange an authorization code for an authentication token.
-		$token_result = $client->request_authentication_token( $code );
+		$token_result = null;
+		$k_client_session_state = null;
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			$k_client_session_state = session_id();
+			$token_result = $client->request_authentication_token( $code, array( 'client_session_state' => $k_client_session_state ) );
+		} else {
+			$token_result = $client->request_authentication_token( $code );
+		}
 
 		if ( is_wp_error( $token_result ) ) {
 			$this->error_redirect( $token_result );
@@ -433,7 +440,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		 * Request is authenticated and authorized - start user handling
 		 */
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
-		$session_id = $client->get_session_id( $id_token_claim );
+		if ( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			// for Keycloak, we use the client_session_state that we sent
+			// to Keycloak's token endpoint previously
+			$session_id = $k_client_session_state;
+		} else {
+			$session_id = $client->get_session_id( $id_token_claim );
+		}
 		$user = $this->get_user_by_identity( $subject_identity );
 
 		if ( ! $user ) {
@@ -482,46 +495,62 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	function backchannel_logout_request_callback( ) {
 		$client = $this->client;
 
-		// This processes the OIDC Backchannel logout request. The request
-		// is made using the HTTP POST method. The function will fail if
-		// it is called from a request made with a HTTP method other than POST.
-		$request = $_POST;
+		// This processes the OIDC Backchannel logout request, which
+		// is expected to be made using HTTP POST
 
+		$token = null;
 		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
-			$this->logger->log( "FIXME: getting keycloak header not yet implemented" );
+			// With keycloak legacy processing, the token comes from 
+			// the post body (which is 'text/plain')
+			$token = file_get_contents('php://input');
+
+		} else {
+			// when using standard OIDC processing, the token is part of
+			// the POST form data field 'logout_token'
+			$token = $_POST['logout_token'];
 		}
 
-$request_string = json_encode($request);
-$this->logger->log( "BCL request is: {$request_string}" );
+		if ( ! isset( $token ) ) {
+			return new WP_Error( 'no-logout-token', __( 'No logout token.', 'daggerhart-openid-connect-generic' ), $token_response );
+		}
 
+		// FIXME: token is not validated here, see below
 
-		// FIXME: token signature should be validated
-
-		$claims = $client->get_logout_token_claim( $request );
+		$claims = $client->parse_jwt( $token );
 		if ( is_wp_error( $claims ) ) {
 			$this->error_redirect( $claims );
 		}
-$this->logger->log( "BCL claims: {$claims}" );
 
-		// token needs to be validated:
-		// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
-		// 
-		// FIXME: #1 and #2 (decryption and token signature) are not yet done here, 
-		// because we're lacking the necessary infrastructure. 
-		// The token introspection endpoint may be a viable alternative:
-		// https://tools.ietf.org/html/rfc7662
-		//
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			// In Keycloak Legacy BCL configuration, we do not receive a 
+			// user id, just the session_id() that we passed to KC's 
+			// token endpoint via the proprietary 'client_session_state' parameter
+			$subject_identity = null;
+			$session_id = $claims['adapterSessionIds'][0];
+		} else {
+			// Token validation and parsing as defined in
+			// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
 
-		// Further validations in Section 2.6
-		$validation = $client->validate_logout_token_claim( $claims );
-		if( is_wp_error( $validation ) ) {
-			$this->error_redirect( $validation );
+			// 
+			// FIXME: #1 and #2 (decryption and token signature) are not yet done here, 
+			// because we're lacking the necessary infrastructure. 
+			// The token introspection endpoint may be a viable alternative:
+			// https://tools.ietf.org/html/rfc7662
+			//
+
+			// parse token into claims
+			// Further validations in Section 2.6
+			$validation = $client->validate_logout_token_claim( $claims );
+			if( is_wp_error( $validation ) ) {
+				$this->error_redirect( $validation );
+			}
+
+			// now that we have valid claims, we can start the actual logout
+			// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.7
+			$subject_identity = $client->get_subject_identity( $claims );
+			$session_id = $client->get_session_id( $claims );
 		}
 
-		// now that we have valid claims, we can start the actual logout
-		// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.7
-		$subject_identity = $client->get_subject_identity( $claims );
-		$session_id = $client->get_session_id( $claims );
 		$user = null;
 		if( isset( $subject_identity ) ) {
 			$user = $this->get_user_by_identity( $subject_identity );
@@ -538,9 +567,15 @@ $this->logger->log( "BCL claims: {$claims}" );
 			$this->error_redirect( new WP_Error( '', __( 'User not found', 'daggerhart-openid-connect-generic' ) ) );
 		}
 
-		// get all sessions for user with ID $user_id
-		$sessions = WP_Session_Tokens::get_instance($user->ID);
-		$sessions->destroy_all();
+		if( $user ) {
+			// get all sessions for user with ID $user_id
+			$sessions = WP_Session_Tokens::get_instance($user->ID);
+			$sessions->destroy_all();
+
+			$this->logger->log( "Successful backchannel logout for: {$user->user_login} (ID: {$user->ID}, sub: {$subject_identity}, sid:{$session_id})", 'backchannel-logout-success' );
+		} else {
+			$this->logger->log( "Backchannel logout failed, no user found for sub: {$subject_identity}, sid: {$session_id}" );
+		}
 
 		exit;
 	}

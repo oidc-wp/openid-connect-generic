@@ -208,21 +208,25 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	function request_authentication_token( $code ) {
+	function request_authentication_token( $code, $additional_params ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
 		$host = $parsed_url['host'];
 
-		$request = array(
-			'body' => array(
+		$body = array_merge(
+			$additional_params,
+			array(
 				'code'          => $code,
 				'client_id'     => $this->client_id,
 				'client_secret' => $this->client_secret,
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
 				'scope'         => $this->scope,
-			),
+			)
+		);
+		$request = array(
+			'body' => $body,
 			'headers' => array( 'Host' => $host ),
 		);
 
@@ -421,29 +425,13 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Extract the id_token_claim from the token_response.
-	 *
-	 * @param array $token_response The token response.
-	 *
-	 * @return array|WP_Error
-	 */
-	function get_logout_token_claim( $token_response ) {
-		// Validate there is a logout_token.
-		if ( ! isset( $token_response['logout_token'] ) ) {
-			return new WP_Error( 'no-logout-token', __( 'No logout token.', 'daggerhart-openid-connect-generic' ), $token_response );
-		}
-
-		return $this->parse_jwt( $token_response['logout_token'] );
-	}
-
-	/**
 	 * Parse a JWT token into an array of claims
 	 *
 	 * @param string $token The token encoded as string.
 	 *
 	 * @return array|WP_Error
 	 */
-	private function parse_jwt( $token ) {
+	function parse_jwt( $token ) {
 
 		// Break apart the id_token in the response for decoding.
 		$tmp = explode( '.', $token );
