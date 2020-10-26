@@ -104,12 +104,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 */
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
+			add_action( 'wp_ajax_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
+			add_action( 'wp_ajax_nopriv_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
 		}
 
-		if ( $settings->alternate_redirect_uri ) {
+		if ( $settings->alternate_redirect_uri || $settings->keycloak_legacy_backchannel_logout_enable ) {
 			// Provide an alternate route for authentication_request_callback.
-			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
-			add_rewrite_tag( '%openid-connect-authorize%', '1' );
+			if ( $settings->alternate_redirect_uri) {
+				add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
+				add_rewrite_tag( '%openid-connect-authorize%', '1' );
+			}
+			if ( $settings->keycloak_legacy_backchannel_logout_enable) {
+				add_rewrite_rule( '^k_logout/?', 'index.php?openid-connect-backchannel-logout=1', 'top' );
+				add_rewrite_tag( '%openid-connect-backchannel-logout%', '1' );
+			}
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
 		}
 
@@ -132,6 +140,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
 			 '1' === $query->query_vars['openid-connect-authorize'] ) {
 			$this->authentication_request_callback();
+			exit;
+		}
+		if ( isset( $query->query_vars['openid-connect-backchannel-logout'] ) &&
+			 '1' === $query->query_vars['openid-connect-backchannel-logout'] ) {
+			$this->backchannel_logout_request_callback();
 			exit;
 		}
 
@@ -352,7 +365,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Attempting to exchange an authorization code for an authentication token.
-		$token_result = $client->request_authentication_token( $code );
+		$token_result = null;
+		$k_client_session_state = null;
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			$k_client_session_state = session_id();
+			$token_result = $client->request_authentication_token( $code, array( 'client_session_state' => $k_client_session_state ) );
+		} else {
+			$token_result = $client->request_authentication_token( $code );
+		}
 
 		if ( is_wp_error( $token_result ) ) {
 			$this->error_redirect( $token_result );
@@ -420,6 +440,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		 * Request is authenticated and authorized - start user handling
 		 */
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
+		if ( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			// for Keycloak, we use the client_session_state that we sent
+			// to Keycloak's token endpoint previously
+			$session_id = $k_client_session_state;
+		} else {
+			$session_id = $client->get_session_id( $id_token_claim );
+		}
 		$user = $this->get_user_by_identity( $subject_identity );
 
 		if ( ! $user ) {
@@ -444,12 +471,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Login the found / created user.
-		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $session_id );
 
 		do_action( 'openid-connect-generic-user-logged-in', $user );
 
 		// Log our success.
-		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
+		$this->logger->log( "Successful login for: {$user->user_login} (ID: {$user->ID}, sub: {$subject_identity}, sid:{$session_id})", 'login-success' );
 
 		// Redirect back to the origin page if enabled.
 		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
@@ -460,6 +487,94 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			wp_redirect( $redirect_url );
 		} else { // Otherwise, go home!
 			wp_redirect( home_url() );
+		}
+
+		exit;
+	}
+
+	function backchannel_logout_request_callback( ) {
+		$client = $this->client;
+
+		// This processes the OIDC Backchannel logout request, which
+		// is expected to be made using HTTP POST
+
+		$token = null;
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			// With keycloak legacy processing, the token comes from 
+			// the post body (which is 'text/plain')
+			$token = file_get_contents('php://input');
+
+		} else {
+			// when using standard OIDC processing, the token is part of
+			// the POST form data field 'logout_token'
+			$token = $_POST['logout_token'];
+		}
+
+		if ( ! isset( $token ) ) {
+			return new WP_Error( 'no-logout-token', __( 'No logout token.', 'daggerhart-openid-connect-generic' ), $token_response );
+		}
+
+		// FIXME: token is not validated here, see below
+
+		$claims = $client->parse_jwt( $token );
+		if ( is_wp_error( $claims ) ) {
+			$this->error_redirect( $claims );
+		}
+
+		if( $this->settings->keycloak_legacy_backchannel_logout_enable ) {
+			// In Keycloak Legacy BCL configuration, we do not receive a 
+			// user id, just the session_id() that we passed to KC's 
+			// token endpoint via the proprietary 'client_session_state' parameter
+			$subject_identity = null;
+			$session_id = $claims['adapterSessionIds'][0];
+		} else {
+			// Token validation and parsing as defined in
+			// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
+
+			// 
+			// FIXME: #1 and #2 (decryption and token signature) are not yet done here, 
+			// because we're lacking the necessary infrastructure. 
+			// The token introspection endpoint may be a viable alternative:
+			// https://tools.ietf.org/html/rfc7662
+			//
+
+			// parse token into claims
+			// Further validations in Section 2.6
+			$validation = $client->validate_logout_token_claim( $claims );
+			if( is_wp_error( $validation ) ) {
+				$this->error_redirect( $validation );
+			}
+
+			// now that we have valid claims, we can start the actual logout
+			// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.7
+			$subject_identity = $client->get_subject_identity( $claims );
+			$session_id = $client->get_session_id( $claims );
+		}
+
+		$user = null;
+		if( isset( $subject_identity ) ) {
+			$user = $this->get_user_by_identity( $subject_identity );
+		} else if( isset( $session_id ) ) {
+			$user = $this->get_user_by_session_id( $session_id );
+		}
+		if( ! $user && isset( $subject_identity ) ) {
+			// NOTE: The spec demands that if the user has already logged out,
+			// the logout request is successful. We actually fulfil this request
+			// even though it is not obvious: Because the user's 'sub' claim is
+			// stored as a user attribute and remains there after the user logged
+			// out, we'd still find her/him. 
+			// So we only ever get here if the user never logged in before.
+			$this->error_redirect( new WP_Error( '', __( 'User not found', 'daggerhart-openid-connect-generic' ) ) );
+		}
+
+		if( $user ) {
+			// get all sessions for user with ID $user_id
+			$sessions = WP_Session_Tokens::get_instance($user->ID);
+			$sessions->destroy_all();
+
+			$this->logger->log( "Successful backchannel logout for: {$user->user_login} (ID: {$user->ID}, sub: {$subject_identity}, sid:{$session_id})", 'backchannel-logout-success' );
+		} else {
+			$this->logger->log( "Backchannel logout failed, no user found for sub: {$subject_identity}, sid: {$session_id}" );
 		}
 
 		exit;
@@ -492,11 +607,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
+	function login_user( $user, $token_response, $id_token_claim, $user_claim, $session_id ) {
 		// Store the tokens for future reference.
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		update_user_meta( $user->ID, 'openid-connect-generic-last-session-id', strval( $session_id ) );
 
 		// Create the WP session, so we know its token.
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
@@ -550,12 +666,28 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	function get_user_by_identity( $subject_identity ) {
 		// Look for user by their openid-connect-generic-subject-identity value.
+		return $this->get_user_by_meta_key( 'openid-connect-generic-subject-identity', $subject_identity );
+	}
+
+	/**
+	 * Get the user that has meta data matching a
+	 *
+	 * @param string $session_id The IDP session id of the user.
+	 *
+	 * @return false|WP_User
+	 */
+	function get_user_by_session_id( $session_id ) {
+		// Look for user by their openid-connect-generic-last-session-id value.
+		return $this->get_user_by_meta_key( 'openid-connect-generic-last-session-id', $session_id );
+	}
+
+	private function get_user_by_meta_key( $meta_key, $meta_value ) {
 		$user_query = new WP_User_Query(
 			array(
 				'meta_query' => array(
 					array(
-						'key'   => 'openid-connect-generic-subject-identity',
-						'value' => $subject_identity,
+						'key'   => $meta_key,
+						'value' => $meta_value,
 					),
 				),
 			)

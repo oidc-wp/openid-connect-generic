@@ -304,6 +304,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'authorization_settings',
 			),
+			'keycloak_legacy_backchannel_logout_enable'   => array(
+				'title'       => __( 'Support Keycloak Legacy Backchannel Logout (< v12.0.0)', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Keycloak before version 12.0.0 only supports proprietary backchannel logout. This enables support for it by adding a specific route for it ("/keycloak/k_logout"). To enable it in a legacy keycloak, set the "Admin URL" on the client settings page in the Keycloak Admin Console to "<wordpress-url>/" (the root path). OIDC compliant backchannel logout is supported regardless whether this feature is enabled or not. You must flush rewrite rules after changing this setting. This can be done by saving the Permalinks settings page.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
 			'nickname_key'     => array(
 				'title'       => __( 'Nickname Key', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Where in the user claim array to find the user\'s nickname. Possible standard values: preferred_username, name, or sub.', 'daggerhart-openid-connect-generic' ),

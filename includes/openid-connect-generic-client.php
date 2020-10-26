@@ -208,21 +208,25 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	function request_authentication_token( $code ) {
+	function request_authentication_token( $code, $additional_params ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
 		$host = $parsed_url['host'];
 
-		$request = array(
-			'body' => array(
+		$body = array_merge(
+			$additional_params,
+			array(
 				'code'          => $code,
 				'client_id'     => $this->client_id,
 				'client_secret' => $this->client_secret,
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
 				'scope'         => $this->scope,
-			),
+			)
+		);
+		$request = array(
+			'body' => $body,
 			'headers' => array( 'Host' => $host ),
 		);
 
@@ -417,17 +421,29 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
 		}
 
-		// Break apart the id_token in the response for decoding.
-		$tmp = explode( '.', $token_response['id_token'] );
+		return $this->parse_jwt( $token_response['id_token'] );
+	}
 
-		if ( ! isset( $tmp[1] ) ) {
-			return new WP_Error( 'missing-identity-token', __( 'Missing identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
+	/**
+	 * Parse a JWT token into an array of claims
+	 *
+	 * @param string $token The token encoded as string.
+	 *
+	 * @return array|WP_Error
+	 */
+	function parse_jwt( $token ) {
+
+		// Break apart the id_token in the response for decoding.
+		$tmp = explode( '.', $token );
+
+		if ( ! isset( $tmp[1] ) || empty( $tmp[1] ) ) {
+			return new WP_Error( 'invalid-token', __( 'Cannot parse token string', 'daggerhart-openid-connect-generic' ), $token );
 		}
 
 		// Extract the id_token's claims from the token.
-		$id_token_claim = json_decode(
+		$token_claim = json_decode(
 			base64_decode(
-				str_replace( // Because token is encoded in base64 URL (and not just base64).
+				str_replace( // Because token may be encoded in base64 URL (and not just base64, see https://en.wikipedia.org/wiki/Base64#Variants_summary_table).
 					array( '-', '_' ),
 					array( '+', '/' ),
 					$tmp[1]
@@ -436,7 +452,7 @@ class OpenID_Connect_Generic_Client {
 			true
 		);
 
-		return $id_token_claim;
+		return $token_claim;
 	}
 
 	/**
@@ -456,6 +472,37 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
 
+		return true;
+	}
+
+	/**
+	 * Ensure the id_token_claim contains the required values.
+	 * See https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
+	 * for details 
+	 * @param array $id_token_claim The ID token claim.
+	 *
+	 * @return bool|WP_Error
+	 */
+	function validate_logout_token_claim( $logout_token_claim ) {
+		if ( ! is_array( $logout_token_claim ) ) {
+			return new WP_Error( 'bad-logout-token-claim', __( 'Bad logout token claim.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
+		}
+
+		// Section 2.6, #4
+		$has_sub =  isset( $logout_token_claim['sub'] ) && ! empty( $logout_token_claim['sub'] );
+		$has_sid =  isset( $logout_token_claim['sid'] ) && ! empty( $logout_token_claim['sid'] );
+		if( ! $has_sub && ! $has_sid ) {
+			return new WP_Error( 'no-subject-identity-or-session', __( 'No subject identity or session id.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
+		}
+
+		// Section 2.6, #6
+		$has_nonce =  isset( $logout_token_claim['nonce'] ) && ! empty( $logout_token_claim['nonce'] );
+		if( ! $has_sub && ! $has_sid ) {
+			return new WP_Error( 'nonce-not-allowed', __( 'Nonce claim not allowed in logout token.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
+		}
+
+		// NOTE: right now we're not performing further validations. #7-#10 are OPTIONAL,
+		// however, #3 and #5 are REQUIRED. 
 		return true;
 	}
 
@@ -530,4 +577,15 @@ class OpenID_Connect_Generic_Client {
 		return $id_token_claim['sub'];
 	}
 
+	/**
+	 * Retrieve the session id from the token claims. This is the OpenID Providers's
+	 * session ID, it is not directly related to a wordpress session context.
+	 *
+	 * @param array $token_claims The token claims.
+	 *
+	 * @return mixed
+	 */
+	function get_session_id( $token_claims ) {
+		return $token_claims['sid'];
+	}
 }
