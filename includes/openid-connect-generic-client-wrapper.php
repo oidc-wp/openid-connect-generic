@@ -371,7 +371,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$k_client_session_state = session_id();
 			$token_result = $client->request_authentication_token( $code, array( 'client_session_state' => $k_client_session_state ) );
 		} else {
-			$token_result = $client->request_authentication_token( $code );
+			$token_result = $client->request_authentication_token( $code, array() );
 		}
 
 		if ( is_wp_error( $token_result ) ) {
