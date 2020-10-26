@@ -493,7 +493,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
-	 * process backchannel logout requests from the IDP.
+	 * Process backchannel logout requests from the IDP.
 	 *
 	 * @return void
 	 */
@@ -516,7 +516,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		if ( ! isset( $token ) ) {
-			return new WP_Error( 'no-logout-token', __( 'No logout token.', 'daggerhart-openid-connect-generic' ) );
+			$this->error_redirect( new WP_Error( 'no-logout-token', __( 'No logout token.', 'daggerhart-openid-connect-generic' ) ) );
 		}
 
 		// FIXME: token is not validated here, see below.
@@ -537,7 +537,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			// https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6 .
 
 			//
-			// FIXME: #1 and #2 (decryption and token signature) are not yet done here, 
+			// FIXME: #1 and #2 (decryption and token signature) are not yet done here,
 			// because we're lacking the necessary infrastructure.
 			// The token introspection endpoint may be a viable alternative:
 			// https://tools.ietf.org/html/rfc7662 .

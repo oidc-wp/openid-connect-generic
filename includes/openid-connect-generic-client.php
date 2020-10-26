@@ -205,7 +205,7 @@ class OpenID_Connect_Generic_Client {
 	 * Using the authorization_code, request an authentication token from the IDP.
 	 *
 	 * @param string|WP_Error $code The authorization code.
-	 * @param array<string> $additional_params additional parameters for the token request
+	 * @param array<string>   $additional_params additional parameters for the token request.
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
