@@ -205,6 +205,7 @@ class OpenID_Connect_Generic_Client {
 	 * Using the authorization_code, request an authentication token from the IDP.
 	 *
 	 * @param string|WP_Error $code The authorization code.
+	 * @param array<string> $additional_params additional parameters for the token request
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
@@ -476,10 +477,11 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Ensure the id_token_claim contains the required values.
+	 * Ensure the logout_token_claim contains the required values.
 	 * See https://openid.net/specs/openid-connect-backchannel-1_0.html#rfc.section.2.6
-	 * for details 
-	 * @param array $id_token_claim The ID token claim.
+	 * for details
+	 *
+	 * @param array $logout_token_claim The logout token claim.
 	 *
 	 * @return bool|WP_Error
 	 */
@@ -488,21 +490,21 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'bad-logout-token-claim', __( 'Bad logout token claim.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
 		}
 
-		// Section 2.6, #4
-		$has_sub =  isset( $logout_token_claim['sub'] ) && ! empty( $logout_token_claim['sub'] );
-		$has_sid =  isset( $logout_token_claim['sid'] ) && ! empty( $logout_token_claim['sid'] );
-		if( ! $has_sub && ! $has_sid ) {
+		// Section 2.6, #4.
+		$has_sub = isset( $logout_token_claim['sub'] ) && ! empty( $logout_token_claim['sub'] );
+		$has_sid = isset( $logout_token_claim['sid'] ) && ! empty( $logout_token_claim['sid'] );
+		if ( ! $has_sub && ! $has_sid ) {
 			return new WP_Error( 'no-subject-identity-or-session', __( 'No subject identity or session id.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
 		}
 
-		// Section 2.6, #6
-		$has_nonce =  isset( $logout_token_claim['nonce'] ) && ! empty( $logout_token_claim['nonce'] );
-		if( ! $has_sub && ! $has_sid ) {
+		// Section 2.6, #6.
+		$has_nonce = isset( $logout_token_claim['nonce'] ) && ! empty( $logout_token_claim['nonce'] );
+		if ( ! $has_sub && ! $has_sid ) {
 			return new WP_Error( 'nonce-not-allowed', __( 'Nonce claim not allowed in logout token.', 'daggerhart-openid-connect-generic' ), $logout_token_claim );
 		}
 
 		// NOTE: right now we're not performing further validations. #7-#10 are OPTIONAL,
-		// however, #3 and #5 are REQUIRED. 
+		// however, #3 and #5 are REQUIRED.
 		return true;
 	}
 
