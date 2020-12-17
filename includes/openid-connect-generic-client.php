@@ -336,7 +336,8 @@ class OpenID_Connect_Generic_Client {
 
 		// Attempt the request including the access token in the query string for backwards compatibility.
 		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo' );
-		$response = wp_remote_post( $this->endpoint_userinfo, $request );
+		// $response = wp_remote_post( $this->endpoint_userinfo, $request );
+		$response = wp_remote_get( $this->endpoint_userinfo, $request );
 
 		if ( is_wp_error( $response ) ) {
 			$response->add( 'request_userinfo', __( 'Request for userinfo failed.', 'daggerhart-openid-connect-generic' ) );
