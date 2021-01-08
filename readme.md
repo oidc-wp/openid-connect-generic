@@ -82,6 +82,8 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - Userinfo Endpoint URL: `OIDC_ENDPOINT_USERINFO_URL`
 - Token Validation Endpoint URL: `OIDC_ENDPOINT_TOKEN_URL`
 - End Session Endpoint URL: `OIDC_ENDPOINT_LOGOUT_URL`
+- openid scope: `OIDC_CLIENT_SCOPE` (space separated)
+- openid login type: `OIDC_LOGIN_TYPE` ('button' or 'auto')
 
 ## Hooks
 

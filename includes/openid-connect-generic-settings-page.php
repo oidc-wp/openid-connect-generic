@@ -216,6 +216,7 @@ class OpenID_Connect_Generic_Settings_Page {
 					'button' => __( 'OpenID Connect button on login form', 'daggerhart-openid-connect-generic' ),
 					'auto'   => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
 				),
+				'disabled'    => defined( 'OIDC_LOGIN_TYPE' ),
 				'section'     => 'client_settings',
 			),
 			'client_id'         => array(
@@ -238,6 +239,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Space separated list of scopes this client should access.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'email profile openid offline_access',
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_CLIENT_SCOPE' ),
 				'section'     => 'client_settings',
 			),
 			'endpoint_login'    => array(
