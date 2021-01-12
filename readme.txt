@@ -4,7 +4,7 @@ Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 4.9
 Tested up to: 5.4.2
-Stable tag: 3.8.0
+Stable tag: 3.8.1
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -50,6 +50,11 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.8.1 =
+
+* Fix: @timnolte - Prevent SSO redirect on password protected posts.
+* Fix: @timnolte - CI/CD build issues.
 
 = 3.8.0 =
 
