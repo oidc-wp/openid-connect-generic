@@ -344,13 +344,13 @@ class OpenID_Connect_Generic {
 				'identify_with_username' => false,
 
 				// Plugin settings.
-				'enforce_privacy' => 0,
+				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
 				'alternate_redirect_uri' => 0,
 				'token_refresh_enable' => 1,
-				'link_existing_users' => 0,
-				'create_if_does_not_exist' => 1,
-				'redirect_user_back' => 0,
-				'redirect_on_logout' => 1,
+				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
+				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_NOT_EXISTS' ) ? intval( OIDC_CREATE_IF_NOT_EXISTS ) : 1,
+				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
+				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000,
 			)
