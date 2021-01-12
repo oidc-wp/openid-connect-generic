@@ -1,5 +1,10 @@
 # OpenId Connect Generic Changelog
 
+3.8.1
+
+* Fix: @timnolte - Prevent SSO redirect on password protected posts.
+* Fix: @timnolte - CI/CD build issues.
+
 3.8.0
 
 * Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
