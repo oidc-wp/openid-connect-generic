@@ -51,15 +51,19 @@ matrix:
       php: 7.3
       env: WP_MODE=single WP_VERSION=5.6.* PHP_UNIT=1
     - name: Preferred Minimum requirements
+      if: (branch IN (dev, main) OR branch =~ /^dev\-release\/.*$/) AND NOT type = pull_request
       php: 7.2
       env: WP_MODE=single WP_VERSION=5.4.* PHP_UNIT=1
     - name: Minimum requirements
+      if: (branch IN (dev, main) OR branch =~ /^dev\-release\/.*$/) AND NOT type = pull_request
       php: 7.1
       env: WP_MODE=single WP_VERSION=5.3.* PHP_UNIT=1
     - name: Bleeding Edge
+      if: (branch IN (dev, main) OR branch =~ /^dev\-release\/.*$/) AND NOT type = pull_request
       php: 7.4
       env: WP_MODE=single WP_VERSION=dev-master PHP_UNIT=1
     - name: Multisite Compatibility
+      if: (branch IN (dev, main) OR branch =~ /^dev\-release\/.*$/) AND NOT type = pull_request
       php: 7.3
       env: WP_MODE=multi WP_VERSION=5.6.* PHP_UNIT=1
   allow_failures:
