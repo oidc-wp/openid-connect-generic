@@ -55,6 +55,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 * Fix: @timnolte - Prevent SSO redirect on password protected posts.
 * Fix: @timnolte - CI/CD build issues.
+* Fix: @timnolte - Invalid redirect handling on logout for Auto Login setting.
 
 = 3.8.0 =
 
