@@ -12,6 +12,7 @@
 
 # Local Development files/folders.
 .env
+.wp-env.override.json
 phpcs.xml
 phpstan.neon
 phpunit.xml

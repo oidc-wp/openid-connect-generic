@@ -184,6 +184,28 @@ module.exports = function (grunt) {
 			},
 		},
 
+		// Bump version numbers
+		version: {
+			class: {
+				options: {
+					prefix: "const VERSION = '"
+				},
+				src: ['<%= pkg.name %>.php']
+			},
+			header: {
+				options: {
+					prefix: '\\* Version:\\s+'
+				},
+				src: ['<%= pkg.name %>.php']
+			},
+			readme: {
+				options: {
+					prefix: 'Stable tag:\\s+'
+				},
+				src: ['readme.txt']
+			}
+		}
+
 	});
 
 	grunt.registerTask('phpcs', ['shell:phpcs']);
