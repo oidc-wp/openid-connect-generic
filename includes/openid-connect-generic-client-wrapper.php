@@ -651,12 +651,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param string $claimname the claim name to look for.
 	 * @param array  $userinfo the JSON to look in.
 	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source).
-	 * @return true if a reference was found.
+	 * @return true|false
 	 */
 	private function get_claim( $claimname, $userinfo, &$claimvalue ) {
-		if ( ! isset( $userinfo ) ) {
-			return false;
-		}
 		/**
 		 * If we find a simple claim, return it.
 		 */
@@ -721,13 +718,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
 		$matches = null;
-		$string = '';
+    $string = '';
+    $info = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
 			foreach ( $matches[0] as $match ) {
 				$key = substr( $match[0], 1, -1 );
 				$string .= substr( $format, $i, $match[1] - $i );
-				if ( ! get_claim( $key, $user_claim, $info ) ) {
+				if ( ! $this->get_claim( $key, $user_claim, $info ) ) {
 					if ( $error_on_missing_key ) {
 						return new WP_Error(
 							'incomplete-user-claim',
