@@ -683,18 +683,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! array_key_exists( $src_name, $userinfo['_claim_sources'] ) ) {
 			return false;
 		}
-		$src = $userinfo['_claim_sources'][$src_name];
+		$src = $userinfo['_claim_sources'][ $src_name ];
 		// Source claim is not a JWT. Abort.
 		if ( ! array_key_exists( 'JWT', $src ) ) {
 			return false;
 		}
 		/**
 		 * Extract claim from JWT.
-		 * FIXME: We probably want to verify the JWT signature/issuer here!
+		 * FIXME: We probably want to verify the JWT signature/issuer here.
+		 * For example, using JWKS if applicable. For symmetrically signed
+		 * JWTs (HMAC), we need a way to specify the acceptable secrets
+		 * and each possible issuer in the config.
 		 */
 		$jwt = $src['JWT'];
 		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
 		$body_str = base64_decode( $body, false );
+		if ( ! $body_str ) {
+			return false;
+		}
 		$body_json = json_decode( $body_str, true );
 		if ( ! isset( $body_json ) ) {
 			return false;
@@ -718,8 +724,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
 		$matches = null;
-    $string = '';
-    $info = '';
+		$string = '';
+		$info = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
 			foreach ( $matches[0] as $match ) {
