@@ -1,5 +1,21 @@
 # OpenId Connect Generic Changelog
 
+3.8.1
+
+* Fix: @timnolte - Prevent SSO redirect on password protected posts.
+* Fix: @timnolte - CI/CD build issues.
+* Fix: @timnolte - Invalid redirect handling on logout for Auto Login setting.
+
+3.8.0
+
+* Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
+* Improvement: @timnolte - NPM version requirements for development.
+* Improvement: @timnolte - Travis CI build fixes.
+* Improvement: @timnolte - GrumPHP configuration updates for code contributions.
+* Improvement: @timnolte - Refactored to meet WordPress coding standards.
+* Improvement: @timnolte - Refactored to provide localization.
+* Improvement: @timnolte - Refactored to provide a Docker-based local development environment.
+
 3.7.1
 
 * Fix: Release Version Number.

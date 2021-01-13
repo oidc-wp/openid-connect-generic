@@ -16,7 +16,7 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
  * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.7.1
+ * Version:           3.8.1
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -80,7 +80,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var
 	 */
-	const VERSION = '3.7.1';
+	const VERSION = '3.8.1';
 
 	/**
 	 * Plugin settings.
@@ -369,14 +369,14 @@ class OpenID_Connect_Generic {
 			// Default settings values.
 			array(
 				// OAuth client settings.
-				'login_type'        => 'button',
-				'client_id'         => '',
-				'client_secret'     => '',
-				'scope'             => '',
-				'endpoint_login'    => '',
-				'endpoint_userinfo' => '',
-				'endpoint_token'    => '',
-				'endpoint_end_session' => '',
+				'login_type'           => 'button',
+				'client_id'            => defined( 'OIDC_CLIENT_ID' ) ? OIDC_CLIENT_ID : '',
+				'client_secret'        => defined( 'OIDC_CLIENT_SECRET' ) ? OIDC_CLIENT_SECRET : '',
+				'scope'                => '',
+				'endpoint_login'       => defined( 'OIDC_ENDPOINT_LOGIN_URL' ) ? OIDC_ENDPOINT_LOGIN_URL : '',
+				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
+				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
+				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
 
 				// Non-standard settings.
 				'no_sslverify'    => 0,

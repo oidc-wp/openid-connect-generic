@@ -76,7 +76,8 @@ class OpenID_Connect_Generic_Login_Form {
 
 		if ( 'wp-login.php' == $GLOBALS['pagenow']
 			&& ( 'auto' == $this->settings->login_type || ! empty( $_GET['force_redirect'] ) )
-			&& ( ! isset( $_GET['action'] ) || 'logout' !== $_GET['action'] )
+			// Don't send users to the IDP on logout or post password protected authentication.
+			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
 				$this->handle_redirect_cookie();
@@ -153,7 +154,7 @@ class OpenID_Connect_Generic_Login_Form {
 		ob_start();
 		?>
 		<div id="login_error">
-			<strong><?php printf( _e( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), $error_code ); ?>: </strong>
+			<strong><?php printf( __( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), $error_code ); ?>: </strong>
 			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php

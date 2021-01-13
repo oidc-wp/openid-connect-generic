@@ -6,6 +6,7 @@ on:
 jobs:
   tag:
     name: New tag
+    if: github.repository == 'oidc-wp/openid-connect-generic'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
