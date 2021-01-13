@@ -648,66 +648,66 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * Checks if $claimname is in the body or _claim_names of the userinfo.
 	 * If yes, returns the claim value. Otherwise, returns false.
 	 *
-	 * @param string $claimname the claim name to look for
-	 * @param array $userinfo the JSON to look in
-	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source)
-	 * @return True if a reference was found
+	 * @param string $claimname the claim name to look for.
+	 * @param array  $userinfo the JSON to look in.
+	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source).
+	 * @return true if a reference was found.
 	 */
 	private function get_claim( $claimname, $userinfo, &$claimvalue ) {
-	if ( ! isset( $userinfo ) ) {
-	return False;
-	}
-	/**
-	 * If we find a simple claim, return it.
-	 */
-	if ( array_key_exists( $claimname, $userinfo ) ) {
-		$claimvalue = $userinfo[$claimname];
-		return True;
-	}
-	/**
-	 * If there are no aggregated claims, it is over.
-	 */
-	if ( ! array_key_exists( '_claim_names', $userinfo ) ||
+		if ( ! isset( $userinfo ) ) {
+			return false;
+		}
+		/**
+		 * If we find a simple claim, return it.
+		 */
+		if ( array_key_exists( $claimname, $userinfo ) ) {
+			$claimvalue = $userinfo[ $claimname ];
+			return true;
+		}
+		/**
+		 * If there are no aggregated claims, it is over.
+		 */
+		if ( ! array_key_exists( '_claim_names', $userinfo ) ||
 			! array_key_exists( '_claim_sources', $userinfo ) ) {
-		return False;
+			return false;
+		}
+		$claim_src_ptr = $userinfo['_claim_names'];
+		if ( ! isset( $claim_src_ptr ) ) {
+			return false;
+		}
+		/**
+		 * No reference found
+		 */
+		if ( ! array_key_exists( $claimname, $claim_src_ptr ) ) {
+			return false;
+		}
+		$src_name = $claim_src_ptr[ $claimname ];
+		// Reference found, but no corresponding JWT. This is a malformed userinfo.
+		if ( ! array_key_exists( $src_name, $userinfo['_claim_sources'] ) ) {
+			return false;
+		}
+		$src = $userinfo['_claim_sources'][$src_name];
+		// Source claim is not a JWT. Abort.
+		if ( ! array_key_exists( 'JWT', $src ) ) {
+			return false;
+		}
+		/**
+		 * Extract claim from JWT.
+		 * FIXME: We probably want to verify the JWT signature/issuer here!
+		 */
+		$jwt = $src['JWT'];
+		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
+		$body_str = base64_decode( $body, false );
+		$body_json = json_decode( $body_str, true );
+		if ( ! isset( $body_json ) ) {
+			return false;
+		}
+		if ( ! array_key_exists( $claimname, $body_json ) ) {
+			return false;
+		}
+		$claimvalue = $body_json[ $claimname ];
+		return true;
 	}
-	$claim_src_ptr = $userinfo['_claim_names'];
-	if ( ! isset( $claim_src_ptr ) ) {
-		return False;
-	}
-	/**
-	 * No reference found
-	 */
-	if ( ! array_key_exists( $claimname, $claim_src_ptr ) ) {
-		return False;
-	}
-	$src_name = $claim_src_ptr[$claimname];
-	//Reference found, but no corresponding JWT. This is a malformed userinfo
-	if ( ! array_key_exists( $src_name, $userinfo['_claim_sources']) ) {
-		return False;
-	}
-	$src = $userinfo['_claim_sources'][$src_name];
-	//Source claim is not a JWT. Abort.
-	if ( ! array_key_exists( 'JWT',  $src ) ) {
-		return False;
-	}
-	/**
-	 * Extract claim from JWT.
-	 * FIXME: We probably want to verify the JWT signature/issuer here!
-	 */
-	$jwt = $src['JWT'];
-	list ($header, $body, $rest) = explode('.', $jwt, 3);
-	$body_str = base64_decode ( $body, false );
-	$body_json = json_decode ($body_str, True);
-	if ( !isset ( $body_json ) ) {
-		return False;
-	}
-	if ( !array_key_exists( $claimname, $body_json ) ) {
-		return False;
-	}
-	$claimvalue = $body_json[$claimname];
-	return True;
-}
 
 
 	/**
