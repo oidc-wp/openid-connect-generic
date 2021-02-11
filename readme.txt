@@ -3,9 +3,9 @@ Contributors: daggerhart, tnolte
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 4.9
-Tested up to: 5.4.2
-Stable tag: trunk
-Requires PHP: 5.6
+Tested up to: 5.6
+Stable tag: 3.8.1
+Requires PHP: 7.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,15 +51,18 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Changelog ==
 
+= 3.8.1 =
+
+* Fix: @timnolte - Prevent SSO redirect on password protected posts.
+* Fix: @timnolte - CI/CD build issues.
+* Fix: @timnolte - Invalid redirect handling on logout for Auto Login setting.
+
 = 3.8.0 =
 
 * Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
-* Improvement: @timnolte - NPM version requirements for development.
-* Improvement: @timnolte - Travis CI build fixes.
-* Improvement: @timnolte - GrumPHP configuration updates for code contributions.
+* Improvement: @timnolte - Plugin development & contribution updates.
 * Improvement: @timnolte - Refactored to meet WordPress coding standards.
 * Improvement: @timnolte - Refactored to provide localization.
-* Improvement: @timnolte - Refactored to provide a Docker-based local development environment.
 
 = 3.7.1 =
 
