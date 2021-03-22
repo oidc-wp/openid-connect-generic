@@ -1,29 +1,54 @@
-name: Deploy to WordPress.org
+name: Prepare & Deploy a Release
+
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [published]
+
+env:
+  WP_MULTISITE: 0
+
 jobs:
-  tag:
-    name: New tag
+  release:
+    name: New Release
+
     if: github.repository == 'oidc-wp/openid-connect-generic'
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@main
+    - name: Checkout Code
+      uses: actions/checkout@v2
 
-        # - name: Validate composer.json and composer.lock
-        #   run: composer validate
+    - name: Setup Node Environment
+      uses: actions/setup-node@v1
+      # https://github.com/marketplace/actions/setup-node-js-environment
+      with:
+        node-version: 12.x
 
-        # - name: Install dependencies
-        #   run: composer install --prefer-dist --no-progress --no-suggest --no-dev
+    - name: Cache Node Modules
+      uses: actions/cache@v2
+      env:
+        npm-cache-name: cache-node-modules
+      with:
+        # npm cache files are stored in `~/.npm` on Linux/macOS
+        path: ~/.npm
+        key: ${{ runner.os }}-build-${{ env.npm-cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.npm-cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
 
-      # - name: Build
-      #   run: |
-      #     npm install
-      #     npm run build
-      - name: WordPress Plugin Deploy
-        uses: 10up/action-wordpress-plugin-deploy@1.4.0
-        env:
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          SLUG: daggerhart-openid-connect-generic
+    - name: NPM Install
+      run: npm install
+
+    - name: Prepare a WordPress.org Release
+      run: npm run release
+
+    - name: WordPress.org Plugin Deploy
+      uses: nk-o/action-wordpress-plugin-deploy@master
+      # https://github.com/marketplace/actions/wordpress-plugin-deploy
+      env:
+        SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+        SOURCE_DIR: dist/
+        SLUG: daggerhart-openid-connect-generic
