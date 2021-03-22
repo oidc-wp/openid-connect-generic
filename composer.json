@@ -53,7 +53,7 @@
 		"php-stubs/wordpress-stubs": "~5.4.2",
 		"roave/security-advisories": "dev-master",
 		"mnsami/composer-custom-directory-installer": "~1.0",
-		"wordpress/wordpress": "~5.4.2",
+		"wordpress/wordpress": "~5.6.0",
 		"dealerdirect/phpcodesniffer-composer-installer": "~0.6",
 		"brain/monkey": "^2.4",
 		"mockery/mockery": "^1.3",
@@ -89,7 +89,10 @@
 		],
 		"phpcs": "vendor/bin/phpcs",
 		"phpcbf": "vendor/bin/phpcbf",
-		"phpstan": "\"vendor/bin/phpstan\""
+		"phpstan": "vendor/bin/phpstan",
+		"lint": "vendor/bin/phpcs --report=full .",
+		"lint-fix": "vendor/bin/phpcbf .",
+		"analyze": "vendor/bin/phpstan analyze ."
 	},
 	"extra": {
 		"installer-paths": {
