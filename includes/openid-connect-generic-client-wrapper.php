@@ -150,8 +150,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! empty( $atts['redirect_to'] ) ) {
 			// Set the request query parameter used to set the cookie redirect.
 			$_REQUEST['redirect_to'] = $atts['redirect_to'];
-			$login_form = new OpenID_Connect_Generic_Login_Form( $this->settings, $this );
-			$login_form->handle_redirect_cookie();
 		}
 
 		return $this->client->make_authentication_url( $atts );

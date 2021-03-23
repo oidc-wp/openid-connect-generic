@@ -42,9 +42,6 @@ class OpenID_Connect_Generic_Login_Form {
 	function __construct( $settings, $client_wrapper ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
-
-		// Handle setting the redirect cookie on a formu page.
-		add_action( 'login_form_login', array( $this, 'handle_redirect_cookie' ) );
 	}
 
 	/**
@@ -80,8 +77,11 @@ class OpenID_Connect_Generic_Login_Form {
 			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
-				$this->handle_redirect_cookie();
-				wp_redirect( $this->client_wrapper->get_authentication_url() );
+				$redirect_to = $this->get_redirect_to();
+				if ( empty( $redirect_to ) ) {
+					return;
+				}
+				wp_redirect( $this->client_wrapper->get_authentication_url( array( 'redirect_to' => $redirect_to ) ) );
 				exit;
 			} else {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
@@ -91,35 +91,40 @@ class OpenID_Connect_Generic_Login_Form {
 	}
 
 	/**
-	 * Handle login related redirects.
+	 * Get the client login redirect.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	function handle_redirect_cookie() {
+	function get_redirect_to() {
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
-			return;
+			return '';
 		}
 
-		// Record the URL of this page if set to redirect back to origin page.
+		// Default redirect to the homepage.
+		$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
+
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
+			// If using the login form, default redirect to the admin dashboard.
+			$redirect_url = admin_url();
+		}
+
+		// Record the URL of the redirect_to if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
-			$redirect_expiry = current_time( 'timestamp' ) + DAY_IN_SECONDS;
-
-			// Default redirect to the homepage.
-			$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
-
-			if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
-				// If using the login form, default redirect to the admin dashboard.
-				$redirect_url = admin_url();
-
-				if ( isset( $_REQUEST['redirect_to'] ) ) {
-					$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
-				}
+			if ( isset( $_REQUEST['redirect_to'] ) ) {
+				$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
 			}
-
-			$redirect_url = apply_filters( 'openid-connect-generic-cookie-redirect-url', $redirect_url );
-
-			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 		}
+
+		// This hook is being deprecated with the move away from cookies.
+		$redirect_url = apply_filters_deprecated(
+			'openid-connect-generic-cookie-redirect-url',
+			array( $redirect_url ),
+			'3.8.2',
+			'openid-connect-generic-client-redirect-to'
+		);
+
+		// This is the new hook to use with the transients version of redirection.
+		return apply_filters( 'openid-connect-generic-client-redirect-to', $redirect_url );
 	}
 
 	/**
@@ -177,6 +182,9 @@ class OpenID_Connect_Generic_Login_Form {
 		}
 
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $button_text );
+		if ( empty( $atts['redirect_to'] ) ) {
+			$atts['redirect_to'] = $this->get_redirect_to();
+		}
 		$href = $this->client_wrapper->get_authentication_url( $atts );
 
 		ob_start();
