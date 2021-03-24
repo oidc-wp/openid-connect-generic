@@ -49,4 +49,3 @@ grumphp:
         - '/^assets\/(.*)/'
       memory_limit: '-1'
       triggered_by: [php]
-    securitychecker: ~

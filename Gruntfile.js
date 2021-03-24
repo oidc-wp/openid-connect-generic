@@ -46,8 +46,7 @@ module.exports = function (grunt) {
 		},
 
 		clean: {
-			main: ['dist'], //Clean up build folder
-			i18n: ['languages/*.mo', 'languages/*.pot']
+			main: ['dist'] //Clean up build folder
 		},
 
 		copy: {
@@ -57,15 +56,17 @@ module.exports = function (grunt) {
 					'**',
 					'!*.xml', '!*.log', //any config/log files
 					'!node_modules/**', '!Gruntfile.js', '!package.json', '!package-lock.json', //npm/Grunt
-					'!assets/**', //wp-org assets
+					'!.wordpress-org/**', //wp-org assets
 					'!dist/**', //build directory
 					'!.git/**', //version control
+					'!.github/**', //GitHub platform files
 					'!tests/**', '!scripts/**', '!phpunit.xml', '!phpunit.xml.dist', //unit testing
 					'!vendor/**', '!composer.lock', '!composer.phar', '!composer.json', //composer
 					'!wordpress/**',
 					'!.*', '!**/*~', //hidden files
 					'!CONTRIBUTING.md',
 					'!README.md',
+					'!HOWTO.md',
 					'!phpcs.xml', '!phpcs.xml.dist', '!phpstan.neon.dist', '!grumphp.yml.dist', // CodeSniffer Configuration.
 					'!docker-compose.override.yml', // Local Docker Development configuration.
 					'!codecov.yml', // Code coverage configuration.
@@ -74,16 +75,6 @@ module.exports = function (grunt) {
 				dest: 'dist/',
 				options: {
 					processContentExclude: ['**/*.{png,gif,jpg,ico,mo}'],
-					processContent: function (content, srcpath) {
-						if (srcpath == 'readme.txt' || srcpath == 'openid-connect-generic.php') {
-							if (grunt.config.get('gitinfo').local.tag.current.name !== 'undefined') {
-								content = content.replace('{{version}}', grunt.config.get('gitinfo').local.tag.current.name);
-							} else {
-								content = content.replace('{{version}}', grunt.config.get('gitinfo').local.tag.current.nameLong);
-							}
-						}
-						return content;
-					},
 				},
 			}
 		},
@@ -114,9 +105,10 @@ module.exports = function (grunt) {
 					domainPath: '/languages',         // Where to save the POT file.
 					exclude: [
 						'node_modules/.*',				//npm
-						'assets/.*', 							//wp-org assets
+						'.wordpress-org/.*', 			//wp-org assets
 						'dist/.*', 								//build directory
 						'.git/.*', 								//version control
+						'.github/.*',							//GitHub platform
 						'tests/.*', 'scripts/.*',	//unit testing
 						'vendor/.*', 							//composer
 						'wordpress/.*',
@@ -145,7 +137,9 @@ module.exports = function (grunt) {
 		checkrepo: {
 			deploy: {
 				tagged: true, // Check that the last commit (HEAD) is tagged
-				clean: true // Check that working directory is clean
+				tag: {
+					eq: '<%= pkg.version %>' // Check if highest repo tag is equal to pkg.version
+				}
 			}
 		},
 
@@ -214,10 +208,9 @@ module.exports = function (grunt) {
 	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain']);
-	grunt.registerTask('build', ['gitinfo', 'test', 'clean', 'i18n', 'readme', 'copy']);
-	//grunt.registerTask( 'deploy', [ 'checkbranch:master', 'checkrepo', 'build' ] );
-	grunt.registerTask('deploy', ['checkrepo', 'build']);
+	grunt.registerTask('test', ['checktextdomain', 'phpcs']);
+	grunt.registerTask('build', ['gitinfo', 'test', 'i18n', 'readme']);
+	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
 
 };
 

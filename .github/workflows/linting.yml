@@ -1,0 +1,50 @@
+name: Coding Standards
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - main
+      - 'release/**'
+      - 'feature/**'
+      - 'fix/**'
+
+env:
+  PHP_VERSION: 7.3
+  WP_MULTISITE: 0
+
+jobs:
+  check:
+    name: Setup & Check
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Setup PHP Environment
+      uses: shivammathur/setup-php@v2
+      # https://github.com/marketplace/actions/setup-php-action
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        tools: composer:v1
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v2
+      env:
+        composer-cache-name: cache-vendor
+      with:
+        path: ~/vendor
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Install Composer Dependencies
+      run: composer install
+
+    - name: Check WordPress Coding Standards
+      run: composer run-script lint
