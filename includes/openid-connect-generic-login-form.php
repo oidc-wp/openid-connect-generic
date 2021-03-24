@@ -132,7 +132,8 @@ class OpenID_Connect_Generic_Login_Form {
 	function handle_login_page( $message ) {
 
 		if ( isset( $_GET['login-error'] ) ) {
-			$message .= $this->make_error_output( $_GET['login-error'], $_GET['message'] );
+			$error_message = ! empty( $_GET['message'] ) ? $_GET['message'] : 'Unknown error.';
+			$message .= $this->make_error_output( $_GET['login-error'], $error_message );
 		}
 
 		// Login button is appended to existing messages in case of error.
@@ -158,7 +159,7 @@ class OpenID_Connect_Generic_Login_Form {
 			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php
-		return ob_get_clean();
+		return wp_kses_post( ob_get_clean() );
 	}
 
 	/**
@@ -184,7 +185,7 @@ class OpenID_Connect_Generic_Login_Form {
 			<a class="button button-large" href="<?php print esc_url( $href ); ?>"><?php print $text; ?></a>
 		</div>
 		<?php
-		return ob_get_clean();
+		return wp_kses_post( ob_get_clean() );
 	}
 
 	/**
