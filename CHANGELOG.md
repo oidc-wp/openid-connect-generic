@@ -1,5 +1,9 @@
 # OpenId Connect Generic Changelog
 
+3.8.2
+
+* Fix: @timnolte - Fixed reported XSS vulnerability on WordPress login screen.
+
 3.8.1
 
 * Fix: @timnolte - Prevent SSO redirect on password protected posts.
