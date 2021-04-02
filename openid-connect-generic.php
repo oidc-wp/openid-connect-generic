@@ -42,6 +42,7 @@ Notes
   - openid-connect-generic-alter-user-data     - modify user data before a new user is created
   - openid-connect-modify-token-response-before-validation - modify the token response before validation
   - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
+  - openid-connect-generic-alter-alternate-redirect-uri  - modify the alternate redirect uri. Do not add starting or ending slash.
 
   Actions
   - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
@@ -133,7 +134,8 @@ class OpenID_Connect_Generic {
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
-			$redirect_uri = site_url( '/openid-connect-authorize' );
+			$redirect_uri = apply_filters( 'openid-connect-generic-alter-alternate-redirect-uri', 'openid-connect-authorize' );
+			$redirect_uri = site_url( '/' . $redirect_uri );
 		}
 
 		$state_time_limit = 180;

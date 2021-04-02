@@ -416,7 +416,8 @@ class OpenID_Connect_Generic_Settings_Page {
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
-			$redirect_uri = site_url( '/openid-connect-authorize' );
+			$redirect_uri = apply_filters( 'openid-connect-generic-alter-alternate-redirect-uri', 'openid-connect-authorize' );
+			$redirect_uri = site_url( '/' . $redirect_uri );
 		}
 		?>
 		<div class="wrap">
