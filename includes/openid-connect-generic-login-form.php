@@ -96,23 +96,28 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @return string
 	 */
 	function get_redirect_to() {
+		global $wp;
+
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
 			return '';
 		}
 
 		// Default redirect to the homepage.
-		$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
+		$redirect_url = home_url();
 
+		// If using the login form, default redirect to the admin dashboard.
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
-			// If using the login form, default redirect to the admin dashboard.
 			$redirect_url = admin_url();
+		}
+
+		// Honor Core WordPress & other plugin redirects.
+		if ( isset( $_REQUEST['redirect_to'] ) ) {
+			$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
 		}
 
 		// Record the URL of the redirect_to if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
-			if ( isset( $_REQUEST['redirect_to'] ) ) {
-				$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
-			}
+			$redirect_url = home_url( add_query_arg( $wp->request ) );
 		}
 
 		// This hook is being deprecated with the move away from cookies.
@@ -176,24 +181,28 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @return string
 	 */
 	function make_login_button( $atts = array() ) {
-		$button_text = __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
-		if ( ! empty( $atts['button_text'] ) ) {
-			$button_text = $atts['button_text'];
-		}
 
-		$text = apply_filters( 'openid-connect-generic-login-button-text', $button_text );
-		if ( empty( $atts['redirect_to'] ) ) {
-			$atts['redirect_to'] = $this->get_redirect_to();
-		}
+		$atts = shortcode_atts(
+			array(
+				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
+				'redirect_to' => $this->get_redirect_to(),
+			),
+			$atts,
+			'openid_connect_generic_login_button'
+		);
+
+		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
+
 		$href = $this->client_wrapper->get_authentication_url( $atts );
 
-		ob_start();
-		?>
-		<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
-			<a class="button button-large" href="<?php print esc_url( $href ); ?>"><?php print $text; ?></a>
-		</div>
-		<?php
-		return wp_kses_post( ob_get_clean() );
+		$login_button = <<<HTML
+<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
+	<a class="button button-large" href="{$href}">{$text}</a>
+</div>
+HTML;
+
+		return $login_button;
+
 	}
 
 	/**

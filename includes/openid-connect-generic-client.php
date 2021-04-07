@@ -132,10 +132,22 @@ class OpenID_Connect_Generic_Client {
 	 */
 	function make_authentication_url( $atts = array() ) {
 
-		$endpoint_login = ( ! empty( $atts['endpoint_login'] ) ) ? $atts['endpoint_login'] : $this->endpoint_login;
-		$scope = ( ! empty( $atts['scope'] ) ) ? $atts['scope'] : $this->scope;
-		$client_id = ( ! empty( $atts['client_id'] ) ) ? $atts['client_id'] : $this->client_id;
-		$redirect_uri = ( ! empty( $atts['redirect_uri'] ) ) ? $atts['redirect_uri'] : $this->redirect_uri;
+		$atts = shortcode_atts(
+			array(
+				'endpoint_login' => $this->endpoint_login,
+				'scope' => $this->scope,
+				'client_id' => $this->client_id,
+				'redirect_uri' => $this->redirect_uri,
+				'redirect_to' => home_url(), // Default redirect to the homepage.
+			),
+			$atts,
+			'openid_connect_generic_auth_url'
+		);
+
+		// Validate the redirect to value to prevent a redirection attack.
+		if ( ! empty( $atts['redirect_to'] ) ) {
+			$atts['redirect_to'] = wp_validate_redirect( $atts['redirect_to'], home_url() );
+		}
 
 		$separator = '?';
 		if ( stripos( $this->endpoint_login, '?' ) !== false ) {
@@ -143,12 +155,12 @@ class OpenID_Connect_Generic_Client {
 		}
 		$url = sprintf(
 			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
-			$endpoint_login,
+			$atts['endpoint_login'],
 			$separator,
-			rawurlencode( $scope ),
-			rawurlencode( $client_id ),
-			$this->new_state(),
-			rawurlencode( $redirect_uri )
+			rawurlencode( $atts['scope'] ),
+			rawurlencode( $atts['client_id'] ),
+			$this->new_state( $atts['redirect_to'] ),
+			rawurlencode( $atts['redirect_uri'] )
 		);
 
 		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
@@ -348,12 +360,19 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Generate a new state, save it as a transient, and return the state hash.
 	 *
+	 * @param string $redirect_to The redirect URL to be used after IDP authentication.
+	 *
 	 * @return string
 	 */
-	function new_state() {
+	function new_state( $redirect_to ) {
 		// New state w/ timestamp.
 		$state = md5( mt_rand() . microtime( true ) );
-		set_transient( 'openid-connect-generic-state--' . $state, $state, $this->state_time_limit );
+		$state_value = array(
+			$state => array(
+				'redirect_to' => $redirect_to,
+			),
+		);
+		set_transient( 'openid-connect-generic-state--' . $state, $state_value, $this->state_time_limit );
 
 		return $state;
 	}
@@ -380,7 +399,22 @@ class OpenID_Connect_Generic_Client {
 			do_action( 'openid-connect-generic-state-expired', $state );
 		}
 
-		return ! ! $valid;
+		return boolval( $valid );
+	}
+
+	/**
+	 * Get the authorization state from the request
+	 *
+	 * @param array<string>|WP_Error $request The authentication request results.
+	 *
+	 * @return string|WP_Error
+	 */
+	function get_authentication_state( $request ) {
+		if ( ! isset( $request['state'] ) ) {
+			return new WP_Error( 'missing-authentication-state', __( 'Missing authentication state.', 'daggerhart-openid-connect-generic' ), $request );
+		}
+
+		return $request['state'];
 	}
 
 	/**

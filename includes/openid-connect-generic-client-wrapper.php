@@ -50,6 +50,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * The user redirect cookie key.
 	 *
+	 * @deprecated Redirection should be done via state transient and not cookies.
+	 *
 	 * @var string
 	 */
 	public $cookie_redirect_key = 'openid-connect-generic-redirect';
@@ -146,11 +148,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	function get_authentication_url( $atts = array() ) {
-
-		if ( ! empty( $atts['redirect_to'] ) ) {
-			// Set the request query parameter used to set the cookie redirect.
-			$_REQUEST['redirect_to'] = $atts['redirect_to'];
-		}
 
 		return $this->client->make_authentication_url( $atts );
 
@@ -350,6 +347,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $code );
 		}
 
+		// Retrieve the authentication state from the authentication request.
+		$state = $client->get_authentication_state( $authentication_request );
+
+		if ( is_wp_error( $state ) ) {
+			$this->error_redirect( $state );
+		}
+
 		// Attempting to exchange an authorization code for an authentication token.
 		$token_result = $client->request_authentication_token( $code );
 
@@ -450,12 +454,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Log our success.
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
-		// Redirect back to the origin page if enabled.
-		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
+		// Default redirect to the homepage.
+		$redirect_url = home_url();
+		// Redirect user according to redirect set in state.
+		$state_object = get_transient( 'openid-connect-generic-state--' . $state );
+		// Get the redirect URL stored with the corresponding authentication request state.
+		if ( ! empty( $state_object ) ) {
+			$redirect_url = $state_object['redirect_to'];
+		}
+
+		// Provide backwards compatibility for customization using the deprecated cookie method.
+		if ( ! empty( $_COOKIE[ $this->cookie_redirect_key ] ) ) {
+			$redirect_url = esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] );
+		}
 
 		if ( $this->settings->redirect_user_back && ! empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
-			setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 			wp_redirect( $redirect_url );
 		} else { // Otherwise, go home!
 			wp_redirect( home_url() );
