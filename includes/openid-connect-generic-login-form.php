@@ -193,8 +193,10 @@ class OpenID_Connect_Generic_Login_Form {
 		);
 
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
+		$text = esc_html( $text );
 
 		$href = $this->client_wrapper->get_authentication_url( $atts );
+		$href = esc_url_raw( $href );
 
 		$login_button = <<<HTML
 <div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
