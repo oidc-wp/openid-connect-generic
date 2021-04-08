@@ -39,7 +39,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Client_Wrapper  $client_wrapper A plugin client wrapper object instance.
 	 */
-	function __construct( $settings, $client_wrapper ) {
+	public function __construct( $settings, $client_wrapper ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
 	}
@@ -52,7 +52,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return void
 	 */
-	static public function register( $settings, $client_wrapper ) {
+	public static function register( $settings, $client_wrapper ) {
 		$login_form = new self( $settings, $client_wrapper );
 
 		// Alter the login form as dictated by settings.
@@ -69,12 +69,13 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return void
 	 */
-	function handle_redirect_login_type_auto() {
+	public function handle_redirect_login_type_auto() {
 
 		if ( 'wp-login.php' == $GLOBALS['pagenow']
 			&& ( 'auto' == $this->settings->login_type || ! empty( $_GET['force_redirect'] ) )
 			// Don't send users to the IDP on logout or post password protected authentication.
 			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WP Login Form doesn't have a nonce.
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
 				$redirect_to = $this->get_redirect_to();
@@ -95,7 +96,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function get_redirect_to() {
+	public function get_redirect_to() {
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -112,7 +113,7 @@ class OpenID_Connect_Generic_Login_Form {
 
 		// Honor Core WordPress & other plugin redirects.
 		if ( isset( $_REQUEST['redirect_to'] ) ) {
-			$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
+			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		}
 
 		// Record the URL of the redirect_to if set to redirect back to origin page.
@@ -139,11 +140,11 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function handle_login_page( $message ) {
+	public function handle_login_page( $message ) {
 
 		if ( isset( $_GET['login-error'] ) ) {
-			$error_message = ! empty( $_GET['message'] ) ? $_GET['message'] : 'Unknown error.';
-			$message .= $this->make_error_output( $_GET['login-error'], $error_message );
+			$error_message = ! empty( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Unknown error.';
+			$message .= $this->make_error_output( sanitize_text_field( wp_unslash( $_GET['login-error'] ) ), $error_message );
 		}
 
 		// Login button is appended to existing messages in case of error.
@@ -160,12 +161,12 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function make_error_output( $error_code, $error_message ) {
+	public function make_error_output( $error_code, $error_message ) {
 
 		ob_start();
 		?>
-		<div id="login_error">
-			<strong><?php printf( __( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), $error_code ); ?>: </strong>
+		<div id="login_error"><?php // translators: %1$s is the error code from the IDP. ?>
+			<strong><?php printf( esc_html__( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), esc_html( $error_code ) ); ?>: </strong>
 			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php
@@ -180,7 +181,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function make_login_button( $atts = array() ) {
+	public function make_login_button( $atts = array() ) {
 
 		$atts = shortcode_atts(
 			array(
@@ -210,7 +211,7 @@ HTML;
 	 *
 	 * @return void
 	 */
-	function remove_login_form() {
+	public function remove_login_form() {
 		?>
 		<script type="text/javascript">
 			(function() {

@@ -111,7 +111,7 @@ class OpenID_Connect_Generic_Client {
 	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
 	 */
-	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -130,7 +130,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string
 	 */
-	function make_authentication_url( $atts = array() ) {
+	public function make_authentication_url( $atts = array() ) {
 
 		$atts = shortcode_atts(
 			array(
@@ -174,7 +174,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<string>|WP_Error
 	 */
-	function validate_authentication_request( $request ) {
+	public function validate_authentication_request( $request ) {
 		// Look for an existing error of some kind.
 		if ( isset( $request['error'] ) ) {
 			return new WP_Error( 'unknown-error', 'An unknown error occurred.', $request );
@@ -205,7 +205,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string|WP_Error
 	 */
-	function get_authentication_code( $request ) {
+	public function get_authentication_code( $request ) {
 		if ( ! isset( $request['code'] ) ) {
 			return new WP_Error( 'missing-authentication-code', __( 'Missing authentication code.', 'daggerhart-openid-connect-generic' ), $request );
 		}
@@ -220,7 +220,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	function request_authentication_token( $code ) {
+	public function request_authentication_token( $code ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
@@ -259,7 +259,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function request_new_tokens( $refresh_token ) {
+	public function request_new_tokens( $refresh_token ) {
 		$request = array(
 			'body' => array(
 				'refresh_token' => $refresh_token,
@@ -290,7 +290,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error|null
 	 */
-	function get_token_response( $token_result ) {
+	public function get_token_response( $token_result ) {
 		if ( ! isset( $token_result['body'] ) ) {
 			return new WP_Error( 'missing-token-body', __( 'Missing token body.', 'daggerhart-openid-connect-generic' ), $token_result );
 		}
@@ -322,7 +322,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function request_userinfo( $access_token ) {
+	public function request_userinfo( $access_token ) {
 		// Allow modifications to the request.
 		$request = apply_filters( 'openid-connect-generic-alter-request', array(), 'get-userinfo' );
 
@@ -364,7 +364,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string
 	 */
-	function new_state( $redirect_to ) {
+	public function new_state( $redirect_to ) {
 		// New state w/ timestamp.
 		$state = md5( mt_rand() . microtime( true ) );
 		$state_value = array(
@@ -384,7 +384,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool
 	 */
-	function check_state( $state ) {
+	public function check_state( $state ) {
 
 		$state_found = true;
 
@@ -409,7 +409,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string|WP_Error
 	 */
-	function get_authentication_state( $request ) {
+	public function get_authentication_state( $request ) {
 		if ( ! isset( $request['state'] ) ) {
 			return new WP_Error( 'missing-authentication-state', __( 'Missing authentication state.', 'daggerhart-openid-connect-generic' ), $request );
 		}
@@ -424,7 +424,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_token_response( $token_response ) {
+	public function validate_token_response( $token_response ) {
 		/*
 		 * Ensure 2 specific items exist with the token response in order
 		 * to proceed with confidence:  id_token and token_type == 'Bearer'
@@ -445,7 +445,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function get_id_token_claim( $token_response ) {
+	public function get_id_token_claim( $token_response ) {
 		// Validate there is an id_token.
 		if ( ! isset( $token_response['id_token'] ) ) {
 			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
@@ -480,7 +480,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_id_token_claim( $id_token_claim ) {
+	public function validate_id_token_claim( $id_token_claim ) {
 		if ( ! is_array( $id_token_claim ) ) {
 			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
@@ -500,7 +500,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error|null
 	 */
-	function get_user_claim( $token_response ) {
+	public function get_user_claim( $token_response ) {
 		// Send a userinfo request to get user claim.
 		$user_claim_result = $this->request_userinfo( $token_response['access_token'] );
 
@@ -523,7 +523,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_user_claim( $user_claim, $id_token_claim ) {
+	public function validate_user_claim( $user_claim, $id_token_claim ) {
 		// Validate the user claim.
 		if ( ! is_array( $user_claim ) ) {
 			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim.', 'daggerhart-openid-connect-generic' ), $user_claim );
@@ -560,7 +560,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return mixed
 	 */
-	function get_subject_identity( $id_token_claim ) {
+	public function get_subject_identity( $id_token_claim ) {
 		return $id_token_claim['sub'];
 	}
 
