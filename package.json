@@ -1,6 +1,6 @@
 {
 	"name": "openid-connect-generic",
-	"version": "3.8.2",
+	"version": "3.8.3",
 	"description": "OpenID Connect generic WordPress plugin.",
 	"main": "Gruntfile.js",
 	"repository": {
