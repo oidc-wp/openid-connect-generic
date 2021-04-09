@@ -61,7 +61,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings The plugin settings object.
 	 * @param OpenID_Connect_Generic_Option_Logger   $logger   The plugin logging class object.
 	 */
-	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 
 		$this->settings             = $settings;
 		$this->logger               = $logger;
@@ -87,7 +87,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 *
 	 * @return void
 	 */
-	static public function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public static function register( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$settings_page = new self( $settings, $logger );
 
 		// Add our options page the the admin menu.
@@ -281,6 +281,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'no_sslverify'      => array(
 				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles, %2$s closing HTML tag for styles.
 				'description' => sprintf( __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.%1$sNot recommended for production sites.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong>', '</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
@@ -435,25 +436,25 @@ class OpenID_Connect_Generic_Settings_Page {
 				?>
 			</form>
 
-			<h4><?php _e( 'Notes', 'daggerhart-openid-connect-generic' ); ?></h4>
+			<h4><?php esc_html_e( 'Notes', 'daggerhart-openid-connect-generic' ); ?></h4>
 
 			<p class="description">
-				<strong><?php _e( 'Redirect URI', 'daggerhart-openid-connect-generic' ); ?></strong>
-				<code><?php print $redirect_uri; ?></code>
+				<strong><?php esc_html_e( 'Redirect URI', 'daggerhart-openid-connect-generic' ); ?></strong>
+				<code><?php print esc_url( $redirect_uri ); ?></code>
 			</p>
 			<p class="description">
-				<strong><?php _e( 'Login Button Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
+				<strong><?php esc_html_e( 'Login Button Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code>[openid_connect_generic_login_button]</code>
 			</p>
 			<p class="description">
-				<strong><?php _e( 'Authentication URL Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
+				<strong><?php esc_html_e( 'Authentication URL Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code>[openid_connect_generic_auth_url]</code>
 			</p>
 
 			<?php if ( $this->settings->enable_logging ) { ?>
-				<h2><?php _e( 'Logs', 'daggerhart-openid-connect-generic' ); ?></h2>
+				<h2><?php esc_html_e( 'Logs', 'daggerhart-openid-connect-generic' ); ?></h2>
 				<div id="logger-table-wrapper">
-					<?php print $this->logger->get_logs_table(); ?>
+					<?php print wp_kses_post( $this->logger->get_logs_table() ); ?>
 				</div>
 
 			<?php } ?>
@@ -507,7 +508,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 *
 	 * @return void
 	 */
-	function do_select( $field ) {
+	public function do_select( $field ) {
 		$current_value = isset( $this->settings->{ $field['key'] } ) ? $this->settings->{ $field['key'] } : '';
 		?>
 		<select name="<?php print esc_attr( $field['name'] ); ?>">
@@ -529,10 +530,10 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_field_description( $field ) {
 		?>
 		<p class="description">
-			<?php print $field['description']; ?>
+			<?php print esc_html( $field['description'] ); ?>
 			<?php if ( isset( $field['example'] ) ) : ?>
-				<br/><strong><?php _e( 'Example', 'daggerhart-openid-connect-generic' ); ?>: </strong>
-				<code><?php print $field['example']; ?></code>
+				<br/><strong><?php esc_html_e( 'Example', 'daggerhart-openid-connect-generic' ); ?>: </strong>
+				<code><?php print esc_html( $field['example'] ); ?></code>
 			<?php endif; ?>
 		</p>
 		<?php
@@ -544,7 +545,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function client_settings_description() {
-		_e( 'Enter your OpenID Connect identity provider settings.', 'daggerhart-openid-connect-generic' );
+		esc_html_e( 'Enter your OpenID Connect identity provider settings.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -553,7 +554,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function user_settings_description() {
-		_e( 'Modify the interaction between OpenID Connect and WordPress users.', 'daggerhart-openid-connect-generic' );
+		esc_html_e( 'Modify the interaction between OpenID Connect and WordPress users.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -562,7 +563,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function authorization_settings_description() {
-		_e( 'Control the authorization mechanics of the site.', 'daggerhart-openid-connect-generic' );
+		esc_html_e( 'Control the authorization mechanics of the site.', 'daggerhart-openid-connect-generic' );
 	}
 
 	/**
@@ -571,6 +572,6 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function log_settings_description() {
-		_e( 'Log information about login attempts through OpenID Connect Generic.', 'daggerhart-openid-connect-generic' );
+		esc_html_e( 'Log information about login attempts through OpenID Connect Generic.', 'daggerhart-openid-connect-generic' );
 	}
 }

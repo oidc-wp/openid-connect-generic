@@ -1,5 +1,11 @@
 # OpenId Connect Generic Changelog
 
+3.8.3
+
+* Fix: @timnolte - Fixed problems with proper redirect handling.
+* Improvement: @timnolte - Changes redirect handling to use State instead of cookies.
+* Improvement: @timnolte - Refactored additional code to meet coding standards.
+
 3.8.2
 
 * Fix: @timnolte - Fixed reported XSS vulnerability on WordPress login screen.

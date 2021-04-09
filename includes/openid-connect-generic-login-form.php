@@ -39,12 +39,9 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Client_Wrapper  $client_wrapper A plugin client wrapper object instance.
 	 */
-	function __construct( $settings, $client_wrapper ) {
+	public function __construct( $settings, $client_wrapper ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
-
-		// Handle setting the redirect cookie on a formu page.
-		add_action( 'login_form_login', array( $this, 'handle_redirect_cookie' ) );
 	}
 
 	/**
@@ -55,7 +52,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return void
 	 */
-	static public function register( $settings, $client_wrapper ) {
+	public static function register( $settings, $client_wrapper ) {
 		$login_form = new self( $settings, $client_wrapper );
 
 		// Alter the login form as dictated by settings.
@@ -72,16 +69,20 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return void
 	 */
-	function handle_redirect_login_type_auto() {
+	public function handle_redirect_login_type_auto() {
 
 		if ( 'wp-login.php' == $GLOBALS['pagenow']
 			&& ( 'auto' == $this->settings->login_type || ! empty( $_GET['force_redirect'] ) )
 			// Don't send users to the IDP on logout or post password protected authentication.
 			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WP Login Form doesn't have a nonce.
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
-				$this->handle_redirect_cookie();
-				wp_redirect( $this->client_wrapper->get_authentication_url() );
+				$redirect_to = $this->get_redirect_to();
+				if ( empty( $redirect_to ) ) {
+					return;
+				}
+				wp_redirect( $this->client_wrapper->get_authentication_url( array( 'redirect_to' => $redirect_to ) ) );
 				exit;
 			} else {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
@@ -91,35 +92,45 @@ class OpenID_Connect_Generic_Login_Form {
 	}
 
 	/**
-	 * Handle login related redirects.
+	 * Get the client login redirect.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	function handle_redirect_cookie() {
+	public function get_redirect_to() {
+		global $wp;
+
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
-			return;
+			return '';
 		}
 
-		// Record the URL of this page if set to redirect back to origin page.
+		// Default redirect to the homepage.
+		$redirect_url = home_url();
+
+		// If using the login form, default redirect to the admin dashboard.
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
+			$redirect_url = admin_url();
+		}
+
+		// Honor Core WordPress & other plugin redirects.
+		if ( isset( $_REQUEST['redirect_to'] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
+		}
+
+		// Record the URL of the redirect_to if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
-			$redirect_expiry = current_time( 'timestamp' ) + DAY_IN_SECONDS;
-
-			// Default redirect to the homepage.
-			$redirect_url = home_url( esc_url( add_query_arg( null, null ) ) );
-
-			if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
-				// If using the login form, default redirect to the admin dashboard.
-				$redirect_url = admin_url();
-
-				if ( isset( $_REQUEST['redirect_to'] ) ) {
-					$redirect_url = esc_url_raw( $_REQUEST['redirect_to'] );
-				}
-			}
-
-			$redirect_url = apply_filters( 'openid-connect-generic-cookie-redirect-url', $redirect_url );
-
-			setcookie( $this->client_wrapper->cookie_redirect_key, $redirect_url, $redirect_expiry, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+			$redirect_url = home_url( add_query_arg( $wp->request ) );
 		}
+
+		// This hook is being deprecated with the move away from cookies.
+		$redirect_url = apply_filters_deprecated(
+			'openid-connect-generic-cookie-redirect-url',
+			array( $redirect_url ),
+			'3.8.2',
+			'openid-connect-generic-client-redirect-to'
+		);
+
+		// This is the new hook to use with the transients version of redirection.
+		return apply_filters( 'openid-connect-generic-client-redirect-to', $redirect_url );
 	}
 
 	/**
@@ -129,11 +140,11 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function handle_login_page( $message ) {
+	public function handle_login_page( $message ) {
 
 		if ( isset( $_GET['login-error'] ) ) {
-			$error_message = ! empty( $_GET['message'] ) ? $_GET['message'] : 'Unknown error.';
-			$message .= $this->make_error_output( $_GET['login-error'], $error_message );
+			$error_message = ! empty( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Unknown error.';
+			$message .= $this->make_error_output( sanitize_text_field( wp_unslash( $_GET['login-error'] ) ), $error_message );
 		}
 
 		// Login button is appended to existing messages in case of error.
@@ -150,12 +161,12 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function make_error_output( $error_code, $error_message ) {
+	public function make_error_output( $error_code, $error_message ) {
 
 		ob_start();
 		?>
-		<div id="login_error">
-			<strong><?php printf( __( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), $error_code ); ?>: </strong>
+		<div id="login_error"><?php // translators: %1$s is the error code from the IDP. ?>
+			<strong><?php printf( esc_html__( 'ERROR (%1$s)', 'daggerhart-openid-connect-generic' ), esc_html( $error_code ) ); ?>: </strong>
 			<?php print esc_html( $error_message ); ?>
 		</div>
 		<?php
@@ -170,22 +181,31 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return string
 	 */
-	function make_login_button( $atts = array() ) {
-		$button_text = __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
-		if ( ! empty( $atts['button_text'] ) ) {
-			$button_text = $atts['button_text'];
-		}
+	public function make_login_button( $atts = array() ) {
 
-		$text = apply_filters( 'openid-connect-generic-login-button-text', $button_text );
+		$atts = shortcode_atts(
+			array(
+				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
+				'redirect_to' => $this->get_redirect_to(),
+			),
+			$atts,
+			'openid_connect_generic_login_button'
+		);
+
+		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
+		$text = esc_html( $text );
+
 		$href = $this->client_wrapper->get_authentication_url( $atts );
+		$href = esc_url_raw( $href );
 
-		ob_start();
-		?>
-		<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
-			<a class="button button-large" href="<?php print esc_url( $href ); ?>"><?php print $text; ?></a>
-		</div>
-		<?php
-		return wp_kses_post( ob_get_clean() );
+		$login_button = <<<HTML
+<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
+	<a class="button button-large" href="{$href}">{$text}</a>
+</div>
+HTML;
+
+		return $login_button;
+
 	}
 
 	/**
@@ -193,7 +213,7 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @return void
 	 */
-	function remove_login_form() {
+	public function remove_login_form() {
 		?>
 		<script type="text/javascript">
 			(function() {

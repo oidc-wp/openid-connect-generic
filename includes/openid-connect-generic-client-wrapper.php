@@ -9,6 +9,8 @@
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
+use \WP_Error as WP_Error;
+
 /**
  * OpenID_Connect_Generic_Client_Wrapper class.
  *
@@ -50,6 +52,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	/**
 	 * The user redirect cookie key.
 	 *
+	 * @deprecated Redirection should be done via state transient and not cookies.
+	 *
 	 * @var string
 	 */
 	public $cookie_redirect_key = 'openid-connect-generic-redirect';
@@ -70,7 +74,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param OpenID_Connect_Generic_Option_Settings $settings A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Option_Logger   $logger   A plugin logger object instance.
 	 */
-	function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public function __construct( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->client = $client;
 		$this->settings = $settings;
 		$this->logger = $logger;
@@ -85,7 +89,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return \OpenID_Connect_Generic_Client_Wrapper
 	 */
-	static public function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public static function register( OpenID_Connect_Generic_Client $client, OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$client_wrapper  = new self( $client, $settings, $logger );
 
 		// Integrated logout.
@@ -128,7 +132,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return mixed
 	 */
-	function alternate_redirect_uri_parse_request( $query ) {
+	public function alternate_redirect_uri_parse_request( $query ) {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
 			 '1' === $query->query_vars['openid-connect-authorize'] ) {
 			$this->authentication_request_callback();
@@ -145,14 +149,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return string
 	 */
-	function get_authentication_url( $atts = array() ) {
-
-		if ( ! empty( $atts['redirect_to'] ) ) {
-			// Set the request query parameter used to set the cookie redirect.
-			$_REQUEST['redirect_to'] = $atts['redirect_to'];
-			$login_form = new OpenID_Connect_Generic_Login_Form( $this->settings, $this );
-			$login_form->handle_redirect_cookie();
-		}
+	public function get_authentication_url( $atts = array() ) {
 
 		return $this->client->make_authentication_url( $atts );
 
@@ -163,7 +160,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	function ensure_tokens_still_fresh() {
+	public function ensure_tokens_still_fresh() {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
@@ -225,7 +222,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	function error_redirect( $error ) {
+	public function error_redirect( $error ) {
 		$this->logger->log( $error );
 
 		// Redirect user back to login page.
@@ -242,7 +239,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function get_error() {
+	public function get_error() {
 		return $this->error;
 	}
 
@@ -253,7 +250,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return array<string>|bool
 	 */
-	function update_allowed_redirect_hosts( $allowed ) {
+	public function update_allowed_redirect_hosts( $allowed ) {
 		$host = parse_url( $this->settings->endpoint_end_session, PHP_URL_HOST );
 		if ( ! $host ) {
 			return false;
@@ -272,7 +269,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return string
 	 */
-	function get_end_session_logout_redirect_url( $redirect_url, $requested_redirect_to, $user ) {
+	public function get_end_session_logout_redirect_url( $redirect_url, $requested_redirect_to, $user ) {
 		$url = $this->settings->endpoint_end_session;
 		$query = parse_url( $url, PHP_URL_QUERY );
 		$url .= $query ? '&' : '?';
@@ -317,7 +314,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return mixed
 	 */
-	function alter_request( $request, $operation ) {
+	public function alter_request( $request, $operation ) {
 		if ( ! empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
@@ -335,7 +332,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	function authentication_request_callback() {
+	public function authentication_request_callback() {
 		$client = $this->client;
 
 		// Start the authentication flow.
@@ -350,6 +347,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		if ( is_wp_error( $code ) ) {
 			$this->error_redirect( $code );
+		}
+
+		// Retrieve the authentication state from the authentication request.
+		$state = $client->get_authentication_state( $authentication_request );
+
+		if ( is_wp_error( $state ) ) {
+			$this->error_redirect( $state );
 		}
 
 		// Attempting to exchange an authorization code for an authentication token.
@@ -452,12 +456,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Log our success.
 		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
 
-		// Redirect back to the origin page if enabled.
-		$redirect_url = isset( $_COOKIE[ $this->cookie_redirect_key ] ) ? esc_url_raw( $_COOKIE[ $this->cookie_redirect_key ] ) : false;
+		// Default redirect to the homepage.
+		$redirect_url = home_url();
+		// Redirect user according to redirect set in state.
+		$state_object = get_transient( 'openid-connect-generic-state--' . $state );
+		// Get the redirect URL stored with the corresponding authentication request state.
+		if ( ! empty( $state_object ) ) {
+			$redirect_url = $state_object['redirect_to'];
+		}
+
+		// Provide backwards compatibility for customization using the deprecated cookie method.
+		if ( ! empty( $_COOKIE[ $this->cookie_redirect_key ] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_COOKIE[ $this->cookie_redirect_key ] ) );
+		}
 
 		if ( $this->settings->redirect_user_back && ! empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
-			setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
 			wp_redirect( $redirect_url );
 		} else { // Otherwise, go home!
 			wp_redirect( home_url() );
@@ -473,7 +487,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return true|WP_Error
 	 */
-	function validate_user( $user ) {
+	public function validate_user( $user ) {
 		// Ensure the found user is a real WP_User.
 		if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
 			return new WP_Error( 'invalid-user', __( 'Invalid user.', 'daggerhart-openid-connect-generic' ), $user );
@@ -493,7 +507,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
+	public function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
 		// Store the tokens for future reference.
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
@@ -519,7 +533,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param string              $token          The current users session token.
 	 * @param array|WP_Error|null $token_response The authentication token response.
 	 */
-	function save_refresh_token( $manager, $token, $token_response ) {
+	public function save_refresh_token( $manager, $token, $token_response ) {
 		if ( ! $this->settings->token_refresh_enable ) {
 			return;
 		}
@@ -549,7 +563,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return false|WP_User
 	 */
-	function get_user_by_identity( $subject_identity ) {
+	public function get_user_by_identity( $subject_identity ) {
 		// Look for user by their openid-connect-generic-subject-identity value.
 		$user_query = new WP_User_Query(
 			array(
@@ -602,10 +616,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// @var string $transliterated_username The username converted to ASCII from UTF-8.
 		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
 		if ( empty( $transliterated_username ) ) {
+			// translators: $1$s is a username from the IDP.
 			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
 		}
 		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
 		if ( empty( $normalized_username ) ) {
+			// translators: %1$s is the ASCII version of the username from the IDP.
 			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized.', 'daggerhart-openid-connect-generic' ), $transliterated_username ), $transliterated_username );
 		}
 
@@ -639,6 +655,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		if ( empty( $desired_nickname ) ) {
+			// translators: %1$s is the configured User Claim nickname key.
 			return new WP_Error( 'no-nickname', sprintf( __( 'No nickname found in user claim using key: %1$s.', 'daggerhart-openid-connect-generic' ), $this->settings->nickname_key ), $this->settings->nickname_key );
 		}
 
@@ -723,7 +740,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return \WP_Error | \WP_User
 	 */
-	function create_new_user( $subject_identity, $user_claim ) {
+	public function create_new_user( $subject_identity, $user_claim ) {
 		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 
 		// Default username & email to the subject identity.
@@ -868,7 +885,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return WP_Error|WP_User
 	 */
-	function update_existing_user( $uid, $subject_identity ) {
+	public function update_existing_user( $uid, $subject_identity ) {
 		// Add the OpenID Connect meta data.
 		update_user_meta( $uid, 'openid-connect-generic-subject-identity', strval( $subject_identity ) );
 
