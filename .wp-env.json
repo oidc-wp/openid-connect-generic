@@ -1,5 +1,6 @@
 {
 	"core": "./wordpress/build",
+	"phpVersion": "7.3",
 	"plugins": [
 		"."
 	],
@@ -14,18 +15,12 @@
 				"https://downloads.wordpress.org/plugin/query-monitor.zip",
 				"https://downloads.wordpress.org/plugin/debug-bar-post-meta.zip",
 				"https://downloads.wordpress.org/plugin/transients-manager.zip"
-			],
-			"mappings": {
-				"wp-config.php": "tools/local-env/wp-config.dev.php"
-			}
+			]
 		},
 		"tests": {
 			"plugins": [
 				"."
-			],
-			"mappings": {
-				"wp-config.php": "tools/local-env/wp-config.tests.php"
-			}
+			]
 		}
 	},
 	"config": {

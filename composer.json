@@ -90,9 +90,9 @@
 		"phpcs": "vendor/bin/phpcs",
 		"phpcbf": "vendor/bin/phpcbf",
 		"phpstan": "vendor/bin/phpstan",
-		"lint": "vendor/bin/phpcs --report=full .",
-		"lint-fix": "vendor/bin/phpcbf .",
-		"analyze": "vendor/bin/phpstan analyze ."
+		"lint": "vendor/bin/phpcs --report=full",
+		"lint-fix": "vendor/bin/phpcbf",
+		"analyze": "vendor/bin/phpstan analyze"
 	},
 	"extra": {
 		"installer-paths": {
