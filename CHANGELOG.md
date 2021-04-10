@@ -1,5 +1,10 @@
 # OpenId Connect Generic Changelog
 
+3.8.4
+* Fix: @timnolte - Fixed invalid State object access for redirection handling.
+* Improvement: @timnolte - Fixed local wp-env Docker development environment.
+* Improvement: @timnolte - Fixed Composer scripts for linting and static analysis.
+
 3.8.3
 
 * Fix: @timnolte - Fixed problems with proper redirect handling.
