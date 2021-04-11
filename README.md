@@ -4,7 +4,7 @@
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 4.9  
 **Tested up to:** 5.6  
-**Stable tag:** 3.8.2  
+**Stable tag:** 3.8.4  
 **Requires PHP:** 7.1  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -50,6 +50,18 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 ## Changelog ##
+
+### 3.8.4 ###
+
+* Fix: @timnolte - Fixed invalid State object access for redirection handling.
+* Improvement: @timnolte - Fixed local wp-env Docker development environment.
+* Improvement: @timnolte - Fixed Composer scripts for linting and static analysis.
+
+### 3.8.3 ###
+
+* Fix: @timnolte - Fixed problems with proper redirect handling.
+* Improvement: @timnolte - Changes redirect handling to use State instead of cookies.
+* Improvement: @timnolte - Refactored additional code to meet coding standards.
 
 ### 3.8.2 ###
 
