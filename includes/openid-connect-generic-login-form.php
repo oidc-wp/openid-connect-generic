@@ -118,7 +118,11 @@ class OpenID_Connect_Generic_Login_Form {
 
 		// Record the URL of the redirect_to if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
-			$redirect_url = home_url( add_query_arg( $wp->request ) );
+			if ( ! empty( $wp->request ) ) {
+				$redirect_url = home_url( add_query_arg( array(), trailingslashit( $wp->request ) ) );
+			} else {
+				$redirect_url = home_url( add_query_arg( array() ) );
+			}
 		}
 
 		// This hook is being deprecated with the move away from cookies.
