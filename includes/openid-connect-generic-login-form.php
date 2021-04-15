@@ -116,12 +116,18 @@ class OpenID_Connect_Generic_Login_Form {
 			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		}
 
-		// Record the URL of the redirect_to if set to redirect back to origin page.
+		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
 			if ( ! empty( $wp->request ) ) {
-				$redirect_url = home_url( add_query_arg( array(), trailingslashit( $wp->request ) ) );
+				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
+					$redirect_url = home_url( trailingslashit( $wp->request ) );
+				} else {
+					$redirect_url = home_url( add_query_arg( null, null ) );
+				}
 			} else {
-				$redirect_url = home_url( add_query_arg( array() ) );
+				if ( ! empty( $wp->query_string ) ) {
+					$redirect_url = home_url( '?' . $wp->query_string );
+				}
 			}
 		}
 
