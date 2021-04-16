@@ -1,5 +1,10 @@
 # OpenId Connect Generic Changelog
 
+3.8.5
+* Fix: @timnolte - Fixes missing URL request validation before use & ensure proper current page URL is setup for Redirect Back.
+* Fix: @timnolte - Fixes Redirect URL Logic to Handle Sub-directory Installs.
+* Fix: @timnolte - Fixes to provide proper redirect user back for the openid_connect_generic_auth_url shortcode.
+
 3.8.4
 * Fix: @timnolte - Fixed invalid State object access for redirection handling.
 * Improvement: @timnolte - Fixed local wp-env Docker development environment.
