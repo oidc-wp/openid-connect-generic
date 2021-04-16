@@ -124,47 +124,21 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Create a single use authentication url
-	 *
-	 * @param array $atts An optional array of override/feature attributes.
+	 * Provides the configured Redirect URI supplied to the IDP.
 	 *
 	 * @return string
 	 */
-	public function make_authentication_url( $atts = array() ) {
+	public function get_redirect_uri() {
+		return $this->redirect_uri;
+	}
 
-		$atts = shortcode_atts(
-			array(
-				'endpoint_login' => $this->endpoint_login,
-				'scope' => $this->scope,
-				'client_id' => $this->client_id,
-				'redirect_uri' => $this->redirect_uri,
-				'redirect_to' => home_url(), // Default redirect to the homepage.
-			),
-			$atts,
-			'openid_connect_generic_auth_url'
-		);
-
-		// Validate the redirect to value to prevent a redirection attack.
-		if ( ! empty( $atts['redirect_to'] ) ) {
-			$atts['redirect_to'] = wp_validate_redirect( $atts['redirect_to'], home_url() );
-		}
-
-		$separator = '?';
-		if ( stripos( $this->endpoint_login, '?' ) !== false ) {
-			$separator = '&';
-		}
-		$url = sprintf(
-			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
-			$atts['endpoint_login'],
-			$separator,
-			rawurlencode( $atts['scope'] ),
-			rawurlencode( $atts['client_id'] ),
-			$this->new_state( $atts['redirect_to'] ),
-			rawurlencode( $atts['redirect_uri'] )
-		);
-
-		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
-		return apply_filters( 'openid-connect-generic-auth-url', $url );
+	/**
+	 * Provide the configured IDP endpoint login URL.
+	 *
+	 * @return string
+	 */
+	public function get_endpoint_login_url() {
+		return $this->endpoint_login;
 	}
 
 	/**
