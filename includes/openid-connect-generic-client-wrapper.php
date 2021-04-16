@@ -143,16 +143,99 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
-	 * Get the authentication url from the client.
+	 * Get the client login redirect.
 	 *
-	 * @param array<string> $atts The optional attributes array when called via a shortcode.
+	 * @return string
+	 */
+	public function get_redirect_to() {
+		global $wp;
+
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
+			return '';
+		}
+
+		// Default redirect to the homepage.
+		$redirect_url = home_url();
+
+		// If using the login form, default redirect to the admin dashboard.
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
+			$redirect_url = admin_url();
+		}
+
+		// Honor Core WordPress & other plugin redirects.
+		if ( isset( $_REQUEST['redirect_to'] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
+		}
+
+		// Capture the current URL if set to redirect back to origin page.
+		if ( $this->settings->redirect_user_back ) {
+			if ( ! empty( $wp->request ) ) {
+				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
+					$redirect_url = home_url( trailingslashit( $wp->request ) );
+				} else {
+					$redirect_url = home_url( add_query_arg( null, null ) );
+				}
+			} else {
+				if ( ! empty( $wp->query_string ) ) {
+					$redirect_url = home_url( '?' . $wp->query_string );
+				}
+			}
+		}
+
+		// This hook is being deprecated with the move away from cookies.
+		$redirect_url = apply_filters_deprecated(
+			'openid-connect-generic-cookie-redirect-url',
+			array( $redirect_url ),
+			'3.8.2',
+			'openid-connect-generic-client-redirect-to'
+		);
+
+		// This is the new hook to use with the transients version of redirection.
+		return apply_filters( 'openid-connect-generic-client-redirect-to', $redirect_url );
+	}
+
+	/**
+	 * Create a single use authentication url
+	 *
+	 * @param array<string> $atts An optional array of override/feature attributes.
 	 *
 	 * @return string
 	 */
 	public function get_authentication_url( $atts = array() ) {
 
-		return $this->client->make_authentication_url( $atts );
+		$atts = shortcode_atts(
+			array(
+				'endpoint_login' => $this->settings->endpoint_login,
+				'scope' => $this->settings->scope,
+				'client_id' => $this->settings->client_id,
+				'redirect_uri' => $this->client->get_redirect_uri(),
+				'redirect_to' => $this->get_redirect_to(),
+			),
+			$atts,
+			'openid_connect_generic_auth_url'
+		);
 
+		// Validate the redirect to value to prevent a redirection attack.
+		if ( ! empty( $atts['redirect_to'] ) ) {
+			$atts['redirect_to'] = wp_validate_redirect( $atts['redirect_to'], home_url() );
+		}
+
+		$separator = '?';
+		if ( stripos( $this->settings->endpoint_login, '?' ) !== false ) {
+			$separator = '&';
+		}
+		$url = sprintf(
+			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
+			$atts['endpoint_login'],
+			$separator,
+			rawurlencode( $atts['scope'] ),
+			rawurlencode( $atts['client_id'] ),
+			$this->client->new_state( $atts['redirect_to'] ),
+			rawurlencode( $atts['redirect_uri'] )
+		);
+
+		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
+		return apply_filters( 'openid-connect-generic-auth-url', $url );
 	}
 
 	/**

@@ -78,59 +78,13 @@ class OpenID_Connect_Generic_Login_Form {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WP Login Form doesn't have a nonce.
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
-				$redirect_to = $this->get_redirect_to();
-				if ( empty( $redirect_to ) ) {
-					return;
-				}
-				wp_redirect( $this->client_wrapper->get_authentication_url( array( 'redirect_to' => $redirect_to ) ) );
+				wp_redirect( $this->client_wrapper->get_authentication_url() );
 				exit;
 			} else {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
 
-	}
-
-	/**
-	 * Get the client login redirect.
-	 *
-	 * @return string
-	 */
-	public function get_redirect_to() {
-		global $wp;
-
-		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
-			return '';
-		}
-
-		// Default redirect to the homepage.
-		$redirect_url = home_url();
-
-		// If using the login form, default redirect to the admin dashboard.
-		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
-			$redirect_url = admin_url();
-		}
-
-		// Honor Core WordPress & other plugin redirects.
-		if ( isset( $_REQUEST['redirect_to'] ) ) {
-			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
-		}
-
-		// Record the URL of the redirect_to if set to redirect back to origin page.
-		if ( $this->settings->redirect_user_back ) {
-			$redirect_url = home_url( add_query_arg( $wp->request ) );
-		}
-
-		// This hook is being deprecated with the move away from cookies.
-		$redirect_url = apply_filters_deprecated(
-			'openid-connect-generic-cookie-redirect-url',
-			array( $redirect_url ),
-			'3.8.2',
-			'openid-connect-generic-client-redirect-to'
-		);
-
-		// This is the new hook to use with the transients version of redirection.
-		return apply_filters( 'openid-connect-generic-client-redirect-to', $redirect_url );
 	}
 
 	/**
@@ -186,7 +140,6 @@ class OpenID_Connect_Generic_Login_Form {
 		$atts = shortcode_atts(
 			array(
 				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
-				'redirect_to' => $this->get_redirect_to(),
 			),
 			$atts,
 			'openid_connect_generic_login_button'

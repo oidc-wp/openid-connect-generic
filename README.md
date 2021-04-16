@@ -3,8 +3,8 @@
 **Donate link:** http://www.daggerhart.com/  
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 4.9  
-**Tested up to:** 5.6  
-**Stable tag:** 3.8.4  
+**Tested up to:** 5.7.1  
+**Stable tag:** 3.8.5  
 **Requires PHP:** 7.1  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -51,6 +51,12 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 ## Changelog ##
 
+### 3.8.5
+
+* Fix: @timnolte - Fixes missing URL request validation before use & ensure proper current page URL is setup for Redirect Back.
+* Fix: @timnolte - Fixes Redirect URL Logic to Handle Sub-directory Installs.
+* Fix: @timnolte - Fixes to provide proper redirect user back for the openid_connect_generic_auth_url shortcode.
+###
 ### 3.8.4 ###
 
 * Fix: @timnolte - Fixed invalid State object access for redirection handling.
