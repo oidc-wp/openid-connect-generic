@@ -1,0 +1,76 @@
+name: PR Unit Testing
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Triggers the workflow on pull request events
+  pull_request:
+
+env:
+  PHP_PREF_MIN_VERSION: '7.3'
+  WP_STABLE_VERSION: '5.6.*'
+  WP_MULTISITE: 0
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job-name: 'Latest Stable Requirements'
+            bleeding-edge: false
+            php-version: '7.3'
+            wordpress-version: '5.6.*'
+            wp-multisite-mode: 0
+
+    name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Setup PHP Environment
+      uses: shivammathur/setup-php@v2
+      # https://github.com/marketplace/actions/setup-php-action
+      with:
+        php-version: ${{ matrix.php-version }}
+        tools: composer:v1
+
+    - name: Setup Node Environment
+      uses: actions/setup-node@v1
+      # https://github.com/marketplace/actions/setup-node-js-environment
+      with:
+        node-version: 12.x
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v2
+      env:
+        composer-cache-name: cache-vendor
+      with:
+        path: ~/vendor
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Require Specified WordPress Version
+      run: composer require wordpress/wordpress:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
+
+    - name: Update Composer Lockfile for Specified WordPress Version
+      run: composer update wordpress/wordpress:${{ matrix.wordpress-version }} --lock --prefer-source
+
+    - name: PHPUnit PHP 7.4 Support
+      if: matrix.php-version == '7.4'
+      run: |
+        composer global require phpunit/php-code-coverage=dev-master
+        composer global require sebastian/global-state:dev-master
+        composer global require phpunit/phpunit=dev-master
+
+    - name: NPM Setup
+      run: npm install
+
+    - name: Unit Tests
+      run: npm run test

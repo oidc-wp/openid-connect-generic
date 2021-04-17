@@ -1,8 +1,27 @@
 {
 	"core": "./wordpress/build",
-	"plugins": [ "." ],
+	"phpVersion": "7.3",
+	"plugins": [
+		"."
+	],
 	"mappings": {
 		"wp-content/mu-plugins": "./tools/local-env/mu-plugins"
+	},
+	"env": {
+		"development": {
+			"plugins": [
+				".",
+				"https://downloads.wordpress.org/plugin/debug-bar.zip",
+				"https://downloads.wordpress.org/plugin/query-monitor.zip",
+				"https://downloads.wordpress.org/plugin/debug-bar-post-meta.zip",
+				"https://downloads.wordpress.org/plugin/transients-manager.zip"
+			]
+		},
+		"tests": {
+			"plugins": [
+				"."
+			]
+		}
 	},
 	"config": {
 		"PHP_INI_MEMORY_LIMIT": "512M",

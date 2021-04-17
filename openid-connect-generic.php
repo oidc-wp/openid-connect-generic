@@ -16,7 +16,7 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
  * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.8.1
+ * Version:           3.8.5
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -80,7 +80,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var
 	 */
-	const VERSION = '3.8.1';
+	const VERSION = '3.8.5';
 
 	/**
 	 * Plugin settings.
@@ -118,7 +118,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
 	}
@@ -128,7 +128,9 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	function init() {
+	public function init() {
+
+		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __FILE__ ) . 'css/styles-admin.css', array(), self::VERSION, 'all' );
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
@@ -179,7 +181,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	function enforce_privacy_redirect() {
+	public function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			// The client endpoint relies on the wp admind ajax endpoint.
 			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
@@ -195,7 +197,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return mixed
 	 */
-	function enforce_privacy_feeds( $content ) {
+	public function enforce_privacy_feeds( $content ) {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
 		}
@@ -207,7 +209,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	function upgrade() {
+	public function upgrade() {
 		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
 		$settings = $this->settings;
 
@@ -236,7 +238,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	function cron_states_garbage_collection() {
+	public function cron_states_garbage_collection() {
 		global $wpdb;
 		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE '_transient_openid-connect-generic-state--%'" );
 
@@ -253,7 +255,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	static public function setup_cron_jobs() {
+	public static function setup_cron_jobs() {
 		if ( ! wp_next_scheduled( 'openid-connect-generic-cron-daily' ) ) {
 			wp_schedule_event( time(), 'daily', 'openid-connect-generic-cron-daily' );
 		}
@@ -264,7 +266,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	static public function activation() {
+	public static function activation() {
 		self::setup_cron_jobs();
 	}
 
@@ -273,7 +275,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	static public function deactivation() {
+	public static function deactivation() {
 		wp_clear_scheduled_hook( 'openid-connect-generic-cron-daily' );
 	}
 
@@ -284,7 +286,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	static public function autoload( $class ) {
+	public static function autoload( $class ) {
 		$prefix = 'OpenID_Connect_Generic_';
 
 		if ( stripos( $class, $prefix ) !== 0 ) {
@@ -312,7 +314,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @return void
 	 */
-	static public function bootstrap() {
+	public static function bootstrap() {
 		/**
 		 * This is a documented valid call for spl_autoload_register.
 		 *
