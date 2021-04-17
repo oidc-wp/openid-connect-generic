@@ -278,8 +278,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$url .= $query ? '&' : '?';
 
 		// Prevent redirect back to the IDP when logging out in auto mode.
-		if ( 'auto' === $this->settings->login_type && 'wp-login.php?loggedout=true' === $redirect_url ) {
-			$redirect_url = '';
+		if ( 'auto' === $this->settings->login_type && strpos( $redirect_url, 'wp-login.php?loggedout=true' ) ) {
+			// By default redirect back to the site home.
+			$redirect_url = home_url();
 		}
 
 		$token_response = $user->get( 'openid-connect-generic-last-token-response' );
