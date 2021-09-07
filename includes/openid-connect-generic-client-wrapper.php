@@ -108,12 +108,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 */
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
+
+			add_action( 'wp_ajax_openid-connect-logout', array( $client_wrapper, 'frontchannel_logout_request' ) );
+			add_action( 'wp_ajax_nopriv_openid-connect-logout', array( $client_wrapper, 'frontchannel_logout_request' ) );
 		}
 
 		if ( $settings->alternate_redirect_uri ) {
 			// Provide an alternate route for authentication_request_callback.
 			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
 			add_rewrite_tag( '%openid-connect-authorize%', '1' );
+			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
+
+			// Provide an alternate route for the frontchannel_logout_request.
+			add_rewrite_rule( '^openid-connect-logout/?', 'index.php?openid-connect-logout=1', 'top' );
+			add_rewrite_tag( '%openid-connect-logout%', '1' );
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
 		}
 
@@ -136,6 +144,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
 			 '1' === $query->query_vars['openid-connect-authorize'] ) {
 			$this->authentication_request_callback();
+			exit;
+		}
+
+		if ( isset( $query->query_vars['openid-connect-logout'] ) &&
+			 '1' === $query->query_vars['openid-connect-logout'] ) {
+			$this->frontchannel_logout_request();
 			exit;
 		}
 
@@ -208,6 +222,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				'endpoint_login' => $this->settings->endpoint_login,
 				'scope' => $this->settings->scope,
 				'client_id' => $this->settings->client_id,
+				'logout_uri' => $this->client->get_logout_uri(),
 				'redirect_uri' => $this->client->get_redirect_uri(),
 				'redirect_to' => $this->get_redirect_to(),
 			),
@@ -561,6 +576,65 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		wp_redirect( $redirect_url );
 
 		exit;
+	}
+
+	/**
+	 * Control the front channel logout endpoint as specified per openid standards.
+	 *
+	 * @return void
+	 */
+	public function frontchannel_logout_request() {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json(
+				array(
+					'status' => 'User not logged in',
+				)
+			);
+		}
+
+		$user = wp_get_current_user();
+		$manager = WP_Session_Tokens::get_instance( $user->ID );
+		$token = wp_get_session_token();
+		$session = $manager->get( $token );
+
+		if ( ! isset( $session[ $this->cookie_token_refresh_key ] ) ) {
+			// Not an OpenID-based session.
+			wp_send_json(
+				array(
+					'status' => 'Not an OAUTH session',
+				)
+			);
+		}
+
+		$claim = $user->get( 'openid-connect-generic-last-id-token-claim' );
+
+		if ( ! isset( $_GET['iss'] ) || ! isset( $_GET['sid'] ) ) {
+			wp_send_json(
+				array(
+					'status' => 'Missing sid or iss parameter',
+				)
+			);
+		}
+
+		if ( $_GET['iss'] != $claim['iss'] || $_GET['sid'] != $claim['sid'] ) {
+			wp_send_json(
+				array(
+					'status' => 'Iss or sid not matching',
+				)
+			);
+		}
+
+		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
+		$refresh_token = $refresh_token_info['refresh_token'];
+		$this->client->revoke_refresh_token( $refresh_token );
+
+		wp_logout();
+
+		wp_send_json(
+			array(
+				'status' => 'Logout OK',
+			)
+		);
 	}
 
 	/**

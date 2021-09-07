@@ -65,6 +65,15 @@ class OpenID_Connect_Generic_Client {
 	private $endpoint_userinfo;
 
 	/**
+	 * The OIDC/oAuth token revocation endpoint URL.
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_revoke
+	 *
+	 * @var string
+	 */
+	private $endpoint_revoke;
+
+	/**
 	 * The OIDC/oAuth token validation endpoint URL.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_token
@@ -72,6 +81,15 @@ class OpenID_Connect_Generic_Client {
 	 * @var string
 	 */
 	private $endpoint_token;
+
+	/**
+	 * The logout front channel flow "ajax" endpoint URI.
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::logout_uri
+	 *
+	 * @var string
+	 */
+	private $logout_uri;
 
 	/**
 	 * The login flow "ajax" endpoint URI.
@@ -106,21 +124,35 @@ class OpenID_Connect_Generic_Client {
 	 * @param string                               $scope             @see OpenID_Connect_Generic_Option_Settings::scope for description.
 	 * @param string                               $endpoint_login    @see OpenID_Connect_Generic_Option_Settings::endpoint_login for description.
 	 * @param string                               $endpoint_userinfo @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo for description.
+	 * @param string                               $endpoint_revoke   @see OpenID_Connect_Generic_Option_Settings::endpoint_revoke for description.
 	 * @param string                               $endpoint_token    @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
+	 * @param string                               $logout_uri        @see OpenID_Connect_Generic_Option_Settings::logout_uri for description.
 	 * @param string                               $redirect_uri      @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
 	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
 	 */
-	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_revoke, $endpoint_token,
+	$logout_uri, $redirect_uri, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
 		$this->endpoint_login = $endpoint_login;
 		$this->endpoint_userinfo = $endpoint_userinfo;
+		$this->endpoint_revoke = $endpoint_revoke;
 		$this->endpoint_token = $endpoint_token;
+		$this->logout_uri = $logout_uri;
 		$this->redirect_uri = $redirect_uri;
 		$this->state_time_limit = $state_time_limit;
 		$this->logger = $logger;
+	}
+
+	/**
+	 * Provides the configured logout URI supplied to the IDP.
+	 *
+	 * @return string
+	 */
+	public function get_logout_uri() {
+		return $this->logout_uri;
 	}
 
 	/**
@@ -536,6 +568,39 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function get_subject_identity( $id_token_claim ) {
 		return $id_token_claim['sub'];
+	}
+
+	/**
+	 * Using the refresh token, revoke its usage
+	 *
+	 * @param string $refresh_token The refresh token previously obtained from token response.
+	 *
+	 * @return array<mixed>|WP_Error
+	 */
+	public function revoke_refresh_token( $refresh_token ) {
+		$request = array(
+			'headers'  => array(
+				'Content-type: application/x-www-form-urlencoded',
+			),
+			'body' => array(
+				'client_id'     => $this->client_id,
+				'client_secret' => $this->client_secret,
+				'token' => $refresh_token,
+			),
+		);
+
+		// Allow modifications to the request.
+		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
+
+		// Call the server and ask to revoke token.
+		$this->logger->log( $this->endpoint_revoke, 'revoke_refresh_token' );
+		$response = wp_remote_post( $this->endpoint_revoke, $request );
+
+		if ( is_wp_error( $response ) ) {
+			$response->add( 'revoke_refresh_token', __( 'Revoke refresh token failed.', 'daggerhart-openid-connect-generic' ) );
+		}
+
+		return $response;
 	}
 
 }

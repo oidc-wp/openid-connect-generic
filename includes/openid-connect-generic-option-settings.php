@@ -31,6 +31,7 @@
  * @property string $scope                The list of scopes this client should access.
  * @property string $endpoint_login       The IDP authorization endpoint URL.
  * @property string $endpoint_userinfo    The IDP User information endpoint URL.
+ * @property string $endpoint_revoke      The IDP revoke endpoint URL.
  * @property string $endpoint_token       The IDP token validation endpoint URL.
  * @property string $endpoint_end_session The IDP logout endpoint URL.
  *
@@ -90,6 +91,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'client_secret'        => 'OIDC_CLIENT_SECRET',
 		'endpoint_login'       => 'OIDC_ENDPOINT_LOGIN_URL',
 		'endpoint_userinfo'    => 'OIDC_ENDPOINT_USERINFO_URL',
+		'endpoint_revoke'      => 'OIDC_ENDPOINT_REVOKE_URL',
 		'endpoint_token'       => 'OIDC_ENDPOINT_TOKEN_URL',
 		'endpoint_end_session' => 'OIDC_ENDPOINT_LOGOUT_URL',
 	);

@@ -132,9 +132,11 @@ class OpenID_Connect_Generic {
 
 		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __FILE__ ) . 'css/styles-admin.css', array(), self::VERSION, 'all' );
 
+		$logout_uri = admin_url( 'admin-ajax.php?action=openid-connect-logout' );
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
+			$logout_uri = admin_url( '/openid-connect-logout' );
 			$redirect_uri = site_url( '/openid-connect-authorize' );
 		}
 
@@ -149,7 +151,9 @@ class OpenID_Connect_Generic {
 			$this->settings->scope,
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
+			$this->settings->endpoint_revoke,
 			$this->settings->endpoint_token,
+			$logout_uri,
 			$redirect_uri,
 			$state_time_limit,
 			$this->logger
@@ -333,6 +337,7 @@ class OpenID_Connect_Generic {
 				'scope'                => '',
 				'endpoint_login'       => defined( 'OIDC_ENDPOINT_LOGIN_URL' ) ? OIDC_ENDPOINT_LOGIN_URL : '',
 				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
+				'endpoint_revoke'      => defined( 'OIDC_ENDPOINT_REVOKE_URL' ) ? OIDC_ENDPOINT_REVOKE_URL : '',
 				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
 

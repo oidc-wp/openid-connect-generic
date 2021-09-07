@@ -256,6 +256,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ),
 				'section'     => 'client_settings',
 			),
+			'endpoint_revoke'    => array(
+				'title'       => __( 'Token Revocation Endpoint URL', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider revoke endpoint.', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'https://example.com/oauth2/revoke',
+				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_REVOKE_URL' ),
+				'section'     => 'client_settings',
+			),
 			'endpoint_token'    => array(
 				'title'       => __( 'Token Validation Endpoint URL', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Identify provider token endpoint.', 'daggerhart-openid-connect-generic' ),
@@ -414,9 +422,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function settings_page() {
+		$logout_uri = admin_url( 'admin-ajax.php?action=openid-connect-logout' );
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
+			$logout_uri = site_url( '/openid-connect-logout' );
 			$redirect_uri = site_url( '/openid-connect-authorize' );
 		}
 		?>
@@ -441,6 +451,10 @@ class OpenID_Connect_Generic_Settings_Page {
 			<p class="description">
 				<strong><?php esc_html_e( 'Redirect URI', 'daggerhart-openid-connect-generic' ); ?></strong>
 				<code><?php print esc_url( $redirect_uri ); ?></code>
+			</p>
+			<p class="description">
+				<strong><?php esc_html_e( 'Logout URI', 'daggerhart-openid-connect-generic' ); ?></strong>
+				<code><?php print esc_url( $logout_uri ); ?></code>
 			</p>
 			<p class="description">
 				<strong><?php esc_html_e( 'Login Button Shortcode', 'daggerhart-openid-connect-generic' ); ?></strong>
