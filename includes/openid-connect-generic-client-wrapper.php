@@ -171,7 +171,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->redirect_user_back ) {
 			if ( ! empty( $wp->request ) ) {
 				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
-					$redirect_url = home_url( trailingslashit( $wp->request ) );
+					$redirect_url = home_url( add_query_arg( $_GET, trailingslashit( $wp->request ) ) );
 				} else {
 					$redirect_url = home_url( add_query_arg( null, null ) );
 				}
