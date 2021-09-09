@@ -589,7 +589,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param WP_User $user             The user object.
 	 * @param array   $token_response   The token response.
 	 *
-	 * @return void
+	 * @return WP_Error|array
 	 */
 	public function refresh_user_claim( $user, $token_response ) {
 		$client = $this->client;
