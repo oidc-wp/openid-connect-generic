@@ -53,9 +53,6 @@ Notes
   - openid-connect-generic-state-not-found    - the given state does not exist in the database, regardless of its expiration.
   - openid-connect-generic-state-expired      - the given state exists, but expired before this login attempt.
 
-  Callable actions
-  - openid-connect-generic-refresh-user-claim - refresh user_claim, 2 args: WP_User, token response array
-
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
