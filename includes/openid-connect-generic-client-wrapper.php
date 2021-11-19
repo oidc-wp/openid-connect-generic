@@ -119,8 +119,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Verify token for any logged in user.
 		if ( is_user_logged_in() ) {
-			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
+			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh_on_load' ) );
 		}
+
+		// Add token refresh callable action.
+		add_action( 'openid-connect-generic-refresh-token', array( $client_wrapper, 'force_refresh_token' ), 10, 0 );
 
 		// Add user claim refresh callable action.
 		add_action( 'openid-connect-generic-refresh-user-claim', array( $client_wrapper, 'refresh_user_claim' ), 10, 2 );
@@ -258,11 +261,21 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
-	 * Handle retrieval and validation of refresh_token.
+	 * Handle refresh_token on wp_loaded.
 	 *
 	 * @return void
 	 */
-	public function ensure_tokens_still_fresh() {
+	public function ensure_tokens_still_fresh_on_load() {
+		$this->ensure_tokens_still_fresh(false);
+	}
+
+	/**
+	 * Handle retrieval and validation of refresh_token.
+	 *
+	 * @param bool $force
+	 * @return void
+	 */
+	public function ensure_tokens_still_fresh($force = false) {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
@@ -282,7 +295,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		$next_access_token_refresh_time = $refresh_token_info['next_access_token_refresh_time'];
 
-		if ( $current_time < $next_access_token_refresh_time ) {
+		if ( !$force && $current_time < $next_access_token_refresh_time ) {
 			return;
 		}
 
@@ -318,6 +331,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
+
+		do_action( 'openid-connect-generic-refresh-user-claim', wp_get_current_user(), $token_response );
 	}
 
 	/**
@@ -603,13 +618,29 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Force a token refresh.
+	 * Callable with do_action( 'openid-connect-generic-refresh-token', $user );
+	 *
+	 * @param WP_User $user             The user object.
+	 * @param array   $token_response   The token response.
+	 *
+	 * @return void
+	 */
+	public function force_refresh_token() {
+		$user = wp_get_current_user();
+		$this->ensure_tokens_still_fresh(true);
+		$token_response = $user->get('openid-connect-generic-last-token-response');
+		$this->refresh_user_claim($user, $token_response);
+	}
+
+	/**
 	 * Refresh user claim.
 	 * Callable with do_action( 'openid-connect-generic-refresh-user-claim', $user, $token_response );
 	 *
 	 * @param WP_User $user             The user object.
 	 * @param array   $token_response   The token response.
 	 *
-	 * @return WP_Error|array
+	 * @return void
 	 */
 	public function refresh_user_claim( $user, $token_response ) {
 		$client = $this->client;
