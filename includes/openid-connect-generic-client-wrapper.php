@@ -122,6 +122,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
+		// Add user claim refresh callable action.
+		add_action( 'openid-connect-generic-refresh-user-claim', array( $client_wrapper, 'refresh_user_claim' ), 10, 2 );
+
 		return $client_wrapper;
 	}
 
@@ -578,6 +581,65 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Refresh user claim.
+	 * Callable with do_action( 'openid-connect-generic-refresh-user-claim', $user, $token_response );
+	 *
+	 * @param WP_User $user             The user object.
+	 * @param array   $token_response   The token response.
+	 *
+	 * @return WP_Error|array
+	 */
+	public function refresh_user_claim( $user, $token_response ) {
+		$client = $this->client;
+
+		/**
+		 * The id_token is used to identify the authenticated user, e.g. for SSO.
+		 * The access_token must be used to prove access rights to protected
+		 * resources e.g. for the userinfo endpoint
+		 */
+		$id_token_claim = $client->get_id_token_claim( $token_response );
+
+		// Allow for other plugins to alter data before validation.
+		$id_token_claim = apply_filters( 'openid-connect-modify-id-token-claim-before-validation', $id_token_claim );
+
+		if ( is_wp_error( $id_token_claim ) ) {
+			return $id_token_claim;
+		}
+
+		// Validate our id_token has required values.
+		$valid = $client->validate_id_token_claim( $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		// If userinfo endpoint is set, exchange the token_response for a user_claim.
+		if ( ! empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] ) ) {
+			$user_claim = $client->get_user_claim( $token_response );
+		} else {
+			$user_claim = $id_token_claim;
+		}
+
+		if ( is_wp_error( $user_claim ) ) {
+			return $user_claim;
+		}
+
+		// Validate our user_claim has required values.
+		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			$this->error_redirect( $valid );
+			return $valid;
+		}
+
+		// Store the tokens for future reference.
+		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
+		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+
+		return $user_claim;
 	}
 
 	/**
