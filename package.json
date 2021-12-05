@@ -50,15 +50,14 @@
 	"wp-env": {
 		"plugin-dir": "daggerhart-openid-connect-generic",
 		"plugin-name": "OpenID Connect Generic",
-		"docker-template": "./docker-compose.override.yml",
+		"docker-template": "./docker-compose.wp-env.yml",
 		"welcome-build-command": "npm start"
 	},
 	"scripts": {
-		"setup": "npm run setup:npm && npm run setup:composer && npm run build:wordpress",
+		"setup": "npm run setup:npm && npm run setup:composer",
 		"setup:npm": "npm install",
-		"setup:composer": "composer install",
+		"setup:composer": "docker-compose run composer install",
 		"build": "npm run grunt build",
-		"build:wordpress": "cd wordpress && npm install && npm run build && cd .. && composer install --optimize-autoloader",
 		"release": "npm run grunt release",
 		"start": "wp-env start",
 		"stop": "wp-env stop",

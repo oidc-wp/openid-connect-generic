@@ -1,5 +1,5 @@
-# Note: You can use any Debian/Ubuntu based image you want. 
-FROM mcr.microsoft.com/vscode/devcontainers/base:0-buster
+# Note: You can use any Debian/Ubuntu based image you want.
+FROM mcr.microsoft.com/vscode/devcontainers/base:bullseye
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
@@ -22,21 +22,21 @@ RUN apt-get update \
     && /bin/bash /tmp/library-scripts/docker-in-docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${USERNAME}" "${USE_MOBY}" \
     # Clean up
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts/
-    
+
 VOLUME [ "/var/lib/docker" ]
 
-# Setting the ENTRYPOINT to docker-init.sh will start up the Docker Engine 
-# inside the container "overrideCommand": false is set in devcontainer.json. 
+# Setting the ENTRYPOINT to docker-init.sh will start up the Docker Engine
+# inside the container "overrideCommand": false is set in devcontainer.json.
 # The script will also execute CMD if you need to alter startup behaviors.
 ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
 CMD [ "sleep", "infinity" ]
 
 # [Optional] Uncomment this section to install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install php7.3-cli php7.3-curl php7.3-dom php7.3-intl php7.3-json php7.3-mbstring php7.3-xml
+    && apt-get -y install php7.4-cli php7.4-curl php7.4-dom php7.4-intl php7.4-json php7.4-mbstring php7.4-xml
 
 # Install Composer.
-COPY --from=composer:1.10 /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # [Choice] Node.js version: none, lts/*, 16, 14, 12, 10
 # nvm environment variables

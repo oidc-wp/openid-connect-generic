@@ -20,6 +20,9 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "npm run setup",
 
+	// Use 'postStartCommand' to run commands after the container has started.
+	"postStartCommand": "npm start -- --update && npm stop && npm start -- --update",
+
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"
 }
