@@ -75,9 +75,9 @@
 		"i18n:make": "npm run grunt i18n",
 		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
 		"lint": "npm run lint:php",
-		"lint:php": "composer run-script lint",
-		"lint:php:fix": "composer run-script lint-fix",
+		"lint:php": "docker-compose run composer lint",
+		"lint:php:fix": "docker-compose run composer lint-fix",
 		"analyze": "npm run analyze:php",
-		"analyze:php": "composer run-script analyze"
+		"analyze:php": "docker-compose run composer analyze"
 	}
 }

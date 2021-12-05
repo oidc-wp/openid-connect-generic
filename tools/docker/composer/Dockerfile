@@ -1,6 +1,10 @@
 # Start with the official PHP CLI image.
 FROM php:7.4-cli
 
+# Increase the memory limit to allow for large processes, such as PHPStan.
+RUN cd /usr/local/etc/php/conf.d/ && \
+  echo 'memory_limit = -1' >> /usr/local/etc/php/conf.d/docker-php-ram-limit.ini
+
 # Copy the Composer PHAR from the official Composer image to the PHP CLI image.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

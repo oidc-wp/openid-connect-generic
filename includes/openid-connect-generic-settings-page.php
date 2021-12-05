@@ -472,9 +472,9 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_text_field( $field ) {
 		?>
 		<input type="<?php print esc_attr( $field['type'] ); ?>"
-				<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) ) ? ' disabled' : ''; ?>
+				<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>
 			  id="<?php print esc_attr( $field['key'] ); ?>"
-			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) ) ? ' disabled' : ''; ?>"
+			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>"
 			  name="<?php print esc_attr( $field['name'] ); ?>"
 			  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php

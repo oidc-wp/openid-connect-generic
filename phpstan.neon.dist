@@ -23,7 +23,7 @@ parameters:
   paths:
     - includes/
     - ./
-  excludes_analyse:
+  excludePaths:
     - node_modules/
     - scripts/
     - tests/
