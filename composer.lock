@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9b71f1eec658ce919a16a177b04ed5a7",
+    "content-hash": "86aec7df8197760380e71cfae59716bb",
     "packages": [
         {
             "name": "composer/installers",
@@ -1209,16 +1209,16 @@
         },
         {
             "name": "johnpbloch/wordpress-core",
-            "version": "5.6.6",
+            "version": "5.7.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/johnpbloch/wordpress-core.git",
-                "reference": "17fdec67c9f1307814dacc98ec3979827da9c8c0"
+                "reference": "08bd602d5d4fdd218570b77cd3a32558c949debd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/johnpbloch/wordpress-core/zipball/17fdec67c9f1307814dacc98ec3979827da9c8c0",
-                "reference": "17fdec67c9f1307814dacc98ec3979827da9c8c0",
+                "url": "https://api.github.com/repos/johnpbloch/wordpress-core/zipball/08bd602d5d4fdd218570b77cd3a32558c949debd",
+                "reference": "08bd602d5d4fdd218570b77cd3a32558c949debd",
                 "shasum": ""
             },
             "require": {
@@ -1226,7 +1226,7 @@
                 "php": ">=5.6.20"
             },
             "provide": {
-                "wordpress/core-implementation": "5.6.6"
+                "wordpress/core-implementation": "5.7.4"
             },
             "type": "wordpress-core",
             "notification-url": "https://packagist.org/downloads/",
@@ -1253,7 +1253,7 @@
                 "source": "https://core.trac.wordpress.org/browser",
                 "wiki": "https://codex.wordpress.org/"
             },
-            "time": "2021-11-10T17:39:42+00:00"
+            "time": "2021-11-10T17:28:09+00:00"
         },
         {
             "name": "johnpbloch/wordpress-core-installer",
@@ -1769,16 +1769,16 @@
         },
         {
             "name": "php-stubs/wordpress-stubs",
-            "version": "v5.6.6",
+            "version": "v5.7.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-stubs/wordpress-stubs.git",
-                "reference": "55f007f45cee993277fc7fcecdbe2b00f0f5e1ad"
+                "reference": "9d8e09f3c6e099f11b98551412f8bb4239a43f8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-stubs/wordpress-stubs/zipball/55f007f45cee993277fc7fcecdbe2b00f0f5e1ad",
-                "reference": "55f007f45cee993277fc7fcecdbe2b00f0f5e1ad",
+                "url": "https://api.github.com/repos/php-stubs/wordpress-stubs/zipball/9d8e09f3c6e099f11b98551412f8bb4239a43f8e",
+                "reference": "9d8e09f3c6e099f11b98551412f8bb4239a43f8e",
                 "shasum": ""
             },
             "replace": {
@@ -1807,9 +1807,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-stubs/wordpress-stubs/issues",
-                "source": "https://github.com/php-stubs/wordpress-stubs/tree/v5.6.6"
+                "source": "https://github.com/php-stubs/wordpress-stubs/tree/v5.7.4"
             },
-            "time": "2021-11-11T13:55:54+00:00"
+            "time": "2021-11-11T13:56:27+00:00"
         },
         {
             "name": "phpcompatibility/php-compatibility",
