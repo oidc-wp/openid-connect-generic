@@ -95,6 +95,7 @@ jobs:
         composer global require phpunit/php-code-coverage=dev-master
         composer global require sebastian/global-state:dev-master
         composer global require phpunit/phpunit=dev-master
+        composer require phpro/grumphp=dev-master --dev -W
 
     - name: Install Composer Dependencies
       run: composer install
