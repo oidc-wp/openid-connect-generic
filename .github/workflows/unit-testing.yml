@@ -89,8 +89,8 @@ jobs:
     - name: Require Specified WordPress Version
       run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
 
-    - name: PHPUnit PHP 7.4 Support
-      if: matrix.php-version == '7.4'
+    - name: PHPUnit PHP 8.0 Support
+      if: matrix.php-version == '8.0'
       run: |
         composer global require phpunit/php-code-coverage=dev-master
         composer global require sebastian/global-state:dev-master
