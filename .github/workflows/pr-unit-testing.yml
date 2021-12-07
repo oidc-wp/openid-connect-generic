@@ -7,8 +7,8 @@ on:
   pull_request:
 
 env:
-  PHP_PREF_MIN_VERSION: '7.4'
-  WP_STABLE_VERSION: '5.7.*'
+  PHP_STABLE_VERSION: '7.4'
+  WP_PREF_STABLE_VERSION: '5.7.*'
   WP_MULTISITE: 0
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - job-name: 'Latest Stable Requirements'
+          - job-name: 'Preferred Stable Requirements'
             bleeding-edge: false
             php-version: '7.4'
             wordpress-version: '5.7.*'
@@ -58,13 +58,6 @@ jobs:
 
     - name: Require Specified WordPress Version
       run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
-
-    - name: PHPUnit PHP 7.4 Support
-      if: matrix.php-version == '7.4'
-      run: |
-        composer global require phpunit/php-code-coverage=dev-master
-        composer global require sebastian/global-state:dev-master
-        composer global require phpunit/phpunit=dev-master
 
     - name: Install Composer Dependencies
       run: composer install

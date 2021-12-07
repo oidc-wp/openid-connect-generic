@@ -13,12 +13,13 @@ on:
       - 'fix/**'
 
 env:
-  PHP_MIN_VERSION: '7.1'
-  PHP_PREF_MIN_VERSION: '7.2'
+  PHP_MIN_VERSION: '7.2'
+  PHP_PREF_MIN_VERSION: '7.3'
   PHP_STABLE_VERSION: '7.4'
-  WP_MIN_VERSION: '5.3.*'
-  WP_PREF_MIN_VERSION: '5.4.*'
-  WP_STABLE_VERSION: '5.7.*'
+  WP_MIN_VERSION: '5.5.*'
+  WP_PREF_MIN_VERSION: '5.6.*'
+  WP_PREF_STABLE_VERSION: '5.7.*'
+  WP_STABLE_VERSION: '5.8.*'
 
 jobs:
   test:
@@ -32,17 +33,22 @@ jobs:
           - job-name: 'Latest Stable Requirements'
             bleeding-edge: false
             php-version: '7.4'
+            wordpress-version: '5.8.*'
+            wp-multisite-mode: 0
+          - job-name: 'Preferred Stable Requirements'
+            bleeding-edge: false
+            php-version: '7.4'
             wordpress-version: '5.7.*'
             wp-multisite-mode: 0
           - job-name: 'Preferred Minimum Requirements'
             bleeding-edge: false
-            php-version: '7.2'
-            wordpress-version: '5.4.*'
+            php-version: '7.3'
+            wordpress-version: '5.6.*'
             wp-multisite-mode: 0
           - job-name: 'Minimum Requirements'
             bleeding-edge: false
-            php-version: '7.1'
-            wordpress-version: '5.3.*'
+            php-version: '7.2'
+            wordpress-version: '5.5.*'
             wp-multisite-mode: 0
           - job-name: 'Bleeding Edge Requirements'
             bleeding-edge: true
@@ -92,10 +98,15 @@ jobs:
     - name: PHPUnit PHP 8.0 Support
       if: matrix.php-version == '8.0'
       run: |
-        composer require phpunit/phpunit:dev-master --dev -W
-        composer require phpro/grumphp:dev-master --dev -W
+        composer require phpunit/phpunit:dev-master --dev -W --ignore-platform-req=php
+        composer require phpro/grumphp:dev-master --dev -W --ignore-platform-req=php
+
+    - name: Install Composer Dependencies (PHP 8.0)
+      if: matrix.php-version == '8.0'
+      run: composer install --ignore-platform-req=php
 
     - name: Install Composer Dependencies
+      if: matrix.php-version != '8.0'
       run: composer install
 
     - name: NPM Setup
