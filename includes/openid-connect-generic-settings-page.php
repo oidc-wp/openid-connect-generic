@@ -272,6 +272,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ),
 				'section'     => 'client_settings',
 			),
+			'acr_values'    => array(
+				'title'       => __( 'ACR values', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Use a specific defined authentication contract from the IDP - optional.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),			
 			'identity_key'     => array(
 				'title'       => __( 'Identity Key', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".', 'daggerhart-openid-connect-generic' ),
