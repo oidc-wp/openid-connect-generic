@@ -214,6 +214,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				'client_id' => $this->settings->client_id,
 				'redirect_uri' => $this->client->get_redirect_uri(),
 				'redirect_to' => $this->get_redirect_to(),
+				'acr_values' => $this->settings->acr_values,
 			),
 			$atts,
 			'openid_connect_generic_auth_url'
@@ -228,16 +229,30 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( stripos( $this->settings->endpoint_login, '?' ) !== false ) {
 			$separator = '&';
 		}
-		$url = sprintf(
-			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
-			$atts['endpoint_login'],
-			$separator,
-			rawurlencode( $atts['scope'] ),
-			rawurlencode( $atts['client_id'] ),
-			$this->client->new_state( $atts['redirect_to'] ),
-			rawurlencode( $atts['redirect_uri'] )
-		);
-
+		
+		if ( empty ( $this->settings->acr_values )) {
+		    $url = sprintf(
+			    '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
+			    $atts['endpoint_login'],
+			    $separator,
+			    rawurlencode( $atts['scope'] ),
+			    rawurlencode( $atts['client_id'] ),
+			    $this->client->new_state( $atts['redirect_to'] ),
+			    rawurlencode( $atts['redirect_uri'] )
+			);
+		} else {
+			$url = sprintf(
+			    '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s&acr_values=%7$s',
+			    $atts['endpoint_login'],
+			    $separator,
+			    rawurlencode( $atts['scope'] ),
+			    rawurlencode( $atts['client_id'] ),
+			    $this->client->new_state( $atts['redirect_to'] ),
+			    rawurlencode( $atts['redirect_uri'] ),
+			    rawurlencode( $atts['acr_values'] )
+			);
+		}
+	
 		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
 		return apply_filters( 'openid-connect-generic-auth-url', $url );
 	}
