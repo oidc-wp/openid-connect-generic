@@ -490,6 +490,13 @@ class OpenID_Connect_Generic_Client {
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
+		
+		// Validate acr values when the option is set in the configuration.
+		if ( ! empty( $this->acr_values ) && isset( $id_token_claim['acr'] ) ) {
+			if ( $this->acr_values != $id_token_claim['acr'] ) {
+				return new WP_Error( 'no-match-acr', __( 'No matching acr values.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			}
+		}
 
 		return true;
 	}
