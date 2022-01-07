@@ -656,6 +656,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						'value' => $subject_identity,
 					),
 				),
+				// Override the default blog_id (get_current_blog_id) to find users on different sites of a multisite install.
+				'blog_id' => 0,
 			)
 		);
 
