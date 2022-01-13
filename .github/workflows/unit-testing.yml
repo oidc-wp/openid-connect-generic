@@ -98,7 +98,8 @@ jobs:
     - name: PHPUnit PHP 8.0 Support
       if: matrix.php-version == '8.0'
       run: |
-        composer require phpunit/phpunit:dev-master sebastian/code-unit:^2.0 --dev -W --ignore-platform-req=php
+        composer require sebastian/code-unit:^2.0 --dev -W --ignore-platform-req=php
+        composer require phpunit/phpunit:dev-master --dev -W --ignore-platform-req=php
         composer require phpro/grumphp:dev-master --dev -W --ignore-platform-req=php
 
     - name: Install Composer Dependencies (PHP 8.0)
