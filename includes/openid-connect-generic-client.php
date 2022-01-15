@@ -90,7 +90,7 @@ class OpenID_Connect_Generic_Client {
 	 * @var string
 	 */
 	private $acr_values;
-	
+
 	/**
 	 * The state time limit. States are only valid for 3 minutes.
 	 *
@@ -213,30 +213,30 @@ class OpenID_Connect_Generic_Client {
 
 		if ( $this->acr_values ) {
 			$request = array(
-			    'body' => array(
-				    'code'          => $code,
-				    'client_id'     => $this->client_id,
-				    'client_secret' => $this->client_secret,
-				    'redirect_uri'  => $this->redirect_uri,
-				    'grant_type'    => 'authorization_code',
-				    'scope'         => $this->scope,
+				'body' => array(
+					'code'          => $code,
+					'client_id'     => $this->client_id,
+					'client_secret' => $this->client_secret,
+					'redirect_uri'  => $this->redirect_uri,
+					'grant_type'    => 'authorization_code',
+					'scope'         => $this->scope,
 					'acr_values'    => $this->acr_values,
-			    ),
-			    'headers' => array( 'Host' => $host ),
+				),
+				'headers' => array( 'Host' => $host ),
 			);
 			} else {
 			$request = array(
-			    'body' => array(
-			    	'code'          => $code,
-			    	'client_id'     => $this->client_id,
-			    	'client_secret' => $this->client_secret,
-			    	'redirect_uri'  => $this->redirect_uri,
-			    	'grant_type'    => 'authorization_code',
-			    	'scope'         => $this->scope,
+				'body' => array(
+					'code'          => $code,
+					'client_id'     => $this->client_id,
+					'client_secret' => $this->client_secret,
+					'redirect_uri'  => $this->redirect_uri,
+					'grant_type'    => 'authorization_code',
+					'scope'         => $this->scope,
 					'acr_values'    => $this->acr_values,
-			    ),
-			    'headers' => array( 'Host' => $host ),
-		  );
+				),
+				'headers' => array( 'Host' => $host ),
+			);
 		}
 
 		// Allow modifications to the request.
@@ -490,7 +490,7 @@ class OpenID_Connect_Generic_Client {
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
-		
+
 		// Validate acr values when the option is set in the configuration.
 		if ( ! empty( $this->acr_values ) && isset( $id_token_claim['acr'] ) ) {
 			if ( $this->acr_values != $id_token_claim['acr'] ) {
