@@ -50,15 +50,14 @@
 	"wp-env": {
 		"plugin-dir": "daggerhart-openid-connect-generic",
 		"plugin-name": "OpenID Connect Generic",
-		"docker-template": "./docker-compose.override.yml",
+		"docker-template": "./docker-compose.wp-env.yml",
 		"welcome-build-command": "npm start"
 	},
 	"scripts": {
-		"setup": "npm run setup:npm && npm run setup:composer && npm run build:wordpress",
+		"setup": "npm run setup:npm && npm run setup:composer",
 		"setup:npm": "npm install",
-		"setup:composer": "composer install",
+		"setup:composer": "docker-compose run composer install",
 		"build": "npm run grunt build",
-		"build:wordpress": "cd wordpress && npm install && npm run build && cd .. && composer install --optimize-autoloader",
 		"release": "npm run grunt release",
 		"start": "wp-env start",
 		"stop": "wp-env stop",
@@ -76,9 +75,9 @@
 		"i18n:make": "npm run grunt i18n",
 		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
 		"lint": "npm run lint:php",
-		"lint:php": "composer run-script lint",
-		"lint:php:fix": "composer run-script lint-fix",
+		"lint:php": "docker-compose run composer lint",
+		"lint:php:fix": "docker-compose run composer lint-fix",
 		"analyze": "npm run analyze:php",
-		"analyze:php": "composer run-script analyze"
+		"analyze:php": "docker-compose run composer analyze"
 	}
 }
