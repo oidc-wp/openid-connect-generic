@@ -1,0 +1,119 @@
+name: Unit Testing
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Triggers the workflow on push events only for the matching branches
+  push:
+    branches:
+      - dev
+      - main
+      - 'release/**'
+      - 'feature/**'
+      - 'fix/**'
+
+env:
+  PHP_MIN_VERSION: '7.2'
+  PHP_PREF_MIN_VERSION: '7.3'
+  PHP_STABLE_VERSION: '7.4'
+  WP_MIN_VERSION: '5.5.*'
+  WP_PREF_MIN_VERSION: '5.6.*'
+  WP_PREF_STABLE_VERSION: '5.7.*'
+  WP_STABLE_VERSION: '5.8.*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.bleeding-edge }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job-name: 'Latest Stable Requirements'
+            bleeding-edge: false
+            php-version: '7.4'
+            wordpress-version: '5.8.*'
+            wp-multisite-mode: 0
+          - job-name: 'Preferred Stable Requirements'
+            bleeding-edge: false
+            php-version: '7.4'
+            wordpress-version: '5.7.*'
+            wp-multisite-mode: 0
+          - job-name: 'Preferred Minimum Requirements'
+            bleeding-edge: false
+            php-version: '7.3'
+            wordpress-version: '5.6.*'
+            wp-multisite-mode: 0
+          - job-name: 'Minimum Requirements'
+            bleeding-edge: false
+            php-version: '7.2'
+            wordpress-version: '5.5.*'
+            wp-multisite-mode: 0
+          - job-name: 'Bleeding Edge Requirements'
+            bleeding-edge: true
+            php-version: '8.0'
+            wordpress-version: 'dev-master'
+            wp-multisite-mode: 0
+          - job-name: 'Multisite Compatibility Requirements'
+            bleeding-edge: false
+            php-version: '7.4'
+            wordpress-version: '5.7.*'
+            wp-multisite-mode: 1
+
+    name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Setup PHP Environment
+      uses: shivammathur/setup-php@v2
+      # https://github.com/marketplace/actions/setup-php-action
+      with:
+        php-version: ${{ matrix.php-version }}
+        tools: composer:v2
+
+    - name: Setup Node Environment
+      uses: actions/setup-node@v1
+      # https://github.com/marketplace/actions/setup-node-js-environment
+      with:
+        node-version: 12.x
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v2
+      env:
+        composer-cache-name: cache-vendor
+      with:
+        path: ~/vendor
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Require Specified WordPress Version
+      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
+
+    - name: PHPUnit PHP 8.0 Support
+      if: matrix.php-version == '8.0'
+      run: |
+        composer require sebastian/code-unit:^2.0 --dev -W --ignore-platform-req=php
+        composer require phpunit/phpunit:dev-master --dev -W --ignore-platform-req=php
+        composer require phpro/grumphp:dev-master --dev -W --ignore-platform-req=php
+
+    - name: Install Composer Dependencies (PHP 8.0)
+      if: matrix.php-version == '8.0'
+      run: composer install --ignore-platform-req=php
+
+    - name: Install Composer Dependencies
+      if: matrix.php-version != '8.0'
+      run: composer install
+
+    - name: NPM Setup
+      run: npm install
+
+    - name: Unit Tests
+      env:
+        WP_MULTISITE: ${{ matrix.wp-multisite-mode }}
+      run: npm run test

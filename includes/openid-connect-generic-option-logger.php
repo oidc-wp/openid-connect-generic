@@ -62,7 +62,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 * @param bool|TRUE $logging_enabled      Whether logging is enabled.
 	 * @param int       $log_limit            The log entry limit.
 	 */
-	function __construct( $option_name, $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
+	public function __construct( $option_name, $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
 		$this->option_name = $option_name;
 		$this->default_message_type = $default_message_type;
 		$this->logging_enabled = boolval( $logging_enabled );
@@ -77,7 +77,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 *
 	 * @return void
 	 */
-	function log_filters( $filter_names, $priority = 10 ) {
+	public function log_filters( $filter_names, $priority = 10 ) {
 		if ( ! is_array( $filter_names ) ) {
 			$filter_names = array( $filter_names );
 		}
@@ -95,7 +95,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 *
 	 * @return void
 	 */
-	function log_actions( $action_names, $priority ) {
+	public function log_actions( $action_names, $priority ) {
 		if ( ! is_array( $action_names ) ) {
 			$action_names = array( $action_names );
 		}
@@ -112,7 +112,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 *
 	 * @return mixed
 	 */
-	function log_hook( $arg1 = null ) {
+	public function log_hook( $arg1 = null ) {
 		$this->log( func_get_args(), current_filter() );
 		return $arg1;
 	}
@@ -178,12 +178,14 @@ class OpenID_Connect_Generic_Option_Logger {
 			}
 		}
 
+		$request_uri = ( ! empty( $_SERVER['REQUEST_URI'] ) ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : 'Unknown';
+
 		// Construct the message.
 		$message = array(
 			'type'    => $type,
 			'time'    => time(),
 			'user_ID' => get_current_user_id(),
-			'uri'     => preg_replace( '/code=([^&]+)/i', 'code=', $_SERVER['REQUEST_URI'] ),
+			'uri'     => preg_replace( '/code=([^&]+)/i', 'code=', $request_uri ),
 			'data'    => $data,
 		);
 
@@ -247,11 +249,6 @@ class OpenID_Connect_Generic_Option_Logger {
 
 		ob_start();
 		?>
-		<style type="text/css">
-			#logger-table .col-data { width: 85% }
-			#logger-table .col-details div { padding: 4px 0; border-bottom: 1px solid #bbb; }
-			#logger-table .col-details label { font-weight: bold; }
-		</style>
 		<table id="logger-table" class="wp-list-table widefat fixed striped posts">
 			<thead>
 			<th class="col-details">Details</th>
@@ -262,20 +259,20 @@ class OpenID_Connect_Generic_Option_Logger {
 				<tr>
 					<td class="col-details">
 						<div>
-							<label><?php _e( 'Type', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print $log['type']; ?>
+							<label><?php esc_html_e( 'Type', 'daggerhart-openid-connect-generic' ); ?>: </label>
+							<?php print esc_html( $log['type'] ); ?>
 						</div>
 						<div>
-							<label><?php _e( 'Date', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print gmdate( 'Y-m-d H:i:s', $log['time'] ); ?>
+							<label><?php esc_html_e( 'Date', 'daggerhart-openid-connect-generic' ); ?>: </label>
+							<?php print esc_html( gmdate( 'Y-m-d H:i:s', $log['time'] ) ); ?>
 						</div>
 						<div>
-							<label><?php _e( 'User', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print ( get_userdata( $log['user_ID'] ) ) ? get_userdata( $log['user_ID'] )->user_login : '0'; ?>
+							<label><?php esc_html_e( 'User', 'daggerhart-openid-connect-generic' ); ?>: </label>
+							<?php print esc_html( ( get_userdata( $log['user_ID'] ) ) ? get_userdata( $log['user_ID'] )->user_login : '0' ); ?>
 						</div>
 						<div>
-							<label><?php _e( 'URI ', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print $log['uri']; ?>
+							<label><?php esc_html_e( 'URI ', 'daggerhart-openid-connect-generic' ); ?>: </label>
+							<?php print esc_url( $log['uri'] ); ?>
 						</div>
 					</td>
 
