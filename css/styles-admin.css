@@ -1,0 +1,32 @@
+#logger-table .col-data {
+	width: 85%
+}
+
+#logger-table .col-data pre {
+	margin: 0;
+	white-space: pre;           /* CSS 2.0 */
+	white-space: pre-wrap;      /* CSS 2.1 */
+	white-space: pre-line;      /* CSS 3.0 */
+	white-space: -pre-wrap;     /* Opera 4-6 */
+	white-space: -o-pre-wrap;   /* Opera 7 */
+	white-space: -moz-pre-wrap; /* Mozilla */
+	white-space: -hp-pre-wrap;  /* HP Printers */
+	word-wrap: break-word;      /* IE 5+ */
+}
+
+#logger-table .col-details {
+	width: 200px;
+}
+
+#logger-table .col-details div {
+	padding: 4px 0;
+	border-bottom: 1px solid #bbb;
+}
+
+#logger-table .col-details div:last-child {
+	border-bottom: none;
+}
+
+#logger-table .col-details label {
+	font-weight: bold;
+}

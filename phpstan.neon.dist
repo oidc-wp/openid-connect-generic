@@ -23,7 +23,7 @@ parameters:
   paths:
     - includes/
     - ./
-  excludes_analyse:
+  excludePaths:
     - node_modules/
     - scripts/
     - tests/
@@ -33,7 +33,7 @@ parameters:
   # scanFiles:
   # - includes/class.php
   scanDirectories:
-    - wordpress/src/
+    - wordpress
   ignoreErrors:
     # Uses func_get_args()
     - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
@@ -49,3 +49,5 @@ parameters:
     # WP-CLI accepts a class as callable
     # - '/^Parameter #2 \$callable of static method WP_CLI::add_command\(\) expects callable\(\): mixed, \S+ given\.$/'
     # Please consider commenting ignores: issue URL or reason for ignoring
+    # Ignore cookie_redirect_key deprecation errors.
+    - '/.*Access to deprecated property \$cookie_redirect_key.*/'
