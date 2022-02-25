@@ -749,6 +749,75 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Checks if $claimname is in the body or _claim_names of the userinfo.
+	 * If yes, returns the claim value. Otherwise, returns false.
+	 *
+	 * @param string $claimname the claim name to look for.
+	 * @param array  $userinfo the JSON to look in.
+	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source).
+	 * @return true|false
+	 */
+	private function get_claim( $claimname, $userinfo, &$claimvalue ) {
+		/**
+		 * If we find a simple claim, return it.
+		 */
+		if ( array_key_exists( $claimname, $userinfo ) ) {
+			$claimvalue = $userinfo[ $claimname ];
+			return true;
+		}
+		/**
+		 * If there are no aggregated claims, it is over.
+		 */
+		if ( ! array_key_exists( '_claim_names', $userinfo ) ||
+			! array_key_exists( '_claim_sources', $userinfo ) ) {
+			return false;
+		}
+		$claim_src_ptr = $userinfo['_claim_names'];
+		if ( ! isset( $claim_src_ptr ) ) {
+			return false;
+		}
+		/**
+		 * No reference found
+		 */
+		if ( ! array_key_exists( $claimname, $claim_src_ptr ) ) {
+			return false;
+		}
+		$src_name = $claim_src_ptr[ $claimname ];
+		// Reference found, but no corresponding JWT. This is a malformed userinfo.
+		if ( ! array_key_exists( $src_name, $userinfo['_claim_sources'] ) ) {
+			return false;
+		}
+		$src = $userinfo['_claim_sources'][ $src_name ];
+		// Source claim is not a JWT. Abort.
+		if ( ! array_key_exists( 'JWT', $src ) ) {
+			return false;
+		}
+		/**
+		 * Extract claim from JWT.
+		 * FIXME: We probably want to verify the JWT signature/issuer here.
+		 * For example, using JWKS if applicable. For symmetrically signed
+		 * JWTs (HMAC), we need a way to specify the acceptable secrets
+		 * and each possible issuer in the config.
+		 */
+		$jwt = $src['JWT'];
+		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
+		$body_str = base64_decode( $body, false );
+		if ( ! $body_str ) {
+			return false;
+		}
+		$body_json = json_decode( $body_str, true );
+		if ( ! isset( $body_json ) ) {
+			return false;
+		}
+		if ( ! array_key_exists( $claimname, $body_json ) ) {
+			return false;
+		}
+		$claimvalue = $body_json[ $claimname ];
+		return true;
+	}
+
+
+	/**
 	 * Build a string from the user claim according to the specified format.
 	 *
 	 * @param string $format               The format format of the user identity.
@@ -760,12 +829,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
 		$matches = null;
 		$string = '';
+		$info = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
 			foreach ( $matches[0] as $match ) {
 				$key = substr( $match[0], 1, -1 );
 				$string .= substr( $format, $i, $match[1] - $i );
-				if ( ! isset( $user_claim[ $key ] ) ) {
+				if ( ! $this->get_claim( $key, $user_claim, $info ) ) {
 					if ( $error_on_missing_key ) {
 						return new WP_Error(
 							'incomplete-user-claim',
@@ -779,7 +849,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						);
 					}
 				} else {
-					$string .= $user_claim[ $key ];
+					$string .= $info;
 				}
 				$i = $match[1] + strlen( $match[0] );
 			}
