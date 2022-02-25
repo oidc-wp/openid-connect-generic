@@ -76,6 +76,13 @@ Notes
 class OpenID_Connect_Generic {
 
 	/**
+	 * Singleton instance of self
+	 *
+	 * @var OpenID_Connect_Generic
+	 */
+	protected static $_instance = null;
+
+	/**
 	 * Plugin version.
 	 *
 	 * @var string
@@ -111,13 +118,6 @@ class OpenID_Connect_Generic {
 	public $client_wrapper;
 
 	/**
-	 * Singleton instance of self
-	 *
-	 * @var OpenID_Connect_Generic
-	 */
-	public static $instance;
-
-	/**
 	 * Setup the plugin
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings The settings object.
@@ -128,7 +128,7 @@ class OpenID_Connect_Generic {
 	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
-		self::$instance = $this;
+		self::$_instance = $this;
 	}
 
 	/**
@@ -385,15 +385,17 @@ class OpenID_Connect_Generic {
 	 * @return OpenID_Connect_Generic
 	 */
 	public static function instance() {
-		if ( null === self::$instance ) {
+		if ( null === self::$_instance ) {
 			self::bootstrap();
 		}
-		return self::$instance;
+		return self::$_instance;
 	}
 }
 
 OpenID_Connect_Generic::instance();
 
-require_once( 'includes/functions.php' );
 register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
+
+// Provide publicly accessible plugin helper functions.
+require_once( 'includes/functions.php' );
