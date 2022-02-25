@@ -108,7 +108,14 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var OpenID_Connect_Generic_Client_Wrapper
 	 */
-	private $client_wrapper;
+	public $client_wrapper;
+
+	/**
+	 * Singleton instance of self
+	 *
+	 * @var OpenID_Connect_Generic
+	 */
+	public static $instance;
 
 	/**
 	 * Setup the plugin
@@ -121,6 +128,7 @@ class OpenID_Connect_Generic {
 	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
+		self::$instance = $this;
 	}
 
 	/**
@@ -370,9 +378,22 @@ class OpenID_Connect_Generic {
 		add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 	}
+
+	/**
+	 * Create (if needed) and return a singleton of self.
+	 *
+	 * @return OpenID_Connect_Generic
+	 */
+	public static function instance() {
+		if ( null === self::$instance ) {
+			self::bootstrap();
+		}
+		return self::$instance;
+	}
 }
 
-OpenID_Connect_Generic::bootstrap();
+OpenID_Connect_Generic::instance();
 
+require_once( 'includes/functions.php' );
 register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
