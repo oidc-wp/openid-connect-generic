@@ -78,7 +78,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Plugin version.
 	 *
-	 * @var
+	 * @var string
 	 */
 	const VERSION = '3.8.5';
 

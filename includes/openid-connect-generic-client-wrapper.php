@@ -148,6 +148,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	public function get_redirect_to() {
+		// @var WP $wp WordPress environment setup class.
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -170,7 +171,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
 			if ( ! empty( $wp->request ) ) {
-				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
+				if ( ! empty( $wp->did_permalink ) && boolval( $wp->did_permalink ) === true ) {
 					$redirect_url = home_url( trailingslashit( $wp->request ) );
 				} else {
 					$redirect_url = home_url( add_query_arg( null, null ) );
@@ -674,7 +675,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param array $user_claim The IDP authenticated user claim data.
 	 *
-	 * @return string|WP_Error|null
+	 * @return string|WP_Error
 	 */
 	private function get_username_from_claim( $user_claim ) {
 
@@ -710,9 +711,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Copy the username for incrementing.
-		$username = ! empty( $normalized_username ) ? $normalized_username : null;
+		$username = $normalized_username;
 
-		if ( ! $this->settings->link_existing_users && ! is_null( $username ) ) {
+		if ( ! $this->settings->link_existing_users ) {
 			// @example Original user gets "name", second user gets "name2", etc.
 			$count = 1;
 			while ( username_exists( $username ) ) {
@@ -845,7 +846,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_username ) ) {
+		} else if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
@@ -885,7 +886,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			return $_username;
-		} else if ( ! is_null( $_username ) ) {
+		} else if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
