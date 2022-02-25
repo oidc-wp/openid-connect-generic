@@ -12,8 +12,9 @@
 			"plugins": [
 				".",
 				"https://downloads.wordpress.org/plugin/debug-bar.zip",
-				"https://downloads.wordpress.org/plugin/query-monitor.zip",
 				"https://downloads.wordpress.org/plugin/debug-bar-post-meta.zip",
+				"https://downloads.wordpress.org/plugin/display-environment-type.zip",
+				"https://downloads.wordpress.org/plugin/query-monitor.zip",
 				"https://downloads.wordpress.org/plugin/transients-manager.zip"
 			]
 		},
