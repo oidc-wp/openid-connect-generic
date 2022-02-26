@@ -275,12 +275,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			if ( isset( $_SERVER['REQUEST_URI'] ) ) {
 				do_action( 'openid-connect-generic-session-expired', wp_get_current_user(), esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
 				wp_logout();
-	
+
 				if ( $this->settings->redirect_on_logout ) {
 					$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
 				}
-	
-				return;	
+
+				return;
 			}
 		}
 
