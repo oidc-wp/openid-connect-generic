@@ -295,6 +295,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $token_response );
 		}
 
+		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
 	}
 
