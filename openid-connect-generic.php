@@ -138,8 +138,6 @@ class OpenID_Connect_Generic {
 	 */
 	public function init() {
 
-		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __FILE__ ) . 'css/styles-admin.css', array(), self::VERSION, 'all' );
-
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
