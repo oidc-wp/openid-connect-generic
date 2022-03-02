@@ -148,6 +148,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	public function get_redirect_to() {
+		// @var WP $wp WordPress environment setup class.
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -170,7 +171,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
 			if ( ! empty( $wp->request ) ) {
-				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
+				if ( ! empty( $wp->did_permalink ) && boolval( $wp->did_permalink ) === true ) {
 					$redirect_url = home_url( trailingslashit( $wp->request ) );
 				} else {
 					$redirect_url = home_url( add_query_arg( null, null ) );
@@ -271,13 +272,16 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$refresh_expires = $refresh_token_info['refresh_expires'];
 
 		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
-			wp_logout();
+			if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+				do_action( 'openid-connect-generic-session-expired', wp_get_current_user(), esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
+				wp_logout();
 
-			if ( $this->settings->redirect_on_logout ) {
-				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
+				if ( $this->settings->redirect_on_logout ) {
+					$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
+				}
+
+				return;
 			}
-
-			return;
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );
@@ -294,6 +298,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $token_response );
 		}
 
+		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
 	}
 
@@ -656,6 +661,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						'value' => $subject_identity,
 					),
 				),
+				// Override the default blog_id (get_current_blog_id) to find users on different sites of a multisite install.
+				'blog_id' => 0,
 			)
 		);
 
@@ -673,7 +680,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param array $user_claim The IDP authenticated user claim data.
 	 *
-	 * @return string|WP_Error|null
+	 * @return string|WP_Error
 	 */
 	private function get_username_from_claim( $user_claim ) {
 
@@ -709,9 +716,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Copy the username for incrementing.
-		$username = ! empty( $normalized_username ) ? $normalized_username : null;
+		$username = $normalized_username;
 
-		if ( ! $this->settings->link_existing_users && ! is_null( $username ) ) {
+		if ( ! $this->settings->link_existing_users ) {
 			// @example Original user gets "name", second user gets "name2", etc.
 			$count = 1;
 			while ( username_exists( $username ) ) {
@@ -746,6 +753,75 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Checks if $claimname is in the body or _claim_names of the userinfo.
+	 * If yes, returns the claim value. Otherwise, returns false.
+	 *
+	 * @param string $claimname the claim name to look for.
+	 * @param array  $userinfo the JSON to look in.
+	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source).
+	 * @return true|false
+	 */
+	private function get_claim( $claimname, $userinfo, &$claimvalue ) {
+		/**
+		 * If we find a simple claim, return it.
+		 */
+		if ( array_key_exists( $claimname, $userinfo ) ) {
+			$claimvalue = $userinfo[ $claimname ];
+			return true;
+		}
+		/**
+		 * If there are no aggregated claims, it is over.
+		 */
+		if ( ! array_key_exists( '_claim_names', $userinfo ) ||
+			! array_key_exists( '_claim_sources', $userinfo ) ) {
+			return false;
+		}
+		$claim_src_ptr = $userinfo['_claim_names'];
+		if ( ! isset( $claim_src_ptr ) ) {
+			return false;
+		}
+		/**
+		 * No reference found
+		 */
+		if ( ! array_key_exists( $claimname, $claim_src_ptr ) ) {
+			return false;
+		}
+		$src_name = $claim_src_ptr[ $claimname ];
+		// Reference found, but no corresponding JWT. This is a malformed userinfo.
+		if ( ! array_key_exists( $src_name, $userinfo['_claim_sources'] ) ) {
+			return false;
+		}
+		$src = $userinfo['_claim_sources'][ $src_name ];
+		// Source claim is not a JWT. Abort.
+		if ( ! array_key_exists( 'JWT', $src ) ) {
+			return false;
+		}
+		/**
+		 * Extract claim from JWT.
+		 * FIXME: We probably want to verify the JWT signature/issuer here.
+		 * For example, using JWKS if applicable. For symmetrically signed
+		 * JWTs (HMAC), we need a way to specify the acceptable secrets
+		 * and each possible issuer in the config.
+		 */
+		$jwt = $src['JWT'];
+		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
+		$body_str = base64_decode( $body, false );
+		if ( ! $body_str ) {
+			return false;
+		}
+		$body_json = json_decode( $body_str, true );
+		if ( ! isset( $body_json ) ) {
+			return false;
+		}
+		if ( ! array_key_exists( $claimname, $body_json ) ) {
+			return false;
+		}
+		$claimvalue = $body_json[ $claimname ];
+		return true;
+	}
+
+
+	/**
 	 * Build a string from the user claim according to the specified format.
 	 *
 	 * @param string $format               The format format of the user identity.
@@ -757,12 +833,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
 		$matches = null;
 		$string = '';
+		$info = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
 			foreach ( $matches[0] as $match ) {
 				$key = substr( $match[0], 1, -1 );
 				$string .= substr( $format, $i, $match[1] - $i );
-				if ( ! isset( $user_claim[ $key ] ) ) {
+				if ( ! $this->get_claim( $key, $user_claim, $info ) ) {
 					if ( $error_on_missing_key ) {
 						return new WP_Error(
 							'incomplete-user-claim',
@@ -776,7 +853,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						);
 					}
 				} else {
-					$string .= $user_claim[ $key ];
+					$string .= $info;
 				}
 				$i = $match[1] + strlen( $match[0] );
 			}
@@ -844,7 +921,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_username ) ) {
+		} else if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
@@ -884,7 +961,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			return $_username;
-		} else if ( ! is_null( $_username ) ) {
+		} else if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
