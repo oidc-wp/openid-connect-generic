@@ -102,7 +102,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 * @param array<mixed> $default_settings  The default plugin settings values.
 	 * @param bool         $granular_defaults The granular defaults.
 	 */
-	function __construct( $option_name, $default_settings = array(), $granular_defaults = true ) {
+	public function __construct( $option_name, $default_settings = array(), $granular_defaults = true ) {
 		$this->option_name = $option_name;
 		$this->default_settings = $default_settings;
 		$this->values = array();
@@ -130,7 +130,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return mixed
 	 */
-	function __get( $key ) {
+	public function __get( $key ) {
 		if ( isset( $this->values[ $key ] ) ) {
 			return $this->values[ $key ];
 		}
@@ -144,7 +144,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return void
 	 */
-	function __set( $key, $value ) {
+	public function __set( $key, $value ) {
 		$this->values[ $key ] = $value;
 	}
 
@@ -155,7 +155,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return bool
 	 */
-	function __isset( $key ) {
+	public function __isset( $key ) {
 		return isset( $this->values[ $key ] );
 	}
 
@@ -166,7 +166,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return void
 	 */
-	function __unset( $key ) {
+	public function __unset( $key ) {
 		unset( $this->values[ $key ] );
 	}
 
@@ -175,7 +175,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return array
 	 */
-	function get_values() {
+	public function get_values() {
 		return $this->values;
 	}
 
@@ -184,7 +184,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return string
 	 */
-	function get_option_name() {
+	public function get_option_name() {
 		return $this->option_name;
 	}
 
@@ -193,7 +193,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @return void
 	 */
-	function save() {
+	public function save() {
 
 		// For each defined environment variable/constant be sure it isn't saved to the database.
 		foreach ( $this->environment_settings as $key => $constant ) {

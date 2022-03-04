@@ -111,7 +111,7 @@ class OpenID_Connect_Generic_Client {
 	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
 	 */
-	function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -124,35 +124,21 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Create a single use authentication url
-	 *
-	 * @param array $atts An optional array of override/feature attributes.
+	 * Provides the configured Redirect URI supplied to the IDP.
 	 *
 	 * @return string
 	 */
-	function make_authentication_url( $atts = array() ) {
+	public function get_redirect_uri() {
+		return $this->redirect_uri;
+	}
 
-		$endpoint_login = ( ! empty( $atts['endpoint_login'] ) ) ? $atts['endpoint_login'] : $this->endpoint_login;
-		$scope = ( ! empty( $atts['scope'] ) ) ? $atts['scope'] : $this->scope;
-		$client_id = ( ! empty( $atts['client_id'] ) ) ? $atts['client_id'] : $this->client_id;
-		$redirect_uri = ( ! empty( $atts['redirect_uri'] ) ) ? $atts['redirect_uri'] : $this->redirect_uri;
-
-		$separator = '?';
-		if ( stripos( $this->endpoint_login, '?' ) !== false ) {
-			$separator = '&';
-		}
-		$url = sprintf(
-			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
-			$endpoint_login,
-			$separator,
-			rawurlencode( $scope ),
-			rawurlencode( $client_id ),
-			$this->new_state(),
-			rawurlencode( $redirect_uri )
-		);
-
-		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
-		return apply_filters( 'openid-connect-generic-auth-url', $url );
+	/**
+	 * Provide the configured IDP endpoint login URL.
+	 *
+	 * @return string
+	 */
+	public function get_endpoint_login_url() {
+		return $this->endpoint_login;
 	}
 
 	/**
@@ -162,7 +148,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<string>|WP_Error
 	 */
-	function validate_authentication_request( $request ) {
+	public function validate_authentication_request( $request ) {
 		// Look for an existing error of some kind.
 		if ( isset( $request['error'] ) ) {
 			return new WP_Error( 'unknown-error', 'An unknown error occurred.', $request );
@@ -193,7 +179,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return string|WP_Error
 	 */
-	function get_authentication_code( $request ) {
+	public function get_authentication_code( $request ) {
 		if ( ! isset( $request['code'] ) ) {
 			return new WP_Error( 'missing-authentication-code', __( 'Missing authentication code.', 'daggerhart-openid-connect-generic' ), $request );
 		}
@@ -209,7 +195,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	function request_authentication_token( $code, $additional_params ) {
+	public function request_authentication_token( $code, $additional_params ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
@@ -252,7 +238,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function request_new_tokens( $refresh_token ) {
+	public function request_new_tokens( $refresh_token ) {
 		$request = array(
 			'body' => array(
 				'refresh_token' => $refresh_token,
@@ -283,7 +269,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array<mixed>|WP_Error|null
 	 */
-	function get_token_response( $token_result ) {
+	public function get_token_response( $token_result ) {
 		if ( ! isset( $token_result['body'] ) ) {
 			return new WP_Error( 'missing-token-body', __( 'Missing token body.', 'daggerhart-openid-connect-generic' ), $token_result );
 		}
@@ -315,7 +301,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function request_userinfo( $access_token ) {
+	public function request_userinfo( $access_token ) {
 		// Allow modifications to the request.
 		$request = apply_filters( 'openid-connect-generic-alter-request', array(), 'get-userinfo' );
 
@@ -353,12 +339,19 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Generate a new state, save it as a transient, and return the state hash.
 	 *
+	 * @param string $redirect_to The redirect URL to be used after IDP authentication.
+	 *
 	 * @return string
 	 */
-	function new_state() {
+	public function new_state( $redirect_to ) {
 		// New state w/ timestamp.
 		$state = md5( mt_rand() . microtime( true ) );
-		set_transient( 'openid-connect-generic-state--' . $state, $state, $this->state_time_limit );
+		$state_value = array(
+			$state => array(
+				'redirect_to' => $redirect_to,
+			),
+		);
+		set_transient( 'openid-connect-generic-state--' . $state, $state_value, $this->state_time_limit );
 
 		return $state;
 	}
@@ -370,7 +363,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool
 	 */
-	function check_state( $state ) {
+	public function check_state( $state ) {
 
 		$state_found = true;
 
@@ -385,7 +378,22 @@ class OpenID_Connect_Generic_Client {
 			do_action( 'openid-connect-generic-state-expired', $state );
 		}
 
-		return ! ! $valid;
+		return boolval( $valid );
+	}
+
+	/**
+	 * Get the authorization state from the request
+	 *
+	 * @param array<string>|WP_Error $request The authentication request results.
+	 *
+	 * @return string|WP_Error
+	 */
+	public function get_authentication_state( $request ) {
+		if ( ! isset( $request['state'] ) ) {
+			return new WP_Error( 'missing-authentication-state', __( 'Missing authentication state.', 'daggerhart-openid-connect-generic' ), $request );
+		}
+
+		return $request['state'];
 	}
 
 	/**
@@ -395,7 +403,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_token_response( $token_response ) {
+	public function validate_token_response( $token_response ) {
 		/*
 		 * Ensure 2 specific items exist with the token response in order
 		 * to proceed with confidence:  id_token and token_type == 'Bearer'
@@ -416,7 +424,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error
 	 */
-	function get_id_token_claim( $token_response ) {
+	public function get_id_token_claim( $token_response ) {
 		// Validate there is an id_token.
 		if ( ! isset( $token_response['id_token'] ) ) {
 			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
@@ -463,7 +471,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_id_token_claim( $id_token_claim ) {
+	public function validate_id_token_claim( $id_token_claim ) {
 		if ( ! is_array( $id_token_claim ) ) {
 			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
@@ -515,7 +523,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return array|WP_Error|null
 	 */
-	function get_user_claim( $token_response ) {
+	public function get_user_claim( $token_response ) {
 		// Send a userinfo request to get user claim.
 		$user_claim_result = $this->request_userinfo( $token_response['access_token'] );
 
@@ -538,7 +546,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return bool|WP_Error
 	 */
-	function validate_user_claim( $user_claim, $id_token_claim ) {
+	public function validate_user_claim( $user_claim, $id_token_claim ) {
 		// Validate the user claim.
 		if ( ! is_array( $user_claim ) ) {
 			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim.', 'daggerhart-openid-connect-generic' ), $user_claim );
@@ -575,7 +583,7 @@ class OpenID_Connect_Generic_Client {
 	 *
 	 * @return mixed
 	 */
-	function get_subject_identity( $id_token_claim ) {
+	public function get_subject_identity( $id_token_claim ) {
 		return $id_token_claim['sub'];
 	}
 

@@ -49,3 +49,5 @@ parameters:
     # WP-CLI accepts a class as callable
     # - '/^Parameter #2 \$callable of static method WP_CLI::add_command\(\) expects callable\(\): mixed, \S+ given\.$/'
     # Please consider commenting ignores: issue URL or reason for ignoring
+    # Ignore cookie_redirect_key deprecation errors.
+    - '/.*Access to deprecated property \$cookie_redirect_key.*/'
