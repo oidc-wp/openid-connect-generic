@@ -100,7 +100,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'link_existing_users'       => 'OIDC_LINK_EXISTING_USERS',
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
-		'acr_values'                => 'OIDC_ACR_VALUES',
+		'acr_values'           => 'OIDC_ACR_VALUES',
 	);
 
 	/**
