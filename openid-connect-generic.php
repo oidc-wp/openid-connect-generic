@@ -53,9 +53,6 @@ Notes
   - openid-connect-generic-state-not-found    - the given state does not exist in the database, regardless of its expiration.
   - openid-connect-generic-state-expired      - the given state exists, but expired before this login attempt.
 
-  Callable actions
-  - openid-connect-generic-refresh-user-claim - refresh user_claim, 2 args: WP_User, token response array
-
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
   - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
@@ -79,18 +76,11 @@ Notes
 class OpenID_Connect_Generic {
 
 	/**
-	 * Singleton instance of self
-	 *
-	 * @var OpenID_Connect_Generic
-	 */
-	protected static $_instance = null;
-
-	/**
 	 * Plugin version.
 	 *
-	 * @var string
+	 * @var
 	 */
-	const VERSION = '3.8.6';
+	const VERSION = '3.8.5';
 
 	/**
 	 * Plugin settings.
@@ -118,7 +108,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var OpenID_Connect_Generic_Client_Wrapper
 	 */
-	public $client_wrapper;
+	private $client_wrapper;
 
 	/**
 	 * Setup the plugin
@@ -131,7 +121,6 @@ class OpenID_Connect_Generic {
 	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
-		self::$_instance = $this;
 	}
 
 	/**
@@ -140,6 +129,8 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public function init() {
+
+		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __FILE__ ) . 'css/styles-admin.css', array(), self::VERSION, 'all' );
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
 
@@ -160,7 +151,6 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
 			$redirect_uri,
-			$this->settings->acr_values,
 			$state_time_limit,
 			$this->logger
 		);
@@ -337,15 +327,14 @@ class OpenID_Connect_Generic {
 			// Default settings values.
 			array(
 				// OAuth client settings.
-				'login_type'           => defined( 'OIDC_LOGIN_TYPE' ) ? OIDC_LOGIN_TYPE : 'button',
+				'login_type'           => 'button',
 				'client_id'            => defined( 'OIDC_CLIENT_ID' ) ? OIDC_CLIENT_ID : '',
 				'client_secret'        => defined( 'OIDC_CLIENT_SECRET' ) ? OIDC_CLIENT_SECRET : '',
-				'scope'                => defined( 'OIDC_CLIENT_SCOPE' ) ? OIDC_CLIENT_SCOPE : '',
+				'scope'                => '',
 				'endpoint_login'       => defined( 'OIDC_ENDPOINT_LOGIN_URL' ) ? OIDC_ENDPOINT_LOGIN_URL : '',
 				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
 				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
-				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
 
 				// Non-standard settings.
 				'no_sslverify'    => 0,
@@ -357,13 +346,13 @@ class OpenID_Connect_Generic {
 				'identify_with_username' => false,
 
 				// Plugin settings.
-				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
+				'enforce_privacy' => 0,
 				'alternate_redirect_uri' => 0,
 				'token_refresh_enable' => 1,
-				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
-				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
-				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
-				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
+				'link_existing_users' => 0,
+				'create_if_does_not_exist' => 1,
+				'redirect_user_back' => 0,
+				'redirect_on_logout' => 1,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000,
 			)
@@ -381,24 +370,9 @@ class OpenID_Connect_Generic {
 		add_filter( 'the_excerpt_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 		add_filter( 'comment_text_rss', array( $plugin, 'enforce_privacy_feeds' ), 999 );
 	}
-
-	/**
-	 * Create (if needed) and return a singleton of self.
-	 *
-	 * @return OpenID_Connect_Generic
-	 */
-	public static function instance() {
-		if ( null === self::$_instance ) {
-			self::bootstrap();
-		}
-		return self::$_instance;
-	}
 }
 
-OpenID_Connect_Generic::instance();
+OpenID_Connect_Generic::bootstrap();
 
 register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
-
-// Provide publicly accessible plugin helper functions.
-require_once( 'includes/functions.php' );
