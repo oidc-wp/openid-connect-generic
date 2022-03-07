@@ -83,6 +83,15 @@ class OpenID_Connect_Generic_Client {
 	private $redirect_uri;
 
 	/**
+	 * The specifically requested authentication contract at the IDP
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::acr_values
+	 *
+	 * @var string
+	 */
+	private $acr_values;
+
+	/**
 	 * The state time limit. States are only valid for 3 minutes.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::state_time_limit
@@ -108,10 +117,11 @@ class OpenID_Connect_Generic_Client {
 	 * @param string                               $endpoint_userinfo @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo for description.
 	 * @param string                               $endpoint_token    @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
 	 * @param string                               $redirect_uri      @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
+	 * @param string                               $acr_values        @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
 	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
 	 */
-	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -119,6 +129,7 @@ class OpenID_Connect_Generic_Client {
 		$this->endpoint_userinfo = $endpoint_userinfo;
 		$this->endpoint_token = $endpoint_token;
 		$this->redirect_uri = $redirect_uri;
+		$this->acr_values = $acr_values;
 		$this->state_time_limit = $state_time_limit;
 		$this->logger = $logger;
 	}
@@ -200,6 +211,7 @@ class OpenID_Connect_Generic_Client {
 		$parsed_url = parse_url( $this->endpoint_token );
 		$host = $parsed_url['host'];
 
+		if ( $this->acr_values ) {
 		$request = array(
 			'body' => array(
 				'code'          => $code,
@@ -208,9 +220,24 @@ class OpenID_Connect_Generic_Client {
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
 				'scope'         => $this->scope,
+					'acr_values'    => $this->acr_values,
 			),
 			'headers' => array( 'Host' => $host ),
 		);
+			} else {
+			$request = array(
+				'body' => array(
+					'code'          => $code,
+					'client_id'     => $this->client_id,
+					'client_secret' => $this->client_secret,
+					'redirect_uri'  => $this->redirect_uri,
+					'grant_type'    => 'authorization_code',
+					'scope'         => $this->scope,
+					'acr_values'    => $this->acr_values,
+				),
+				'headers' => array( 'Host' => $host ),
+			);
+		}
 
 		// Allow modifications to the request.
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token' );
@@ -462,6 +489,13 @@ class OpenID_Connect_Generic_Client {
 		// Validate the identification data and it's value.
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		// Validate acr values when the option is set in the configuration.
+		if ( ! empty( $this->acr_values ) && isset( $id_token_claim['acr'] ) ) {
+			if ( $this->acr_values != $id_token_claim['acr'] ) {
+				return new WP_Error( 'no-match-acr', __( 'No matching acr values.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			}
 		}
 
 		return true;
