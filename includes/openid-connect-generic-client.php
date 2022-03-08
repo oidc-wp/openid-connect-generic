@@ -222,7 +222,7 @@ class OpenID_Connect_Generic_Client {
 					'scope'         => $this->scope,
 					'acr_values'    => $this->acr_values,
 				),
-			'headers' => array( 'Host' => $host ),
+				'headers' => array( 'Host' => $host ),
 			);
 		} else {
 			$request = array(
