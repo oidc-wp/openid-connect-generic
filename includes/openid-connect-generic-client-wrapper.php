@@ -229,7 +229,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( stripos( $this->settings->endpoint_login, '?' ) !== false ) {
 			$separator = '&';
 		}
-		if ( empty ( $this->settings->acr_values )) {
+		if ( empty( $this->settings->acr_values ) ) {
 			$url = sprintf(
 				'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
 				$atts['endpoint_login'],
