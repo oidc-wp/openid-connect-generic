@@ -223,8 +223,8 @@ class OpenID_Connect_Generic_Client {
 					'acr_values'    => $this->acr_values,
 				),
 			'headers' => array( 'Host' => $host ),
-		);
-			} else {
+			);
+		} else {
 			$request = array(
 				'body' => array(
 					'code'          => $code,
