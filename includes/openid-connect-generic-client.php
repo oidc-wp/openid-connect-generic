@@ -212,16 +212,16 @@ class OpenID_Connect_Generic_Client {
 		$host = $parsed_url['host'];
 
 		if ( $this->acr_values ) {
-		$request = array(
-			'body' => array(
-				'code'          => $code,
-				'client_id'     => $this->client_id,
-				'client_secret' => $this->client_secret,
-				'redirect_uri'  => $this->redirect_uri,
-				'grant_type'    => 'authorization_code',
-				'scope'         => $this->scope,
+			$request = array(
+				'body' => array(
+					'code'          => $code,
+					'client_id'     => $this->client_id,
+					'client_secret' => $this->client_secret,
+					'redirect_uri'  => $this->redirect_uri,
+					'grant_type'    => 'authorization_code',
+					'scope'         => $this->scope,
 					'acr_values'    => $this->acr_values,
-			),
+				),
 			'headers' => array( 'Host' => $host ),
 		);
 			} else {
