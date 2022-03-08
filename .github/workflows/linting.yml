@@ -1,6 +1,7 @@
 name: Coding Standards
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
