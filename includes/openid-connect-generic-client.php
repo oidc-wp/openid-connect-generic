@@ -211,32 +211,20 @@ class OpenID_Connect_Generic_Client {
 		$parsed_url = parse_url( $this->endpoint_token );
 		$host = $parsed_url['host'];
 
-		if ( $this->acr_values ) {
-			$request = array(
-				'body' => array(
-					'code'          => $code,
-					'client_id'     => $this->client_id,
-					'client_secret' => $this->client_secret,
-					'redirect_uri'  => $this->redirect_uri,
-					'grant_type'    => 'authorization_code',
-					'scope'         => $this->scope,
-					'acr_values'    => $this->acr_values,
-				),
-				'headers' => array( 'Host' => $host ),
-			);
-		} else {
-			$request = array(
-				'body' => array(
-					'code'          => $code,
-					'client_id'     => $this->client_id,
-					'client_secret' => $this->client_secret,
-					'redirect_uri'  => $this->redirect_uri,
-					'grant_type'    => 'authorization_code',
-					'scope'         => $this->scope,
-					'acr_values'    => $this->acr_values,
-				),
-				'headers' => array( 'Host' => $host ),
-			);
+		$request = array(
+			'body' => array(
+				'code'          => $code,
+				'client_id'     => $this->client_id,
+				'client_secret' => $this->client_secret,
+				'redirect_uri'  => $this->redirect_uri,
+				'grant_type'    => 'authorization_code',
+				'scope'         => $this->scope,
+			),
+			'headers' => array( 'Host' => $host ),
+		);
+
+		if ( ! empty( $this->acr_values ) ) {
+			$request['body'] += array( 'acr_values' => $this->acr_values );
 		}
 
 		// Allow modifications to the request.
