@@ -278,6 +278,7 @@ class OpenID_Connect_Generic_Settings_Page {
 				'title'       => __( 'ACR values', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Use a specific defined authentication contract from the IDP - optional.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ACR_VALUES' ),
 				'section'     => 'client_settings',
 			),
 			'identity_key'     => array(
