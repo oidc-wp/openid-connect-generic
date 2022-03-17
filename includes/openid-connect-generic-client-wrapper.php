@@ -982,30 +982,30 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Allow claim details to determine username, email, nickname and displayname.
 		$_email = $this->get_email_from_claim( $user_claim, true );
-		if ( is_wp_error( $_email ) ) {
+		if ( is_wp_error( $_email ) || empty( $_email ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_email ) ) {
+		} else {
 			$email = $_email;
 		}
 
 		$_username = $this->get_username_from_claim( $user_claim );
-		if ( is_wp_error( $_username ) ) {
+		if ( is_wp_error( $_username ) || empty( $_username ) ) {
 			$values_missing = true;
-		} else if ( ! empty( $_username ) ) {
+		} else {
 			$username = $_username;
 		}
 
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
-		if ( is_null( $_nickname ) ) {
+		if ( is_wp_error( $_nickname ) || empty( $_nickname ) ) {
 			$values_missing = true;
 		} else {
 			$nickname = $_nickname;
 		}
 
 		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
-		if ( is_wp_error( $_displayname ) ) {
+		if ( is_wp_error( $_displayname ) || empty( $_displayname ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_displayname ) ) {
+		} else {
 			$displayname = $_displayname;
 		}
 
@@ -1024,28 +1024,36 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_email = $this->get_email_from_claim( $user_claim, true );
 		if ( is_wp_error( $_email ) ) {
 			return $_email;
-		} else if ( ! is_null( $_email ) ) {
+		}
+		// Use the email address from the latest userinfo request if not empty.
+		if ( ! empty( $_email ) ) {
 			$email = $_email;
 		}
 
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			return $_username;
-		} else if ( ! empty( $_username ) ) {
+		}
+		// Use the username from the latest userinfo request if not empty.
+		if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			return $_nickname;
-		} else if ( is_null( $_nickname ) ) {
+		}
+		// Use the username as the nickname if the userinfo request nickname is empty.
+		if ( empty( $_nickname ) ) {
 			$nickname = $username;
 		}
 
 		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
 		if ( is_wp_error( $_displayname ) ) {
 			return $_displayname;
-		} else if ( is_null( $_displayname ) ) {
+		}
+		// Use the nickname as the displayname if the userinfo request displayname is empty.
+		if ( empty( $_displayname ) ) {
 			$displayname = $nickname;
 		}
 
