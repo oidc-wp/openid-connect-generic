@@ -33,6 +33,7 @@
  * @property string $endpoint_userinfo    The IDP User information endpoint URL.
  * @property string $endpoint_token       The IDP token validation endpoint URL.
  * @property string $endpoint_end_session The IDP logout endpoint URL.
+ * @property string $acr_values           The Authentication contract as defined on the IDP.
  *
  * Non-standard Settings:
  *
@@ -86,12 +87,20 @@ class OpenID_Connect_Generic_Option_Settings {
 	 * @var array<string,string>
 	 */
 	private $environment_settings = array(
-		'client_id'            => 'OIDC_CLIENT_ID',
-		'client_secret'        => 'OIDC_CLIENT_SECRET',
-		'endpoint_login'       => 'OIDC_ENDPOINT_LOGIN_URL',
-		'endpoint_userinfo'    => 'OIDC_ENDPOINT_USERINFO_URL',
-		'endpoint_token'       => 'OIDC_ENDPOINT_TOKEN_URL',
-		'endpoint_end_session' => 'OIDC_ENDPOINT_LOGOUT_URL',
+		'client_id'                 => 'OIDC_CLIENT_ID',
+		'client_secret'             => 'OIDC_CLIENT_SECRET',
+		'endpoint_end_session'      => 'OIDC_ENDPOINT_LOGOUT_URL',
+		'endpoint_login'            => 'OIDC_ENDPOINT_LOGIN_URL',
+		'endpoint_token'            => 'OIDC_ENDPOINT_TOKEN_URL',
+		'endpoint_userinfo'         => 'OIDC_ENDPOINT_USERINFO_URL',
+		'login_type'                => 'OIDC_LOGIN_TYPE',
+		'scope'                     => 'OIDC_CLIENT_SCOPE',
+		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
+		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',
+		'link_existing_users'       => 'OIDC_LINK_EXISTING_USERS',
+		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
+		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
+		'acr_values'                => 'OIDC_ACR_VALUES',
 	);
 
 	/**

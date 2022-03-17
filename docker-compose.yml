@@ -1,0 +1,21 @@
+# This is the Compose file for command-line services.
+# Anything that doesn't need to be run as part of the main `docker-compose up'
+# command should reside in here and be invoked by a helper script.
+version: "3.7"
+services:
+  dev:
+    build: .devcontainer
+    working_dir: /app
+    user: 1000:1000
+    volumes:
+      - .:/app:cached
+  composer:
+    build: ./tools/docker/composer
+    entrypoint: composer
+    working_dir: /app
+    user: 1000:1000
+    volumes:
+      - .:/app:cached
+      - ~/.composer:/root/.composer:cached
+volumes:
+  {}
