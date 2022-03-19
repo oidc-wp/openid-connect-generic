@@ -526,8 +526,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
 		$user = $this->get_user_by_identity( $subject_identity );
 
+		// A pre-existing IDP mapped user wasn't found.
 		if ( ! $user ) {
-			if ( $this->settings->create_if_does_not_exist ) {
+			// If linking existing users or creating new ones call the `create_new_user` method which handles both cases.
+			if ( $this->settings->link_existing_users || $this->settings->create_if_does_not_exist ) {
 				$user = $this->create_new_user( $subject_identity, $user_claim );
 				if ( is_wp_error( $user ) ) {
 					$this->error_redirect( $user );
@@ -736,7 +738,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			)
 		);
 
-		// If we found an existing users, grab the first one returned.
+		// If we found existing users, grab the first one returned.
 		if ( $user_query->get_total() > 0 ) {
 			$users = $user_query->get_results();
 			return $users[0];
@@ -760,44 +762,33 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Allow settings to take first stab at username.
 		if ( ! empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
 			$desired_username = $user_claim[ $this->settings->identity_key ];
-		} else if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
 			$desired_username = $user_claim['preferred_username'];
-		} else if ( isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
 			$desired_username = $user_claim['name'];
-		} else if ( isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
 			$tmp = explode( '@', $user_claim['email'] );
 			$desired_username = $tmp[0];
-		} else {
+		}
+		if ( empty( $desired_username ) ) {
 			// Nothing to build a name from.
 			return new WP_Error( 'no-username', __( 'No appropriate username found.', 'daggerhart-openid-connect-generic' ), $user_claim );
 		}
 
-		// Normalize the data a bit.
-		// @var string $transliterated_username The username converted to ASCII from UTF-8.
-		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
-		if ( empty( $transliterated_username ) ) {
-			// translators: $1$s is a username from the IDP.
-			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
-		}
-		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
-		if ( empty( $normalized_username ) ) {
-			// translators: %1$s is the ASCII version of the username from the IDP.
-			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized.', 'daggerhart-openid-connect-generic' ), $transliterated_username ), $transliterated_username );
+		// Don't use the full email address for a username.
+		$_desired_username = explode( '@', $desired_username );
+		$desired_username = $_desired_username[0];
+		// Use WordPress Core to sanitize the IDP username.
+		$sanitized_username = sanitize_user( $desired_username, true );
+		if ( empty( $sanitized_username ) ) {
+			// translators: %1$s is the santitized version of the username from the IDP.
+			return new WP_Error( 'username-sanitization-failed', sprintf( __( 'Username %1$s could not be sanitized.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
 		}
 
-		// Copy the username for incrementing.
-		$username = $normalized_username;
-
-		if ( ! $this->settings->link_existing_users ) {
-			// @example Original user gets "name", second user gets "name2", etc.
-			$count = 1;
-			while ( username_exists( $username ) ) {
-				$count ++;
-				$username = $normalized_username . $count;
-			}
-		}
-
-		return $username;
+		return $sanitized_username;
 	}
 
 	/**
@@ -1057,14 +1048,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$displayname = $nickname;
 		}
 
-		// Before trying to create the user, first check if a user with the same email already exists.
+		// Before trying to create the user, first check if a matching user exists.
 		if ( $this->settings->link_existing_users ) {
+			$uid = null;
 			if ( $this->settings->identify_with_username ) {
 				$uid = username_exists( $username );
 			} else {
 				$uid = email_exists( $email );
 			}
-			if ( $uid ) {
+			if ( ! empty( $uid ) ) {
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 				return $user;
@@ -1075,10 +1067,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		 * Allow other plugins / themes to determine authorization of new accounts
 		 * based on the returned user claim.
 		 */
-		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', true, $user_claim );
+		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', $this->settings->create_if_does_not_exist, $user_claim );
 
 		if ( ! $create_user ) {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.', 'daggerhart-openid-connect-generic' ), $create_user );
+		}
+
+		// Copy the username for incrementing.
+		$_username = $username;
+		// Ensure prevention of linking usernames & collisions by incrementing the username if it exists.
+		// @example Original user gets "name", second user gets "name2", etc.
+		$count = 1;
+		while ( username_exists( $username ) ) {
+			$count ++;
+			$username = $_username . $count;
 		}
 
 		$user_data = array(

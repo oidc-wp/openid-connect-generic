@@ -363,7 +363,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'create_if_does_not_exist'   => array(
 				'title'       => __( 'Create user if does not exist', 'daggerhart-openid-connect-generic' ),
-				'description' => __( 'If the user identity is not link to an existing Wordpress user, it is created. If this setting is not enabled and if the user authenticates with an account which is not link to an existing Wordpress user then the authentication failed', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If the user identity is not linked to an existing WordPress user, it is created. If this setting is not enabled, and if the user authenticates with an account which is not linked to an existing WordPress user, then the authentication will fail.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'disabled'    => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ),
 				'section'     => 'user_settings',
@@ -546,7 +546,7 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_field_description( $field ) {
 		?>
 		<p class="description">
-			<?php print esc_html( $field['description'] ); ?>
+			<?php print wp_kses_post( $field['description'] ); ?>
 			<?php if ( isset( $field['example'] ) ) : ?>
 				<br/><strong><?php esc_html_e( 'Example', 'daggerhart-openid-connect-generic' ); ?>: </strong>
 				<code><?php print esc_html( $field['example'] ); ?></code>
