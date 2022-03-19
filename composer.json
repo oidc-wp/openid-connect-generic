@@ -91,9 +91,9 @@
 		"phpcs": "vendor/bin/phpcs",
 		"phpcbf": "vendor/bin/phpcbf",
 		"phpstan": "vendor/bin/phpstan",
-		"lint": "vendor/bin/phpcs --report=full",
-		"lint-fix": "vendor/bin/phpcbf",
-		"analyze": "vendor/bin/phpstan analyze"
+		"lint": "@phpcs --report=full",
+		"lint-fix": "@phpcbf",
+		"analyze": "@phpstan analyze"
 	},
 	"extra": {
 		"wordpress-install-dir": "wordpress",

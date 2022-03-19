@@ -27,7 +27,7 @@ jobs:
       uses: actions/setup-node@v1
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 12.x
+        node-version: 14.x
 
     - name: Cache node modules
       uses: actions/cache@v2
@@ -43,7 +43,7 @@ jobs:
           ${{ runner.os }}-
 
     - name: NPM Install
-      run: npm install
+      run: npm ci
 
     - name: Check i18n Compliance
       run: npm run i18n:check
