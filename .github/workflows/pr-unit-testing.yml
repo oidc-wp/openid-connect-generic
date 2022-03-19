@@ -42,7 +42,7 @@ jobs:
       uses: actions/setup-node@v1
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 12.x
+        node-version: 14.x
 
     - name: Cache Composer dependencies
       uses: actions/cache@v2
@@ -63,7 +63,7 @@ jobs:
       run: composer install
 
     - name: NPM Setup
-      run: npm install
+      run: npm ci
 
     - name: Unit Tests
       run: npm run test
