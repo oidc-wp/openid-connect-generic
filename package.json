@@ -60,6 +60,7 @@
 	"scripts": {
 		"preinstall": "npx force-resolutions",
 		"setup:composer": "docker-compose run composer install",
+		"composer": "docker-compose run composer",
 		"build": "npm run grunt build",
 		"release": "npm run grunt release",
 		"start": "wp-env start",
