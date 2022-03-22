@@ -122,9 +122,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
-		// Add user claim refresh callable action.
-		add_action( 'openid-connect-generic-refresh-user-claim', array( $client_wrapper, 'refresh_user_claim' ), 10, 2 );
-
 		return $client_wrapper;
 	}
 
@@ -537,9 +534,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			} else {
 				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user.', 'daggerhart-openid-connect-generic' ), $user_claim ) );
 			}
-		} else {
-			// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
-			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 		}
 
 		// Validate the found / created user.
@@ -552,6 +546,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Login the found / created user.
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 
+		// Allow plugins / themes to take action once a user is logged in.
 		do_action( 'openid-connect-generic-user-logged-in', $user );
 
 		// Log our success.
@@ -599,7 +594,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 	/**
 	 * Refresh user claim.
-	 * Callable with do_action( 'openid-connect-generic-refresh-user-claim', $user, $token_response );
 	 *
 	 * @param WP_User $user             The user object.
 	 * @param array   $token_response   The token response.
@@ -650,6 +644,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Store the tokens for future reference.
+		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
@@ -672,6 +667,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
+		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
 		// Create the WP session, so we know its token.
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );

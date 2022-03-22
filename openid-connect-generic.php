@@ -44,17 +44,16 @@ Notes
   - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
 
   Actions
-  - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
-  - openid-connect-generic-user-update        - 1 arg: user ID, fires when user is updated by this plugin
-  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
-  - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
-  - openid-connect-generic-user-logged-in     - 1 arg: $user, fires when user is logged in.
-  - openid-connect-generic-cron-daily         - daily cron action
-  - openid-connect-generic-state-not-found    - the given state does not exist in the database, regardless of its expiration.
-  - openid-connect-generic-state-expired      - the given state exists, but expired before this login attempt.
+  - openid-connect-generic-user-create                     - 2 args: fires when a new user is created by this plugin
+  - openid-connect-generic-user-update                     - 1 arg: user ID, fires when user is updated by this plugin
+  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs in and the claims are updated.
+  - openid-connect-generic-redirect-user-back              - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
+  - openid-connect-generic-user-logged-in                  - 1 arg: $user, fires when user is logged in.
+  - openid-connect-generic-cron-daily                      - daily cron action
+  - openid-connect-generic-state-not-found                 - the given state does not exist in the database, regardless of its expiration.
+  - openid-connect-generic-state-expired                   - the given state exists, but expired before this login attempt.
 
   Callable actions
-  - openid-connect-generic-refresh-user-claim - refresh user_claim, 2 args: WP_User, token response array
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
