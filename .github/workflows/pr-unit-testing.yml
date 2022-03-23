@@ -7,8 +7,8 @@ on:
   pull_request:
 
 env:
-  PHP_PREF_MIN_VERSION: '7.3'
-  WP_STABLE_VERSION: '5.6.*'
+  PHP_STABLE_VERSION: '7.4'
+  WP_PREF_STABLE_VERSION: '5.7.*'
   WP_MULTISITE: 0
 
 jobs:
@@ -19,10 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - job-name: 'Latest Stable Requirements'
+          - job-name: 'Preferred Stable Requirements'
             bleeding-edge: false
-            php-version: '7.3'
-            wordpress-version: '5.6.*'
+            php-version: '7.4'
+            wordpress-version: '5.7.*'
             wp-multisite-mode: 0
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
@@ -36,13 +36,13 @@ jobs:
       # https://github.com/marketplace/actions/setup-php-action
       with:
         php-version: ${{ matrix.php-version }}
-        tools: composer:v1
+        tools: composer:v2
 
     - name: Setup Node Environment
       uses: actions/setup-node@v1
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 12.x
+        node-version: 14.x
 
     - name: Cache Composer dependencies
       uses: actions/cache@v2
@@ -57,20 +57,13 @@ jobs:
           ${{ runner.os }}-
 
     - name: Require Specified WordPress Version
-      run: composer require wordpress/wordpress:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
+      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
 
-    - name: Update Composer Lockfile for Specified WordPress Version
-      run: composer update wordpress/wordpress:${{ matrix.wordpress-version }} --lock --prefer-source
-
-    - name: PHPUnit PHP 7.4 Support
-      if: matrix.php-version == '7.4'
-      run: |
-        composer global require phpunit/php-code-coverage=dev-master
-        composer global require sebastian/global-state:dev-master
-        composer global require phpunit/phpunit=dev-master
+    - name: Install Composer Dependencies
+      run: composer install
 
     - name: NPM Setup
-      run: npm install
+      run: npm ci
 
     - name: Unit Tests
       run: npm run test

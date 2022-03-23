@@ -148,6 +148,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	public function get_redirect_to() {
+		// @var WP $wp WordPress environment setup class.
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -170,8 +171,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
 			if ( ! empty( $wp->request ) ) {
-				if ( ! empty( $wp->did_permalink ) && $wp->did_permalink ) {
-					$redirect_url = home_url( trailingslashit( $wp->request ) );
+				if ( ! empty( $wp->did_permalink ) && boolval( $wp->did_permalink ) === true ) {
+					$redirect_url = home_url( add_query_arg( $_GET, trailingslashit( $wp->request ) ) );
 				} else {
 					$redirect_url = home_url( add_query_arg( null, null ) );
 				}
@@ -210,6 +211,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				'client_id' => $this->settings->client_id,
 				'redirect_uri' => $this->client->get_redirect_uri(),
 				'redirect_to' => $this->get_redirect_to(),
+				'acr_values' => $this->settings->acr_values,
 			),
 			$atts,
 			'openid_connect_generic_auth_url'
@@ -224,14 +226,21 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( stripos( $this->settings->endpoint_login, '?' ) !== false ) {
 			$separator = '&';
 		}
+
+		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s';
+		if ( ! empty( $atts['acr_values'] ) ) {
+			$url_format .= '&acr_values=%7$s';
+		}
+
 		$url = sprintf(
-			'%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s',
+			$url_format,
 			$atts['endpoint_login'],
 			$separator,
 			rawurlencode( $atts['scope'] ),
 			rawurlencode( $atts['client_id'] ),
 			$this->client->new_state( $atts['redirect_to'] ),
-			rawurlencode( $atts['redirect_uri'] )
+			rawurlencode( $atts['redirect_uri'] ),
+			rawurlencode( $atts['acr_values'] )
 		);
 
 		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
@@ -271,13 +280,16 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$refresh_expires = $refresh_token_info['refresh_expires'];
 
 		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
-			wp_logout();
+			if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+				do_action( 'openid-connect-generic-session-expired', wp_get_current_user(), esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
+				wp_logout();
 
-			if ( $this->settings->redirect_on_logout ) {
-				$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
+				if ( $this->settings->redirect_on_logout ) {
+					$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
+				}
+
+				return;
 			}
-
-			return;
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );
@@ -294,6 +306,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->error_redirect( $token_response );
 		}
 
+		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
 	}
 
@@ -510,8 +523,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
 		$user = $this->get_user_by_identity( $subject_identity );
 
+		// A pre-existing IDP mapped user wasn't found.
 		if ( ! $user ) {
-			if ( $this->settings->create_if_does_not_exist ) {
+			// If linking existing users or creating new ones call the `create_new_user` method which handles both cases.
+			if ( $this->settings->link_existing_users || $this->settings->create_if_does_not_exist ) {
 				$user = $this->create_new_user( $subject_identity, $user_claim );
 				if ( is_wp_error( $user ) ) {
 					$this->error_redirect( $user );
@@ -519,9 +534,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			} else {
 				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user.', 'daggerhart-openid-connect-generic' ), $user_claim ) );
 			}
-		} else {
-			// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
-			do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 		}
 
 		// Validate the found / created user.
@@ -534,6 +546,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Login the found / created user.
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 
+		// Allow plugins / themes to take action once a user is logged in.
 		do_action( 'openid-connect-generic-user-logged-in', $user );
 
 		// Log our success.
@@ -580,6 +593,65 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Refresh user claim.
+	 *
+	 * @param WP_User $user             The user object.
+	 * @param array   $token_response   The token response.
+	 *
+	 * @return WP_Error|array
+	 */
+	public function refresh_user_claim( $user, $token_response ) {
+		$client = $this->client;
+
+		/**
+		 * The id_token is used to identify the authenticated user, e.g. for SSO.
+		 * The access_token must be used to prove access rights to protected
+		 * resources e.g. for the userinfo endpoint
+		 */
+		$id_token_claim = $client->get_id_token_claim( $token_response );
+
+		// Allow for other plugins to alter data before validation.
+		$id_token_claim = apply_filters( 'openid-connect-modify-id-token-claim-before-validation', $id_token_claim );
+
+		if ( is_wp_error( $id_token_claim ) ) {
+			return $id_token_claim;
+		}
+
+		// Validate our id_token has required values.
+		$valid = $client->validate_id_token_claim( $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		// If userinfo endpoint is set, exchange the token_response for a user_claim.
+		if ( ! empty( $this->settings->endpoint_userinfo ) && isset( $token_response['access_token'] ) ) {
+			$user_claim = $client->get_user_claim( $token_response );
+		} else {
+			$user_claim = $id_token_claim;
+		}
+
+		if ( is_wp_error( $user_claim ) ) {
+			return $user_claim;
+		}
+
+		// Validate our user_claim has required values.
+		$valid = $client->validate_user_claim( $user_claim, $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			$this->error_redirect( $valid );
+			return $valid;
+		}
+
+		// Store the tokens for future reference.
+		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
+		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
+		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+
+		return $user_claim;
+	}
+
+	/**
 	 * Record user meta data, and provide an authorization cookie.
 	 *
 	 * @param WP_User $user             The user object.
@@ -595,6 +667,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
+		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
 		// Create the WP session, so we know its token.
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
@@ -656,10 +730,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						'value' => $subject_identity,
 					),
 				),
+				// Override the default blog_id (get_current_blog_id) to find users on different sites of a multisite install.
+				'blog_id' => 0,
 			)
 		);
 
-		// If we found an existing users, grab the first one returned.
+		// If we found existing users, grab the first one returned.
 		if ( $user_query->get_total() > 0 ) {
 			$users = $user_query->get_results();
 			return $users[0];
@@ -673,7 +749,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param array $user_claim The IDP authenticated user claim data.
 	 *
-	 * @return string|WP_Error|null
+	 * @return string|WP_Error
 	 */
 	private function get_username_from_claim( $user_claim ) {
 
@@ -683,44 +759,33 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Allow settings to take first stab at username.
 		if ( ! empty( $this->settings->identity_key ) && isset( $user_claim[ $this->settings->identity_key ] ) ) {
 			$desired_username = $user_claim[ $this->settings->identity_key ];
-		} else if ( isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['preferred_username'] ) && ! empty( $user_claim['preferred_username'] ) ) {
 			$desired_username = $user_claim['preferred_username'];
-		} else if ( isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['name'] ) && ! empty( $user_claim['name'] ) ) {
 			$desired_username = $user_claim['name'];
-		} else if ( isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
+		}
+		if ( empty( $desired_username ) && isset( $user_claim['email'] ) && ! empty( $user_claim['email'] ) ) {
 			$tmp = explode( '@', $user_claim['email'] );
 			$desired_username = $tmp[0];
-		} else {
+		}
+		if ( empty( $desired_username ) ) {
 			// Nothing to build a name from.
 			return new WP_Error( 'no-username', __( 'No appropriate username found.', 'daggerhart-openid-connect-generic' ), $user_claim );
 		}
 
-		// Normalize the data a bit.
-		// @var string $transliterated_username The username converted to ASCII from UTF-8.
-		$transliterated_username = iconv( 'UTF-8', 'ASCII//TRANSLIT', $desired_username );
-		if ( empty( $transliterated_username ) ) {
-			// translators: $1$s is a username from the IDP.
-			return new WP_Error( 'username-transliteration-failed', sprintf( __( 'Username %1$s could not be transliterated.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
-		}
-		$normalized_username = strtolower( preg_replace( '/[^a-zA-Z0-9 _.\-@]/', '', $transliterated_username ) );
-		if ( empty( $normalized_username ) ) {
-			// translators: %1$s is the ASCII version of the username from the IDP.
-			return new WP_Error( 'username-normalization-failed', sprintf( __( 'Username %1$s could not be normalized.', 'daggerhart-openid-connect-generic' ), $transliterated_username ), $transliterated_username );
+		// Don't use the full email address for a username.
+		$_desired_username = explode( '@', $desired_username );
+		$desired_username = $_desired_username[0];
+		// Use WordPress Core to sanitize the IDP username.
+		$sanitized_username = sanitize_user( $desired_username, true );
+		if ( empty( $sanitized_username ) ) {
+			// translators: %1$s is the santitized version of the username from the IDP.
+			return new WP_Error( 'username-sanitization-failed', sprintf( __( 'Username %1$s could not be sanitized.', 'daggerhart-openid-connect-generic' ), $desired_username ), $desired_username );
 		}
 
-		// Copy the username for incrementing.
-		$username = ! empty( $normalized_username ) ? $normalized_username : null;
-
-		if ( ! $this->settings->link_existing_users && ! is_null( $username ) ) {
-			// @example Original user gets "name", second user gets "name2", etc.
-			$count = 1;
-			while ( username_exists( $username ) ) {
-				$count ++;
-				$username = $normalized_username . $count;
-			}
-		}
-
-		return $username;
+		return $sanitized_username;
 	}
 
 	/**
@@ -746,6 +811,75 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Checks if $claimname is in the body or _claim_names of the userinfo.
+	 * If yes, returns the claim value. Otherwise, returns false.
+	 *
+	 * @param string $claimname the claim name to look for.
+	 * @param array  $userinfo the JSON to look in.
+	 * @param string $claimvalue the source claim value ( from the body of the JWT of the claim source).
+	 * @return true|false
+	 */
+	private function get_claim( $claimname, $userinfo, &$claimvalue ) {
+		/**
+		 * If we find a simple claim, return it.
+		 */
+		if ( array_key_exists( $claimname, $userinfo ) ) {
+			$claimvalue = $userinfo[ $claimname ];
+			return true;
+		}
+		/**
+		 * If there are no aggregated claims, it is over.
+		 */
+		if ( ! array_key_exists( '_claim_names', $userinfo ) ||
+			! array_key_exists( '_claim_sources', $userinfo ) ) {
+			return false;
+		}
+		$claim_src_ptr = $userinfo['_claim_names'];
+		if ( ! isset( $claim_src_ptr ) ) {
+			return false;
+		}
+		/**
+		 * No reference found
+		 */
+		if ( ! array_key_exists( $claimname, $claim_src_ptr ) ) {
+			return false;
+		}
+		$src_name = $claim_src_ptr[ $claimname ];
+		// Reference found, but no corresponding JWT. This is a malformed userinfo.
+		if ( ! array_key_exists( $src_name, $userinfo['_claim_sources'] ) ) {
+			return false;
+		}
+		$src = $userinfo['_claim_sources'][ $src_name ];
+		// Source claim is not a JWT. Abort.
+		if ( ! array_key_exists( 'JWT', $src ) ) {
+			return false;
+		}
+		/**
+		 * Extract claim from JWT.
+		 * FIXME: We probably want to verify the JWT signature/issuer here.
+		 * For example, using JWKS if applicable. For symmetrically signed
+		 * JWTs (HMAC), we need a way to specify the acceptable secrets
+		 * and each possible issuer in the config.
+		 */
+		$jwt = $src['JWT'];
+		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
+		$body_str = base64_decode( $body, false );
+		if ( ! $body_str ) {
+			return false;
+		}
+		$body_json = json_decode( $body_str, true );
+		if ( ! isset( $body_json ) ) {
+			return false;
+		}
+		if ( ! array_key_exists( $claimname, $body_json ) ) {
+			return false;
+		}
+		$claimvalue = $body_json[ $claimname ];
+		return true;
+	}
+
+
+	/**
 	 * Build a string from the user claim according to the specified format.
 	 *
 	 * @param string $format               The format format of the user identity.
@@ -757,12 +891,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private function format_string_with_claim( $format, $user_claim, $error_on_missing_key = false ) {
 		$matches = null;
 		$string = '';
+		$info = '';
 		$i = 0;
 		if ( preg_match_all( '/\{[^}]*\}/u', $format, $matches, PREG_OFFSET_CAPTURE ) ) {
 			foreach ( $matches[0] as $match ) {
 				$key = substr( $match[0], 1, -1 );
 				$string .= substr( $format, $i, $match[1] - $i );
-				if ( ! isset( $user_claim[ $key ] ) ) {
+				if ( ! $this->get_claim( $key, $user_claim, $info ) ) {
 					if ( $error_on_missing_key ) {
 						return new WP_Error(
 							'incomplete-user-claim',
@@ -776,7 +911,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 						);
 					}
 				} else {
-					$string .= $user_claim[ $key ];
+					$string .= $info;
 				}
 				$i = $match[1] + strlen( $match[0] );
 			}
@@ -835,30 +970,30 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Allow claim details to determine username, email, nickname and displayname.
 		$_email = $this->get_email_from_claim( $user_claim, true );
-		if ( is_wp_error( $_email ) ) {
+		if ( is_wp_error( $_email ) || empty( $_email ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_email ) ) {
+		} else {
 			$email = $_email;
 		}
 
 		$_username = $this->get_username_from_claim( $user_claim );
-		if ( is_wp_error( $_username ) ) {
+		if ( is_wp_error( $_username ) || empty( $_username ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_username ) ) {
+		} else {
 			$username = $_username;
 		}
 
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
-		if ( is_null( $_nickname ) ) {
+		if ( is_wp_error( $_nickname ) || empty( $_nickname ) ) {
 			$values_missing = true;
 		} else {
 			$nickname = $_nickname;
 		}
 
 		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
-		if ( is_wp_error( $_displayname ) ) {
+		if ( is_wp_error( $_displayname ) || empty( $_displayname ) ) {
 			$values_missing = true;
-		} else if ( ! is_null( $_displayname ) ) {
+		} else {
 			$displayname = $_displayname;
 		}
 
@@ -877,39 +1012,48 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$_email = $this->get_email_from_claim( $user_claim, true );
 		if ( is_wp_error( $_email ) ) {
 			return $_email;
-		} else if ( ! is_null( $_email ) ) {
+		}
+		// Use the email address from the latest userinfo request if not empty.
+		if ( ! empty( $_email ) ) {
 			$email = $_email;
 		}
 
 		$_username = $this->get_username_from_claim( $user_claim );
 		if ( is_wp_error( $_username ) ) {
 			return $_username;
-		} else if ( ! is_null( $_username ) ) {
+		}
+		// Use the username from the latest userinfo request if not empty.
+		if ( ! empty( $_username ) ) {
 			$username = $_username;
 		}
 
 		$_nickname = $this->get_nickname_from_claim( $user_claim );
 		if ( is_wp_error( $_nickname ) ) {
 			return $_nickname;
-		} else if ( is_null( $_nickname ) ) {
+		}
+		// Use the username as the nickname if the userinfo request nickname is empty.
+		if ( empty( $_nickname ) ) {
 			$nickname = $username;
 		}
 
 		$_displayname = $this->get_displayname_from_claim( $user_claim, true );
 		if ( is_wp_error( $_displayname ) ) {
 			return $_displayname;
-		} else if ( is_null( $_displayname ) ) {
+		}
+		// Use the nickname as the displayname if the userinfo request displayname is empty.
+		if ( empty( $_displayname ) ) {
 			$displayname = $nickname;
 		}
 
-		// Before trying to create the user, first check if a user with the same email already exists.
+		// Before trying to create the user, first check if a matching user exists.
 		if ( $this->settings->link_existing_users ) {
+			$uid = null;
 			if ( $this->settings->identify_with_username ) {
 				$uid = username_exists( $username );
 			} else {
 				$uid = email_exists( $email );
 			}
-			if ( $uid ) {
+			if ( ! empty( $uid ) ) {
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 				return $user;
@@ -920,10 +1064,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		 * Allow other plugins / themes to determine authorization of new accounts
 		 * based on the returned user claim.
 		 */
-		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', true, $user_claim );
+		$create_user = apply_filters( 'openid-connect-generic-user-creation-test', $this->settings->create_if_does_not_exist, $user_claim );
 
 		if ( ! $create_user ) {
 			return new WP_Error( 'cannot-authorize', __( 'Can not authorize.', 'daggerhart-openid-connect-generic' ), $create_user );
+		}
+
+		// Copy the username for incrementing.
+		$_username = $username;
+		// Ensure prevention of linking usernames & collisions by incrementing the username if it exists.
+		// @example Original user gets "name", second user gets "name2", etc.
+		$count = 1;
+		while ( username_exists( $username ) ) {
+			$count ++;
+			$username = $_username . $count;
 		}
 
 		$user_data = array(

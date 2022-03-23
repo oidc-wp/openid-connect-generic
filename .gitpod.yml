@@ -1,0 +1,17 @@
+# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
+tasks:
+  - name: WordPress Development Environment
+    init: npm run setup # runs during prebuild
+    command: |
+      npm start -- --update
+      npm stop
+      npm start -- --update
+
+# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+ports:
+  - port: 8888
+    onOpen: notify
+    visibility: public
+  - port: 8889
+    onOpen: notify
+    visibility: public

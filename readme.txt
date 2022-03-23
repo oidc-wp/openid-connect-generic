@@ -3,9 +3,9 @@ Contributors: daggerhart, tnolte
 Donate link: http://www.daggerhart.com/
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 4.9
-Tested up to: 5.7.1
-Stable tag: 3.8.5
-Requires PHP: 7.1
+Tested up to: 5.9.2
+Stable tag: 3.9.0
+Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,11 +51,29 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Changelog ==
 
-= 3.8.5
+= 3.9.0 =
 
-* Fix: @timnolte - Fixes missing URL request validation before use & ensure proper current page URL is setup for Redirect Back.
-* Fix: @timnolte - Fixes Redirect URL Logic to Handle Sub-directory Installs.
-* Fix: @timnolte - Fixes to provide proper redirect user back for the openid_connect_generic_auth_url shortcode.
+* Feature: @matchaxnb - Added support for additional configuration constants.
+* Feature: @schanzen - Added support for agregated claims.
+* Fix: @rkcreation - Fixed access token not updating user metadata after login.
+* Fix: @danc1248 - Fixed user creation issue on Multisite Networks.
+* Feature: @RobjS - Added plugin singleton to support for more developer customization.
+* Feature: @jkouris - Added action hook to allow custom handling of session expiration.
+* Fix: @tommcc - Fixed admin CSS loading only on the plugin settings screen.
+* Feature: @rkcreation - Added method to refresh the user claim.
+* Feature: @Glowsome - Added acr_values support & verification checks that it when defined in options is honored.
+* Fix: @timnolte - Fixed regression which caused improper fallback on missing claims.
+* Fix: @slykar - Fixed missing query string handling in redirect URL.
+* Fix: @timnolte - Fixed issue with some user linking and user creation handling.
+* Improvement: @timnolte - Fixed plugin settings typos and screen formatting.
+* Security: @timnolte - Updated build tooling security vulnerabilities.
+* Improvement: @timnolte - Changed build tooling scripts.
+
+= 3.8.5 =
+
+* Fix: @timnolte - Fixed missing URL request validation before use & ensure proper current page URL is setup for Redirect Back.
+* Fix: @timnolte - Fixed Redirect URL Logic to Handle Sub-directory Installs.
+* Fix: @timnolte - Fixed issue with redirecting user back when the openid_connect_generic_auth_url shortcode is used.
 
 = 3.8.4 =
 
