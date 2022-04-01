@@ -16,7 +16,9 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
  * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.8.5
+ * Version:           3.9.0
+ * Requires at least: 4.9
+ * Requires PHP:      7.2
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -44,17 +46,16 @@ Notes
   - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
 
   Actions
-  - openid-connect-generic-user-create        - 2 args: fires when a new user is created by this plugin
-  - openid-connect-generic-user-update        - 1 arg: user ID, fires when user is updated by this plugin
-  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs
-  - openid-connect-generic-redirect-user-back - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
-  - openid-connect-generic-user-logged-in     - 1 arg: $user, fires when user is logged in.
-  - openid-connect-generic-cron-daily         - daily cron action
-  - openid-connect-generic-state-not-found    - the given state does not exist in the database, regardless of its expiration.
-  - openid-connect-generic-state-expired      - the given state exists, but expired before this login attempt.
+  - openid-connect-generic-user-create                     - 2 args: fires when a new user is created by this plugin
+  - openid-connect-generic-user-update                     - 1 arg: user ID, fires when user is updated by this plugin
+  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs in and the claims are updated.
+  - openid-connect-generic-redirect-user-back              - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
+  - openid-connect-generic-user-logged-in                  - 1 arg: $user, fires when user is logged in.
+  - openid-connect-generic-cron-daily                      - daily cron action
+  - openid-connect-generic-state-not-found                 - the given state does not exist in the database, regardless of its expiration.
+  - openid-connect-generic-state-expired                   - the given state exists, but expired before this login attempt.
 
   Callable actions
-  - openid-connect-generic-refresh-user-claim - refresh user_claim, 2 args: WP_User, token response array
 
   User Meta
   - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
@@ -90,7 +91,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.8.5';
+	const VERSION = '3.9.0';
 
 	/**
 	 * Plugin settings.
@@ -160,6 +161,7 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
 			$redirect_uri,
+			$this->settings->acr_values,
 			$state_time_limit,
 			$this->logger
 		);
@@ -344,6 +346,7 @@ class OpenID_Connect_Generic {
 				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
 				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
+				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
 
 				// Non-standard settings.
 				'no_sslverify'    => 0,
