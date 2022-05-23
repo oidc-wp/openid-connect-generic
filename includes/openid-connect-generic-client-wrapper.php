@@ -701,7 +701,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			- The previous refresh token had an expiration date: Dunno
 			=> Do not override a working token. See #404
 		*/
-		if (!isset($token_response['refresh_token'])) {
+		if ( ! isset( $token_response['refresh_token'] ) ) {
 			return;
 		}
 
