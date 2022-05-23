@@ -694,6 +694,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! $this->settings->token_refresh_enable ) {
 			return;
 		}
+
+		/*
+			If the new token does not provide a new token, there are two case:
+			- The previous refresh token had no expiration date: Keep it
+			- The previous refresh token had an expiration date: Dunno
+			=> Do not override a working token. See #404
+		*/
+		if (!isset($token_response['refresh_token'])) {
+			return;
+		}
+
 		$session = $manager->get( $token );
 		$now = time();
 		$session[ $this->cookie_token_refresh_key ] = array(
