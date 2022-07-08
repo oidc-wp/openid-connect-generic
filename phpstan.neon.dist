@@ -4,7 +4,7 @@ parameters:
   bootstrapFiles:
     - tests/phpstan-bootstrap.php
   paths:
-	  - openid-connect-generic.php 
+    - openid-connect-generic.php 
     - includes/
   ignoreErrors:
     # Uses func_get_args()
