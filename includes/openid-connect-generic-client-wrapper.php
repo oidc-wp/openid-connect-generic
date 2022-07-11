@@ -127,6 +127,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
+		// Modify authentication-token request to include PKCE code verifier.
+		if ( $settings->enable_pkce ) {
+			add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_authentication_token_request' ), 15, 3 );
+		}
+
 		return $client_wrapper;
 	}
 
@@ -432,6 +437,31 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->no_sslverify ) {
 			$request['sslverify'] = false;
 		}
+
+		return $request;
+	}
+
+	/**
+	 * Include PKCE code verifier in authentication token request.
+	 *
+	 * @param array<mixed> $request   The outgoing request array.
+	 * @param string       $operation The request operation name.
+	 *
+	 * @return mixed
+	 */
+	public function alter_authentication_token_request( $request, $operation ) {
+		if ( 'get-authentication-token' !== $operation ) {
+			return $request;
+		}
+
+		$code_verifier = '';
+		$state         = $_GET['state'] ?? ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Sanitized later if not empty.
+		if ( ! empty( $state ) ) {
+			$state_object  = get_transient( 'openid-connect-generic-state--' . sanitize_text_field( $state ) );
+			$code_verifier = $state_object[ $state ]['code_verifier'] ?? '';
+		}
+
+		$request['body']['code_verifier'] = $code_verifier;
 
 		return $request;
 	}
