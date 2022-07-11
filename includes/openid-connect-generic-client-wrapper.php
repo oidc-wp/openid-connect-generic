@@ -236,15 +236,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$url_format .= '&acr_values=%7$s';
 		}
 
+		if ( $this->settings->enable_pkce ) {
+			$pkce_data = $this->pkce_code_generator();
+			if ( false !== $pkce_data ) {
+				$url_format .= '&code_challenge=%8$s&code_challenge_method=%9$s';
+			}
+		}
+
 		$url = sprintf(
 			$url_format,
 			$atts['endpoint_login'],
 			$separator,
 			rawurlencode( $atts['scope'] ),
 			rawurlencode( $atts['client_id'] ),
-			$this->client->new_state( $atts['redirect_to'] ),
+			$this->client->new_state( $atts['redirect_to'], $pkce_data['code_verifier'] ?? '' ),
 			rawurlencode( $atts['redirect_uri'] ),
-			rawurlencode( $atts['acr_values'] )
+			rawurlencode( $atts['acr_values'] ),
+			rawurlencode( $pkce_data['code_challenge'] ?? '' ),
+			rawurlencode( $pkce_data['code_challenge_method'] ?? '' )
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
