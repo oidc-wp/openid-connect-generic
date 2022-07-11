@@ -128,7 +128,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Modify authentication-token request to include PKCE code verifier.
-		if ( $settings->enable_pkce ) {
+		if ( true === (bool) $settings->enable_pkce ) {
 			add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_authentication_token_request' ), 15, 3 );
 		}
 
@@ -241,7 +241,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$url_format .= '&acr_values=%7$s';
 		}
 
-		if ( $this->settings->enable_pkce ) {
+		if ( true === (bool) $this->settings->enable_pkce ) {
 			$pkce_data = $this->pkce_code_generator();
 			if ( false !== $pkce_data ) {
 				$url_format .= '&code_challenge=%8$s&code_challenge_method=%9$s';
