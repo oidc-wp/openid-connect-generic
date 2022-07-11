@@ -1177,4 +1177,36 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Return our updated user.
 		return get_user_by( 'id', $uid );
 	}
+
+	/**
+	 * Generate PKCE code for OAuth flow.
+	 *
+	 * @see : https://help.aweber.com/hc/en-us/articles/360036524474-How-do-I-use-Proof-Key-for-Code-Exchange-PKCE-
+	 *
+	 * @return array<string, mixed>|bool Code challenge array on success, false on error.
+	 */
+	private function pkce_code_generator() {
+		try {
+			$verifier_bytes = random_bytes( 64 );
+		} catch ( \Exception $e ) {
+			$this->logger->log(
+				sprintf( 'Fail to generate PKCE code challenge : %s', $e->getMessage() ),
+				'pkce_code_generator'
+			);
+
+			return false;
+		}
+
+		$verifier = rtrim( strtr( base64_encode( $verifier_bytes ), '+/', '-_' ), '=' );
+
+		// Very important, "raw_output" must be set to true or the challenge will not match the verifier.
+		$challenge_bytes = hash( 'sha256', $verifier, true );
+		$challenge       = rtrim( strtr( base64_encode( $challenge_bytes ), '+/', '-_' ), '=' );
+
+		return array(
+			'code_verifier'         => $verifier,
+			'code_challenge'        => $challenge,
+			'code_challenge_method' => 'S256',
+		);
+	}
 }
