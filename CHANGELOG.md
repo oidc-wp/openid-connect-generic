@@ -1,6 +1,11 @@
 # OpenId Connect Generic Changelog
 
-3.9.0
+**3.9.1**
+
+- Improvement: @timnolte - Refactors Composer setup and GitHub Actions.
+- Improvement: @timnolte - Bumps WordPress tested version compatibility.
+
+**3.9.0**
 
 - Feature: @matchaxnb - Added support for additional configuration constants.
 - Feature: @schanzen - Added support for agregated claims.
@@ -18,35 +23,35 @@
 - Security: @timnolte - Updated build tooling security vulnerabilities.
 - Improvement: @timnolte - Changed build tooling scripts.
 
-  3.8.5
+**3.8.5**
 
 - Fix: @timnolte - Fixed missing URL request validation before use & ensure proper current page URL is setup for Redirect Back.
 - Fix: @timnolte - Fixed Redirect URL Logic to Handle Sub-directory Installs.
 - Fix: @timnolte - Fixed issue with redirecting user back when the openid_connect_generic_auth_url shortcode is used.
 
-  3.8.4
+**3.8.4**
 
 - Fix: @timnolte - Fixed invalid State object access for redirection handling.
 - Improvement: @timnolte - Fixed local wp-env Docker development environment.
 - Improvement: @timnolte - Fixed Composer scripts for linting and static analysis.
 
-  3.8.3
+**3.8.3**
 
 - Fix: @timnolte - Fixed problems with proper redirect handling.
 - Improvement: @timnolte - Changes redirect handling to use State instead of cookies.
 - Improvement: @timnolte - Refactored additional code to meet coding standards.
 
-  3.8.2
+**3.8.2**
 
 - Fix: @timnolte - Fixed reported XSS vulnerability on WordPress login screen.
 
-  3.8.1
+**3.8.1**
 
 - Fix: @timnolte - Prevent SSO redirect on password protected posts.
 - Fix: @timnolte - CI/CD build issues.
 - Fix: @timnolte - Invalid redirect handling on logout for Auto Login setting.
 
-  3.8.0
+**3.8.0**
 
 - Feature: @timnolte - Ability to use 6 new constants for setting client configuration instead of storing in the DB.
 - Improvement: @timnolte - NPM version requirements for development.
@@ -56,18 +61,17 @@
 - Improvement: @timnolte - Refactored to provide localization.
 - Improvement: @timnolte - Refactored to provide a Docker-based local development environment.
 
-  3.7.1
+**3.7.1**
 
 - Fix: Release Version Number.
 
-  3.7.0
+**3.7.0**
 
 - Feature: @timnolte - Ability to enable/disable token refresh. Useful for IDPs that don't support token refresh.
 - Feature: @timnolte - Support custom redirect URL(`redirect_to`) with the authentication URL & login button shortcodes.
+- Supports additional attribute overrides including login `button_text`, `endpoint_login`, `scope`, `redirect_uri`.
 
-  - Supports additional attribute overrides including login `button_text`, `endpoint_login`, `scope`, `redirect_uri`.
-
-    3.6.0
+**3.6.0**
 
 - Improvement: @RobjS - Improved error messages during login state failure.
 - Improvement: @RobjS - New developer filter for login form button URL.
@@ -76,11 +80,11 @@
 - Feature: @benochen - New setting named "Create user if does not exist" determines whether new users are created during login attempts.
 - Improvement: @flat235 - Username transliteration and normalization.
 
-  3.5.1
+**3.5.1**
 
 - Fix: @daggerhart - New approach to state management using transients.
 
-  3.5.0
+**3.5.0**
 
 - Readme fix: @thijskh - Fix syntax error in example openid-connect-generic-login-button-text
 - Feature: @slavicd - Allow override of the plugin by posting credentials to wp-login.php
