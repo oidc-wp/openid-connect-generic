@@ -5,43 +5,53 @@ on:
   push:
     branches:
       - dev
-      - main
       - 'release/**'
       - 'feature/**'
       - 'fix/**'
 
 env:
-  PHP_VERSION: 7.4
+  PHP_VERSION: '7.4'
   WP_MULTISITE: 0
+  COMPOSER_VERSION: '2.2'
+  ACTION_VERSION: 2
 
 jobs:
-  check:
-    name: Setup & Check
+  check_linting:
+    name: Setup & Check Coding Standards
 
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
+      # https://github.com/marketplace/actions/checkout
       uses: actions/checkout@v2
 
-    - name: Setup PHP Environment
-      uses: shivammathur/setup-php@v2
-      # https://github.com/marketplace/actions/setup-php-action
-      with:
-        php-version: ${{ env.PHP_VERSION }}
-        tools: composer:v2
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      if: ${{ !env.ACT }}
+      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
     - name: Cache Composer dependencies
-      uses: actions/cache@v2
+      if: ${{ !env.ACT }}
+      # https://github.com/marketplace/actions/cache
+      uses: actions/cache@v3
       env:
-        composer-cache-name: cache-vendor
+        composer-cache-name: cache-composer
       with:
-        path: ~/vendor
-        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-${{ hashFiles('**/composer.lock') }}
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.composer-cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-v${{ env.ACTION_VERSION }}-
+
+    - name: Setup PHP & Composer Environment
+      # https://github.com/marketplace/actions/setup-php-action
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "${{ env.PHP_VERSION }}"
+        tools: "composer:${{ env.COMPOSER_VERSION }}"
+
+    - name: Environment Check
+      run: php -v && composer --version
 
     - name: Install Composer Dependencies
       run: composer install

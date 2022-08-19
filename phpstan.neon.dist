@@ -11,6 +11,7 @@ parameters:
   inferPrivatePropertyTypeFromConstructor: true
   bootstrapFiles:
     - tests/phpstan-bootstrap.php
+    - %rootDir%/../../php-stubs/wordpress-stubs/wordpress-stubs.php
   # autoload_files:
     # Missing constants, function and class stubs
     # - tests/phpstan/bootstrap.php
@@ -24,19 +25,22 @@ parameters:
     - includes/
     - ./
   excludePaths:
-    - node_modules/
-    - scripts/
-    - tests/
-    - tools/
-    - vendor/
-    - wordpress/
+    analyse:
+      - node_modules/
+      - scripts/
+      - tests/
+      - tools/
+      - vendor/
+      - wordpress/
+    analyseAndScan:
+      - wordpress/wp-content/uploads/
   # scanFiles:
-  # - includes/class.php
-  scanDirectories:
-    - wordpress
+  #   - includes/class.php
+  # scanDirectories:
+  #   - wordpress
   ignoreErrors:
     # Uses func_get_args()
-    - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
+    # - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
     # Fixed in WordPress 5.3
     # - '#^Function do_action(_ref_array)? invoked with [3456] parameters, 1-2 required\.$#'
     # - '#^Function current_user_can invoked with 2 parameters, 1 required\.$#'
