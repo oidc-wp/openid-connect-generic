@@ -194,8 +194,8 @@ class OpenID_Connect_Generic {
 	 */
 	public function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			// The client endpoint relies on the wp admind ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
+			// The client endpoint relies on the wp-admin ajax endpoint.
+			if ( ! defined( 'DOING_AJAX' ) || ! constant( 'DOING_AJAX' ) || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
 				auth_redirect();
 			}
 		}
