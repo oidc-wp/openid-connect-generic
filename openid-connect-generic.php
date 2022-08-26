@@ -16,7 +16,7 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
  * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.9.0
+ * Version:           3.9.1
  * Requires at least: 4.9
  * Requires PHP:      7.2
  * Author:            daggerhart
@@ -91,7 +91,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.9.0';
+	const VERSION = '3.9.1';
 
 	/**
 	 * Plugin settings.
@@ -194,8 +194,8 @@ class OpenID_Connect_Generic {
 	 */
 	public function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			// The client endpoint relies on the wp admind ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
+			// The client endpoint relies on the wp-admin ajax endpoint.
+			if ( ! defined( 'DOING_AJAX' ) || ! constant( 'DOING_AJAX' ) || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
 				auth_redirect();
 			}
 		}
