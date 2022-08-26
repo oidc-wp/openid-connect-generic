@@ -8,6 +8,6 @@ parameters:
     - includes/
   ignoreErrors:
     # Uses func_get_args()
-    - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
+    #- '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
     # Ignore cookie_redirect_key deprecation errors.
-    - '/Access to deprecated property \$cookie_redirect_key/'
+    - '/^Access to deprecated property \$cookie_redirect_key/'
