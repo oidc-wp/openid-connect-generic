@@ -1,20 +1,20 @@
-# Contributing to OpenID Connect Generic Client ✨
+# Contributing to Hellō Login
 
 This plugin provides security enhancements to WordPress, and your help making it even more awesome will be greatly appreciated :)
 
 There are many ways to contribute to the project!
 
-- [Translating strings into your language](https://translate.wordpress.org/projects/wp-plugins/daggerhart-openid-connect-generic/).
-- Answering open questions under the GitHub Issue Tracker (https://github.com/oidc-wp/openid-connect-generic/issues).
-- Testing open [issues](https://github.com/oidc-wp/openid-connect-generic/issues) or [pull requests](https://github.com/oidc-wp/openid-connect-generic/pulls) and sharing your findings in a comment.
+- [Translating strings into your language](TBD).
+- Answering open questions under the GitHub Issue Tracker (https://github.com/hellocoop/wordpress/issues).
+- Testing open [issues](https://github.com/hellocoop/wordpress/issues) or [pull requests](https://github.com/hellocoop/wordpress/pulls) and sharing your findings in a comment.
 - Submitting fixes, improvements, and enhancements.
 - Disclose a security issue to our team.
 
 If you wish to contribute code, please read the information in the sections below. Then [fork](https://help.github.com/articles/fork-a-repo/) the plugin, commit your changes, and [submit a pull request](https://help.github.com/articles/using-pull-requests/) 🎉
 
-We use the `good first issue` label to mark issues that are suitable for new contributors. You can find all the issues with this label [here](https://github.com/oidc-wp/openid-connect-generic/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+We use the `good first issue` label to mark issues that are suitable for new contributors. You can find all the issues with this label [here](https://github.com/hellocoop/wordpress/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
-OpenID Connect Generic Client is licensed under the GPLv2.0, and all contributions to the project will be released under the same license. You maintain copyright over any contribution you make, and by submitting a pull request, you are agreeing to release that contribution under the GPLv2.0 license.
+Hellō Login is licensed under the GPLv2.0, and all contributions to the project will be released under the same license. You maintain copyright over any contribution you make, and by submitting a pull request, you are agreeing to release that contribution under the GPLv2.0 license.
 
 ## Getting started
 
@@ -34,4 +34,4 @@ OpenID Connect Generic Client is licensed under the GPLv2.0, and all contributio
 
 ## Feature Requests 🚀
 
-Feature requests can be [submitted to our issue tracker](https://github.com/oidc-wp/openid-connect-generic/issues/new?template=5-Feature-request.md). Be sure to include a description of the expected behavior and use case, and before submitting a request, please search for similar ones in the closed issues.
+Feature requests can be [submitted to our issue tracker](https://github.com/hellocoop/wordpress/issues/new?template=5-Feature-request.md). Be sure to include a description of the expected behavior and use case, and before submitting a request, please search for similar ones in the closed issues.

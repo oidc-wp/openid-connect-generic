@@ -1,9 +1,9 @@
-# OpenID Connect Generic Client
+# Hellō Login
 
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-A simple client that provides SSO or opt-in authentication against a generic OAuth2 Server implementation.
+A login and registration plugin for the Hellō service.
 
 ## Description
 
@@ -12,7 +12,7 @@ Once installed, it can be configured to automatically authenticate users (SSO), 
 button on the login form. After consent has been obtained, an existing user is automatically logged into WordPress, while 
 new users are created in WordPress database.
 
-Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
+Much of the documentation can be found on the Settings > Hellō Login dashboard page.
 
 ## Table of Contents
 
@@ -24,30 +24,28 @@ Much of the documentation can be found on the Settings > OpenID Connect Generic 
 - [Configuration Environment Variables/Constants](#configuration-environment-variables-constants)
 - [Hooks](#hooks)
     - [Filters](#filters)
-        - [openid-connect-generic-alter-request](#openid-connect-generic-alter-request)
-        - [openid-connect-generic-login-button-text](#openid-connect-generic-login-button-text)
-        - [openid-connect-generic-auth-url](#openid-connect-generic-auth-url)
-        - [openid-connect-generic-user-login-test](#openid-connect-generic-user-login-test)
-        - [openid-connect-generic-user-creation-test](#openid-connect-generic-user-creation-test)
-        - <del>[openid-connect-generic-alter-user-claim](#openid-connect-generic-alter-user-claim)</del>
-        - [openid-connect-generic-alter-user-data](#openid-connect-generic-alter-user-data)
-        - [openid-connect-generic-settings-fields](#openid-connect-generic-settings-fields)
+        - [hello-login-alter-request](#hello-login-alter-request)
+        - [hello-login-auth-url](#hello-login-auth-url)
+        - [hello-login-user-login-test](#hello-login-user-login-test)
+        - [hello-login-user-creation-test](#hello-login-user-creation-test)
+        - [hello-login-alter-user-data](#hello-login-alter-user-data)
+        - [hello-login-settings-fields](#hello-login-settings-fields)
     - [Actions](#actions)
-        - [openid-connect-generic-user-create](#openid-connect-generic-user-create)
-        - [openid-connect-generic-user-update](#openid-connect-generic-user-update)
-        - [openid-connect-generic-update-user-using-current-claim](#openid-connect-generic-update-user-using-current-claim)
-        - [openid-connect-generic-redirect-user-back](#openid-connect-generic-redirect-user-back)
+        - [hello-login-user-create](#hello-login-user-create)
+        - [hello-login-user-update](#hello-login-user-update)
+        - [hello-login-update-user-using-current-claim](#hello-login-update-user-using-current-claim)
+        - [hello-login-redirect-user-back](#hello-login-redirect-user-back)
 
 
 ## Installation
 
 1. Upload to the `/wp-content/plugins/` directory
 1. Activate the plugin
-1. Visit Settings > OpenID Connect and configure to meet your needs
+1. Visit Settings > Hellō Login and configure to meet your needs
 
 ### Composer
 
-[OpenID Connect Generic on packagist](https://packagist.org/packages/daggerhart/openid-connect-generic)
+[Hellō Login on packagist](https://packagist.org/packages/hellocoop/wordpress)
 
 Installation:
 
@@ -59,7 +57,7 @@ Installation:
 ### What is the client's Redirect URI?
 
 Most OAuth2 servers should require a whitelist of redirect URIs for security purposes. The Redirect URI provided
-by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=openid-connect-authorize`
+by this client is like so:  `https://example.com/wp-admin/admin-ajax.php?action=hello-login-callback`
 
 Replace `example.com` with your domain name and path to WordPress.
 
@@ -70,9 +68,9 @@ this module leverages WordPress's `admin-ajax.php` endpoint as an easy way to pr
 HTML, but this will naturally involve a query string. Fortunately, this plugin provides a setting that will make use of 
 an alternate redirect URI that does not include a query string.
 
-On the settings page for this plugin (Dashboard > Settings > OpenID Connect Generic) there is a checkbox for 
+On the settings page for this plugin (Dashboard > Settings > Hellō Login) there is a checkbox for 
 **Alternate Redirect URI**. When checked, the plugin will use the Redirect URI 
-`https://example.com/openid-connect-authorize`.
+`https://example.com/hello-login-callback`.
 
 ## Configuration Environment Variables/Constants
 
@@ -105,7 +103,7 @@ WordPress filters API - [`add_filter()`](https://developer.wordpress.org/referen
 
 Most often you'll only need to use `add_filter()` to hook into this plugin's code.
 
-#### `openid-connect-generic-alter-request`
+#### `hello-login-alter-request`
 
 Hooks directly into client before requests are sent to the OpenID Server.
 
@@ -119,7 +117,7 @@ Possible operations:
 - get-userinfo
 
 ```
-add_filter('openid-connect-generic-alter-request', function( $request, $operation ) {
+add_filter('hello-login-alter-request', function( $request, $operation ) {
     if ( $operation == 'get-authentication-token' ) {
         $request['some_key'] = 'modified value';
     }
@@ -128,21 +126,7 @@ add_filter('openid-connect-generic-alter-request', function( $request, $operatio
 }, 10, 2);
 ```
 
-#### `openid-connect-generic-login-button-text`
-
-Modify the login button text. Default value is `__( 'Login with OpenID Connect' )`.
-
-Provides 1 argument: the current login button text.
-
-```
-add_filter('openid-connect-generic-login-button-text', function( $text ) {
-    $text = __('Login to my super cool IDP server');
-    
-    return $text;
-});
-```
-
-#### `openid-connect-generic-auth-url`
+#### `hello-login-auth-url`
 
 Modify the authentication URL before presented to the user. This is the URL that will send the user to the IDP server 
 for login.
@@ -150,21 +134,21 @@ for login.
 Provides 1 argument: the plugin generated URL.
 
 ```
-add_filter('openid-connect-generic-auth-url', function( $url ) {
+add_filter('hello-login-auth-url', function( $url ) {
     // Add some custom data to the url.
     $url.= '&my_custom_data=123abc';
     return $url;
 }); 
 ```
 
-#### `openid-connect-generic-user-login-test`
+#### `hello-login-user-login-test`
 
 Determine whether or not the user should be logged into WordPress.
 
 Provides 2 arguments: the boolean result of the test (default `TRUE`), and the `$user_claim` array from the server.
 
 ```
-add_filter('openid-connect-generic-user-login-test', function( $result, $user_claim ) {
+add_filter('hello-login-user-login-test', function( $result, $user_claim ) {
     // Don't let Terry login.
     if ( $user_claim['email'] == 'terry@example.com' ) {
         $result = FALSE;
@@ -174,7 +158,7 @@ add_filter('openid-connect-generic-user-login-test', function( $result, $user_cl
 }, 10, 2);
 ```
 
-#### `openid-connect-generic-user-creation-test`
+#### `hello-login-user-creation-test`
 
 Determine whether or not the user should be created. This filter is called when a new user is trying to login and they
 do not currently exist within WordPress.
@@ -182,7 +166,7 @@ do not currently exist within WordPress.
 Provides 2 arguments: the boolean result of the test (default `TRUE`), and the `$user_claim` array from the server.
 
 ```
-add_filter('', function( $result, $user_claim ) {
+add_filter('hello-login-user-creation-test', function( $result, $user_claim ) {
     // Don't let anyone from example.com create an account.
     $email_array = explode( '@', $user_claim['email'] );
     if ( $email_array[1] == 'example.com' ) {
@@ -193,31 +177,7 @@ add_filter('', function( $result, $user_claim ) {
 }, 10, 2) 
 ```
 
-#### <del>`openid-connect-generic-alter-user-claim`</del>
-
-Modify the `$user_claim` before the plugin builds the `$user_data` array for new user created.
-
-**Deprecated** - This filter is not very useful due to some changes that were added later. Recommend not using this 
-filter, and using the `openid-connect-generic-alter-user-data` filter instead. Practically, you can only change the 
-user's `first_name` and `last_name` values with this filter, but you could easily do that in 
-`openid-connect-generic-alter-user-data` as well. 
-
-Provides 1 argument: the `$user_claim` from the server.
-
-```
-// Not a great example because the hook isn't very useful.
-add_filter('openid-connect-generic-alter-user-claim', function( $user_claim ) {
-    // Use the beginning of the user's email address as the user's first name. 
-    if ( empty( $user_claim['given_name'] ) ) {
-        $email_array = explode( '@', $user_claim['email'] );
-        $user_claim['given_name'] = $email_array[0];
-    }
-    
-    return $user_claim;
-});
-```
-
-#### `openid-connect-generic-alter-user-data`
+#### `hello-login-alter-user-data`
 
 Modify a new user's data immediately before the user is created.
 
@@ -225,7 +185,7 @@ Provides 2 arguments: the `$user_data` array that will be sent to `wp_insert_use
 server.
 
 ```
-add_filter('openid-connect-generic-alter-user-data', function( $user_data, $user_claim ) {
+add_filter('hello-login-alter-user-data', function( $user_data, $user_claim ) {
     // Don't register any user with their real email address. Create a fake internal address.
     if ( !empty( $user_data['user_email'] ) ) {
         $email_array = explode( '@', $user_data['user_email'] );
@@ -237,24 +197,24 @@ add_filter('openid-connect-generic-alter-user-data', function( $user_data, $user
 }, 10, 2);
 ```
 
-#### `openid-connect-generic-settings-fields`
+#### `hello-login-settings-fields`
 
-For extending the plugin with a new setting field (found on Dashboard > Settings > OpenID Connect Generic) that the site 
+For extending the plugin with a new setting field (found on Dashboard > Settings > Hellō Login) that the site 
 administrator can modify. Also useful to alter the existing settings fields.
 
-See `/includes/openid-connect-generic-settings-page.php` for how fields are constructed.
+See `/includes/hello-login-settings-page.php` for how fields are constructed.
 
 New settings fields will be automatically saved into the wp_option for this plugin's settings, and will be available in 
-the `\OpenID_Connect_Generic_Option_Settings` object this plugin uses. 
+the `\Hello_Login_Option_Settings` object this plugin uses. 
 
 **Note:** It can be difficult to get a copy of the settings from within other hooks. The easiest way to make use of 
 settings in your custom hooks is to call 
-`$settings = get_option('openid_connect_generic_settings', array());`.
+`$settings = get_option('hello_login_settings', array());`.
 
 Provides 1 argument: the existing fields array.
 
 ```
-add_filter('openid-connect-generic-settings-fields', function( $fields ) {
+add_filter('hello-login-settings-fields', function( $fields ) {
 
     // Modify an existing field's title.
     $fields['endpoint_userinfo']['title'] = __('User information endpoint url');
@@ -305,14 +265,14 @@ Actions API: [`add_action`](https://developer.wordpress.org/reference/functions/
 
 You'll probably only ever want to use `add_action` when hooking into this plugin.
 
-#### `openid-connect-generic-user-create`
+#### `hello-login-user-create`
 
 React to a new user being created by this plugin.
 
 Provides 2 arguments: the `\WP_User` object that was created, and the `$user_claim` from the IDP server.
 
 ``` 
-add_action('openid-connect-generic-user-create', function( $user, $user_claim ) {
+add_action('hello-login-user-create', function( $user, $user_claim ) {
     // Send the user an email when their account is first created.
     wp_mail( 
         $user->user_email,
@@ -322,7 +282,7 @@ add_action('openid-connect-generic-user-create', function( $user, $user_claim ) 
 }, 10, 2);
 ``` 
 
-#### `openid-connect-generic-user-update`
+#### `hello-login-user-update`
 
 React to the user being updated after login. This is the event that happens when a user logins and they already exist as 
 a user in WordPress, as opposed to a new WordPress user being created.
@@ -330,7 +290,7 @@ a user in WordPress, as opposed to a new WordPress user being created.
 Provides 1 argument: the user's WordPress user ID.
 
 ``` 
-add_action('openid-connect-generic-user-update', function( $uid ) {
+add_action('hello-login-user-update', function( $uid ) {
     // Keep track of the number of times the user has logged into the site.
     $login_count = get_user_meta( $uid, 'my-user-login-count', TRUE);
     $login_count += 1;
@@ -338,14 +298,14 @@ add_action('openid-connect-generic-user-update', function( $uid ) {
 });
 ```
 
-#### `openid-connect-generic-update-user-using-current-claim`
+#### `hello-login-update-user-using-current-claim`
 
 React to an existing user logging in (after authentication and authorization).
 
 Provides 2 arguments: the `WP_User` object, and the `$user_claim` provided by the IDP server.
 
 ```
-add_action('openid-connect-generic-update-user-using-current-claim', function( $user, $user_claim) {
+add_action('hello-login-update-user-using-current-claim', function( $user, $user_claim) {
     // Based on some data in the user_claim, modify the user.
     if ( !empty( $user_claim['wp_user_role'] ) ) {
         if ( $user_claim['wp_user_role'] == 'should-be-editor' ) {
@@ -355,16 +315,16 @@ add_action('openid-connect-generic-update-user-using-current-claim', function( $
 }, 10, 2); 
 ```
 
-#### `openid-connect-generic-redirect-user-back`
+#### `hello-login-redirect-user-back`
 
 React to a user being redirected after a successful login. This hook is the last hook that will fire when a user logs 
-in. It will only fire if the plugin setting "Redirect Back to Origin Page" is enabled at Dashboard > Settings > 
-OpenID Connect Generic. It will fire for both new and existing users.
+in. It will only fire if the plugin setting "Redirect Back to Origin Page" is enabled at Dashboard > Settings >
+Hellō Login. It will fire for both new and existing users.
 
 Provides 2 arguments: the url where the user will be redirected, and the `WP_User` object.
 
 ```
-add_action('openid-connect-generic-redirect-user-back', function( $redirect_url, $user ) {
+add_action('hello-login-redirect-user-back', function( $redirect_url, $user ) {
     // Take over the redirection complete. Send users somewhere special based on their capabilities.
     if ( $user->has_cap( 'edit_users' ) ) {
         wp_redirect( admin_url( 'users.php' ) );
@@ -377,7 +337,7 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
 
 This plugin stores meta data about the user for both practical and debugging purposes.
 
-* `openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
-* `openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
-* `openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
-* `openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.
+* `hello-login-subject-identity` - The identity of the user provided by the IDP server.
+* `hello-login-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
+* `hello-login-last-user-claim` - The user's most recent `user_claim`, stored as an array.
+* `hello-login-last-token-response` - The user's most recent `token_response`, stored as an array.

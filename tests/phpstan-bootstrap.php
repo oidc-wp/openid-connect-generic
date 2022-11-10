@@ -2,7 +2,7 @@
 /**
  * Phpstan bootstrap file.
  *
- * @package   OpenID_Connect_Generic
+ * @package   Hello_Login
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
  * @author    Tim Nolte <tim.nolte@ndigitals.com>
  * @copyright 2015-2020 daggerhart

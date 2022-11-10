@@ -1,31 +1,31 @@
 <?php
 /**
- * OpenID Connect Generic Client
+ * Hellō Login
  *
  * This plugin provides the ability to authenticate users with Identity
  * Providers using the OpenID Connect OAuth2 API with Authorization Code Flow.
  *
- * @package   OpenID_Connect_Generic
+ * @package   Hello_Login
  * @category  General
- * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @author    Marius Scurtescu <marius.scurtescu@hello.coop>
+ * @copyright 2022 Hello Identity Co-op
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
- * @link      https://github.com/daggerhart
+ * @link      https://www.hello.dev/
  *
  * @wordpress-plugin
- * Plugin Name:       OpenID Connect Generic
- * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
- * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.9.1
+ * Plugin Name:       Hellō Login
+ * Plugin URI:        https://github.com/hellocoop/wordpress
+ * Description:       A login and registration plugin for the Hellō service.
+ * Version:           1.0.0
  * Requires at least: 4.9
  * Requires PHP:      7.2
- * Author:            daggerhart
- * Author URI:        http://www.daggerhart.com
- * Text Domain:       daggerhart-openid-connect-generic
+ * Author:            hellocoop
+ * Author URI:        http://www.hello.coop
+ * Text Domain:       hello-login
  * Domain Path:       /languages
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * GitHub Plugin URI: https://github.com/daggerhart/openid-connect-generic
+ * GitHub Plugin URI: https://github.com/hellocoop/wordpress
  */
 
 /*
@@ -33,56 +33,52 @@ Notes
   Spec Doc - http://openid.net/specs/openid-connect-basic-1_0-32.html
 
   Filters
-  - openid-connect-generic-alter-request       - 3 args: request array, plugin settings, specific request op
-  - openid-connect-generic-settings-fields     - modify the fields provided on the settings page
-  - openid-connect-generic-login-button-text   - modify the login button text
-  - openid-connect-generic-cookie-redirect-url - modify the redirect url stored as a cookie
-  - openid-connect-generic-user-login-test     - (bool) should the user be logged in based on their claim
-  - openid-connect-generic-user-creation-test  - (bool) should the user be created based on their claim
-  - openid-connect-generic-auth-url            - modify the authentication url
-  - openid-connect-generic-alter-user-claim    - modify the user_claim before a new user is created
-  - openid-connect-generic-alter-user-data     - modify user data before a new user is created
-  - openid-connect-modify-token-response-before-validation - modify the token response before validation
-  - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
+  - hello-login-alter-request                           - 3 args: request array, plugin settings, specific request op
+  - hello-login-settings-fields                         - modify the fields provided on the settings page
+  - hello-login-user-login-test                         - (bool) should the user be logged in based on their claim
+  - hello-login-user-creation-test                      - (bool) should the user be created based on their claim
+  - hello-login-auth-url                                - modify the authentication url
+  - hello-login-alter-user-data                         - modify user data before a new user is created
+  - hello-login-modify-token-response-before-validation - modify the token response before validation
+  - hello-login-modify-id-token-claim-before-validation - modify the token claim before validation
 
   Actions
-  - openid-connect-generic-user-create                     - 2 args: fires when a new user is created by this plugin
-  - openid-connect-generic-user-update                     - 1 arg: user ID, fires when user is updated by this plugin
-  - openid-connect-generic-update-user-using-current-claim - 2 args: fires every time an existing user logs in and the claims are updated.
-  - openid-connect-generic-redirect-user-back              - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
-  - openid-connect-generic-user-logged-in                  - 1 arg: $user, fires when user is logged in.
-  - openid-connect-generic-cron-daily                      - daily cron action
-  - openid-connect-generic-state-not-found                 - the given state does not exist in the database, regardless of its expiration.
-  - openid-connect-generic-state-expired                   - the given state exists, but expired before this login attempt.
+  - hello-login-user-create                     - 2 args: fires when a new user is created by this plugin
+  - hello-login-user-update                     - 1 arg: user ID, fires when user is updated by this plugin
+  - hello-login-update-user-using-current-claim - 2 args: fires every time an existing user logs in and the claims are updated.
+  - hello-login-redirect-user-back              - 2 args: $redirect_url, $user. Allows interruption of redirect during login.
+  - hello-login-user-logged-in                  - 1 arg: $user, fires when user is logged in.
+  - hello-login-cron-daily                      - daily cron action
+  - hello-login-state-not-found                 - the given state does not exist in the database, regardless of its expiration.
+  - hello-login-state-expired                   - the given state exists, but expired before this login attempt.
 
   Callable actions
 
   User Meta
-  - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
-  - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
-  - openid-connect-generic-last-user-claim     - the user's most recent user_claim
-  - openid-connect-generic-last-token-response - the user's most recent token response
+  - hello-login-subject-identity    - the identity of the user provided by the idp
+  - hello-login-last-id-token-claim - the user's most recent id_token claim, decoded
+  - hello-login-last-user-claim     - the user's most recent user_claim
+  - hello-login-last-token-response - the user's most recent token response
 
   Options
-  - openid_connect_generic_settings     - plugin settings
-  - openid-connect-generic-valid-states - locally stored generated states
+  - hello_login_settings - plugin settings
 */
 
 
 /**
- * OpenID_Connect_Generic class.
+ * Hello_Login class.
  *
  * Defines plugin initialization functionality.
  *
- * @package OpenID_Connect_Generic
+ * @package Hello_Login
  * @category  General
  */
-class OpenID_Connect_Generic {
+class Hello_Login {
 
 	/**
 	 * Singleton instance of self
 	 *
-	 * @var OpenID_Connect_Generic
+	 * @var Hello_Login
 	 */
 	protected static $_instance = null;
 
@@ -91,45 +87,45 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.9.1';
+	const VERSION = '1.0.0';
 
 	/**
 	 * Plugin settings.
 	 *
-	 * @var OpenID_Connect_Generic_Option_Settings
+	 * @var Hello_Login_Option_Settings
 	 */
 	private $settings;
 
 	/**
 	 * Plugin logs.
 	 *
-	 * @var OpenID_Connect_Generic_Option_Logger
+	 * @var Hello_Login_Option_Logger
 	 */
 	private $logger;
 
 	/**
-	 * Openid Connect Generic client
+	 * Hellō Login client
 	 *
-	 * @var OpenID_Connect_Generic_Client
+	 * @var Hello_Login_Client
 	 */
 	private $client;
 
 	/**
 	 * Client wrapper.
 	 *
-	 * @var OpenID_Connect_Generic_Client_Wrapper
+	 * @var Hello_Login_Client_Wrapper
 	 */
 	public $client_wrapper;
 
 	/**
 	 * Setup the plugin
 	 *
-	 * @param OpenID_Connect_Generic_Option_Settings $settings The settings object.
-	 * @param OpenID_Connect_Generic_Option_Logger   $logger   The loggin object.
+	 * @param Hello_Login_Option_Settings $settings The settings object.
+	 * @param Hello_Login_Option_Logger   $logger   The loggin object.
 	 *
 	 * @return void
 	 */
-	public function __construct( OpenID_Connect_Generic_Option_Settings $settings, OpenID_Connect_Generic_Option_Logger $logger ) {
+	public function __construct( Hello_Login_Option_Settings $settings, Hello_Login_Option_Logger $logger ) {
 		$this->settings = $settings;
 		$this->logger = $logger;
 		self::$_instance = $this;
@@ -142,10 +138,10 @@ class OpenID_Connect_Generic {
 	 */
 	public function init() {
 
-		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
+		$redirect_uri = admin_url( 'admin-ajax.php?action=hello-login-callback' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
-			$redirect_uri = site_url( '/openid-connect-authorize' );
+			$redirect_uri = site_url( '/hello-login-callback' );
 		}
 
 		$state_time_limit = 180;
@@ -153,7 +149,7 @@ class OpenID_Connect_Generic {
 			$state_time_limit = intval( $this->settings->state_time_limit );
 		}
 
-		$this->client = new OpenID_Connect_Generic_Client(
+		$this->client = new Hello_Login_Client(
 			$this->settings->client_id,
 			$this->settings->client_secret,
 			$this->settings->scope,
@@ -166,23 +162,23 @@ class OpenID_Connect_Generic {
 			$this->logger
 		);
 
-		$this->client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
+		$this->client_wrapper = Hello_Login_Client_Wrapper::register( $this->client, $this->settings, $this->logger );
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			return;
 		}
 
-		OpenID_Connect_Generic_Login_Form::register( $this->settings, $this->client_wrapper );
+		Hello_Login_Login_Form::register( $this->settings, $this->client_wrapper );
 
 		// Add a shortcode to get the auth URL.
-		add_shortcode( 'openid_connect_generic_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
+		add_shortcode( 'hello_login_auth_url', array( $this->client_wrapper, 'get_authentication_url' ) );
 
 		// Add actions to our scheduled cron jobs.
-		add_action( 'openid-connect-generic-cron-daily', array( $this, 'cron_states_garbage_collection' ) );
+		add_action( 'hello-login-cron-daily', array( $this, 'cron_states_garbage_collection' ) );
 
 		$this->upgrade();
 
 		if ( is_admin() ) {
-			OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
+			Hello_Login_Settings_Page::register( $this->settings, $this->logger );
 		}
 	}
 
@@ -195,7 +191,7 @@ class OpenID_Connect_Generic {
 	public function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			// The client endpoint relies on the wp-admin ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! constant( 'DOING_AJAX' ) || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
+			if ( ! defined( 'DOING_AJAX' ) || ! constant( 'DOING_AJAX' ) || ! isset( $_GET['action'] ) || 'hello-login-callback' != $_GET['action'] ) {
 				auth_redirect();
 			}
 		}
@@ -210,7 +206,7 @@ class OpenID_Connect_Generic {
 	 */
 	public function enforce_privacy_feeds( $content ) {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
-			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
+			$content = __( 'Private site', 'hello-login' );
 		}
 		return $content;
 	}
@@ -221,7 +217,7 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public function upgrade() {
-		$last_version = get_option( 'openid-connect-generic-plugin-version', 0 );
+		$last_version = get_option( 'hello-login-plugin-version', 0 );
 		$settings = $this->settings;
 
 		if ( version_compare( self::VERSION, $last_version, '>' ) ) {
@@ -239,7 +235,7 @@ class OpenID_Connect_Generic {
 			}
 
 			// Update the stored version number.
-			update_option( 'openid-connect-generic-plugin-version', self::VERSION );
+			update_option( 'hello-login-plugin-version', self::VERSION );
 		}
 	}
 
@@ -251,7 +247,7 @@ class OpenID_Connect_Generic {
 	 */
 	public function cron_states_garbage_collection() {
 		global $wpdb;
-		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE '_transient_openid-connect-generic-state--%'" );
+		$states = $wpdb->get_col( "SELECT `option_name` FROM {$wpdb->options} WHERE `option_name` LIKE '_transient_hello-login-state--%'" );
 
 		if ( ! empty( $states ) ) {
 			foreach ( $states as $state ) {
@@ -267,8 +263,8 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function setup_cron_jobs() {
-		if ( ! wp_next_scheduled( 'openid-connect-generic-cron-daily' ) ) {
-			wp_schedule_event( time(), 'daily', 'openid-connect-generic-cron-daily' );
+		if ( ! wp_next_scheduled( 'hello-login-cron-daily' ) ) {
+			wp_schedule_event( time(), 'daily', 'hello-login-cron-daily' );
 		}
 	}
 
@@ -287,7 +283,7 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function deactivation() {
-		wp_clear_scheduled_hook( 'openid-connect-generic-cron-daily' );
+		wp_clear_scheduled_hook( 'hello-login-cron-daily' );
 	}
 
 	/**
@@ -298,7 +294,7 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function autoload( $class ) {
-		$prefix = 'OpenID_Connect_Generic_';
+		$prefix = 'Hello_Login_';
 
 		if ( stripos( $class, $prefix ) !== 0 ) {
 			return;
@@ -331,36 +327,37 @@ class OpenID_Connect_Generic {
 		 *
 		 * @link https://www.php.net/manual/en/function.spl-autoload-register.php#71155
 		 */
-		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
+		spl_autoload_register( array( 'Hello_Login', 'autoload' ) );
 
-		$settings = new OpenID_Connect_Generic_Option_Settings(
-			'openid_connect_generic_settings',
+		$settings = new Hello_Login_Option_Settings(
+			'hello_login_settings',
 			// Default settings values.
 			array(
 				// OAuth client settings.
 				'login_type'           => defined( 'OIDC_LOGIN_TYPE' ) ? OIDC_LOGIN_TYPE : 'button',
 				'client_id'            => defined( 'OIDC_CLIENT_ID' ) ? OIDC_CLIENT_ID : '',
 				'client_secret'        => defined( 'OIDC_CLIENT_SECRET' ) ? OIDC_CLIENT_SECRET : '',
-				'scope'                => defined( 'OIDC_CLIENT_SCOPE' ) ? OIDC_CLIENT_SCOPE : '',
-				'endpoint_login'       => defined( 'OIDC_ENDPOINT_LOGIN_URL' ) ? OIDC_ENDPOINT_LOGIN_URL : '',
-				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
-				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
+				'scope'                => defined( 'OIDC_CLIENT_SCOPE' ) ? OIDC_CLIENT_SCOPE : 'openid name nickname email',
+				'endpoint_login'       => defined( 'OIDC_ENDPOINT_LOGIN_URL' ) ? OIDC_ENDPOINT_LOGIN_URL : 'https://wallet.hello.coop/authorize',
+				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : 'https://wallet.hello.coop/oauth/userinfo',
+				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : 'https://wallet.hello.coop/oauth/token',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
 				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
+				'enable_pkce'          => defined( 'OIDC_ENABLE_PKCE' ) ? OIDC_ENABLE_PKCE : true,
 
 				// Non-standard settings.
 				'no_sslverify'    => 0,
 				'http_request_timeout' => 5,
-				'identity_key'    => 'preferred_username',
-				'nickname_key'    => 'preferred_username',
+				'identity_key'    => 'sub',
+				'nickname_key'    => 'nickname',
 				'email_format'       => '{email}',
-				'displayname_format' => '',
+				'displayname_format' => '{name}',
 				'identify_with_username' => false,
 
 				// Plugin settings.
 				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
 				'alternate_redirect_uri' => 0,
-				'token_refresh_enable' => 1,
+				'token_refresh_enable' => 0,
 				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
 				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
@@ -370,7 +367,7 @@ class OpenID_Connect_Generic {
 			)
 		);
 
-		$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
+		$logger = new Hello_Login_Option_Logger( 'hello-login-logs', 'error', $settings->enable_logging, $settings->log_limit );
 
 		$plugin = new self( $settings, $logger );
 
@@ -386,7 +383,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Create (if needed) and return a singleton of self.
 	 *
-	 * @return OpenID_Connect_Generic
+	 * @return Hello_Login
 	 */
 	public static function instance() {
 		if ( null === self::$_instance ) {
@@ -396,10 +393,10 @@ class OpenID_Connect_Generic {
 	}
 }
 
-OpenID_Connect_Generic::instance();
+Hello_Login::instance();
 
-register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation' ) );
-register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
+register_activation_hook( __FILE__, array( 'Hello_Login', 'activation' ) );
+register_deactivation_hook( __FILE__, array( 'Hello_Login', 'deactivation' ) );
 
 // Provide publicly accessible plugin helper functions.
 require_once( 'includes/functions.php' );

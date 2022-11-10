@@ -12,7 +12,7 @@ jobs:
   release:
     name: New Release
 
-    if: github.repository == 'oidc-wp/openid-connect-generic'
+    if: github.repository == 'hellocoop/wordpress'
 
     runs-on: ubuntu-latest
 
@@ -56,4 +56,4 @@ jobs:
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
         SOURCE_DIR: dist/
-        SLUG: daggerhart-openid-connect-generic
+        SLUG: hello-login

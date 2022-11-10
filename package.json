@@ -1,22 +1,21 @@
 {
-	"name": "openid-connect-generic",
-	"version": "3.9.1",
-	"description": "OpenID Connect generic WordPress plugin.",
+	"name": "hello-login",
+	"version": "1.0.0",
+	"description": "Hellō WordPress plugin.",
 	"main": "Gruntfile.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/daggerhart/openid-connect-generic"
+		"url": "https://github.com/hellocoop/wordpress"
 	},
 	"keywords": [
 		"wordpress",
-		"openid"
+		"Hellō"
 	],
-	"author": "Jonathan Daggerhart",
 	"license": "GPL-2.0-only",
 	"bugs": {
-		"url": "https://github.com/daggerhart/openid-connect-generic/issues"
+		"url": "https://github.com/hellocoop/wordpress/issues"
 	},
-	"homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
+	"homepage": "https://github.com/hellocoop/wordpress#readme",
 	"dependencies": {
 		"dev-require": "^0.1.0"
 	},
@@ -52,8 +51,8 @@
 		"shelljs": "0.8.5"
 	},
 	"wp-env": {
-		"plugin-dir": "daggerhart-openid-connect-generic",
-		"plugin-name": "OpenID Connect Generic",
+		"plugin-dir": "hello-login",
+		"plugin-name": "Hellō Login",
 		"docker-template": "./docker-compose.wp-env.yml",
 		"welcome-build-command": "npm start"
 	},
@@ -77,7 +76,7 @@
 		"test": "npm run grunt test",
 		"i18n:check": "npm run grunt checktextdomain",
 		"i18n:make": "npm run grunt i18n",
-		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
+		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=hello-login --include=hello-login.php,includes",
 		"lint": "npm run lint:php",
 		"lint:php": "docker-compose run composer lint",
 		"lint:php:fix": "docker-compose run composer lint-fix",

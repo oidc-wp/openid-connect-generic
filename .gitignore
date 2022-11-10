@@ -13,6 +13,7 @@
 # Local Development files/folders.
 .env
 .wp-env.override.json
+composer.phar
 phpcs.xml
 phpstan.neon
 phpunit.xml

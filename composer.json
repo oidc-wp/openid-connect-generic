@@ -1,19 +1,14 @@
 {
-	"name": "daggerhart/openid-connect-generic",
+	"name": "hellocoop/wordpress",
 	"type": "wordpress-plugin",
 	"license": "GPL-2.0-only",
-	"description": "OpenID Connect generic WordPress plugin.",
-	"homepage": "https://github.com/daggerhart/openid-connect-generic",
+	"description": "A login and registration plugin for the Hellō service.",
+	"homepage": "https://github.com/hellocoop/wordpress",
 	"authors": [
 		{
-			"name": "Jonathan Daggerhart",
-			"email": "jonathan@daggerhart.com",
-			"homepage": "https://github.com/daggerhart"
-		},
-		{
-			"name": "Tim Nolte",
-			"email": "tim.nolte@ndigitals.com",
-			"homepage": "https://github.com/timnolte"
+			"name": "Marius Scurtescu",
+			"email": "marius.scurtescu@hello.coop",
+			"homepage": "https://www.hello.coop/"
 		}
 	],
 	"keywords": [
@@ -21,7 +16,7 @@
 		"openid"
 	],
 	"support": {
-		"issues": "https://github.com/daggerhart/openid-connect-generic/issues"
+		"issues": "https://github.com/hellocoop/wordpress/issues"
 	},
 	"config": {
 		"platform": {
@@ -70,13 +65,13 @@
 	},
 	"autoload": {
 		"classmap": [
-			"openid-connect-generic.php",
-			"includes/openid-connect-generic-client.php",
-			"includes/openid-connect-generic-client-wrapper.php",
-			"includes/openid-connect-generic-login-form.php",
-			"includes/openid-connect-generic-option-logger.php",
-			"includes/openid-connect-generic-option-settings.php",
-			"includes/openid-connect-generic-settings-page.php"
+		  "hello-login.php",
+		  "includes/hello-login-client.php",
+		  "includes/hello-login-client-wrapper.php",
+		  "includes/hello-login-login-form.php",
+		  "includes/hello-login-option-logger.php",
+		  "includes/hello-login-option-settings.php",
+		  "includes/hello-login-settings-page.php"
 		]
 	},
 	"scripts": {

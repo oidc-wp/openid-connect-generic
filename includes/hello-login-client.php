@@ -2,7 +2,7 @@
 /**
  * Plugin OIDC/oAuth client class.
  *
- * @package   OpenID_Connect_Generic
+ * @package   Hello_Login
  * @category  Authentication
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
  * @copyright 2015-2020 daggerhart
@@ -10,19 +10,19 @@
  */
 
 /**
- * OpenID_Connect_Generic_Client class.
+ * Hello_Login_Client class.
  *
  * Plugin OIDC/oAuth client class.
  *
- * @package  OpenID_Connect_Generic
+ * @package  Hello_Login
  * @category Authentication
  */
-class OpenID_Connect_Generic_Client {
+class Hello_Login_Client {
 
 	/**
 	 * The OIDC/oAuth client ID.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::client_id
+	 * @see Hello_Login_Option_Settings::client_id
 	 *
 	 * @var string
 	 */
@@ -31,7 +31,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The OIDC/oAuth client secret.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::client_secret
+	 * @see Hello_Login_Option_Settings::client_secret
 	 *
 	 * @var string
 	 */
@@ -40,7 +40,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The OIDC/oAuth scopes.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::scope
+	 * @see Hello_Login_Option_Settings::scope
 	 *
 	 * @var string
 	 */
@@ -49,7 +49,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The OIDC/oAuth authorization endpoint URL.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_login
+	 * @see Hello_Login_Option_Settings::endpoint_login
 	 *
 	 * @var string
 	 */
@@ -58,7 +58,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The OIDC/oAuth User Information endpoint URL.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo
+	 * @see Hello_Login_Option_Settings::endpoint_userinfo
 	 *
 	 * @var string
 	 */
@@ -67,7 +67,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The OIDC/oAuth token validation endpoint URL.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_token
+	 * @see Hello_Login_Option_Settings::endpoint_token
 	 *
 	 * @var string
 	 */
@@ -76,7 +76,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The login flow "ajax" endpoint URI.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::redirect_uri
+	 * @see Hello_Login_Option_Settings::redirect_uri
 	 *
 	 * @var string
 	 */
@@ -85,7 +85,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The specifically requested authentication contract at the IDP
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::acr_values
+	 * @see Hello_Login_Option_Settings::acr_values
 	 *
 	 * @var string
 	 */
@@ -94,7 +94,7 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The state time limit. States are only valid for 3 minutes.
 	 *
-	 * @see OpenID_Connect_Generic_Option_Settings::state_time_limit
+	 * @see Hello_Login_Option_Settings::state_time_limit
 	 *
 	 * @var int
 	 */
@@ -103,23 +103,23 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * The logger object instance.
 	 *
-	 * @var OpenID_Connect_Generic_Option_Logger
+	 * @var Hello_Login_Option_Logger
 	 */
 	private $logger;
 
 	/**
 	 * Client constructor.
 	 *
-	 * @param string                               $client_id         @see OpenID_Connect_Generic_Option_Settings::client_id for description.
-	 * @param string                               $client_secret     @see OpenID_Connect_Generic_Option_Settings::client_secret for description.
-	 * @param string                               $scope             @see OpenID_Connect_Generic_Option_Settings::scope for description.
-	 * @param string                               $endpoint_login    @see OpenID_Connect_Generic_Option_Settings::endpoint_login for description.
-	 * @param string                               $endpoint_userinfo @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo for description.
-	 * @param string                               $endpoint_token    @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
-	 * @param string                               $redirect_uri      @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
-	 * @param string                               $acr_values        @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
-	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
-	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
+	 * @param string                               $client_id         @see Hello_Login_Option_Settings::client_id for description.
+	 * @param string                               $client_secret     @see Hello_Login_Option_Settings::client_secret for description.
+	 * @param string                               $scope             @see Hello_Login_Option_Settings::scope for description.
+	 * @param string                               $endpoint_login    @see Hello_Login_Option_Settings::endpoint_login for description.
+	 * @param string                               $endpoint_userinfo @see Hello_Login_Option_Settings::endpoint_userinfo for description.
+	 * @param string                               $endpoint_token    @see Hello_Login_Option_Settings::endpoint_token for description.
+	 * @param string                               $redirect_uri      @see Hello_Login_Option_Settings::redirect_uri for description.
+	 * @param string                               $acr_values        @see Hello_Login_Option_Settings::acr_values for description.
+	 * @param int                                  $state_time_limit  @see Hello_Login_Option_Settings::state_time_limit for description.
+	 * @param Hello_Login_Option_Logger $logger            The plugin logging object instance.
 	 */
 	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
@@ -172,12 +172,12 @@ class OpenID_Connect_Generic_Client {
 
 		// Check the client request state.
 		if ( ! isset( $request['state'] ) ) {
-			do_action( 'openid-connect-generic-no-state-provided' );
-			return new WP_Error( 'missing-state', __( 'Missing state.', 'daggerhart-openid-connect-generic' ), $request );
+			do_action( 'hello-login-no-state-provided' );
+			return new WP_Error( 'missing-state', __( 'Missing state.', 'hello-login' ), $request );
 		}
 
 		if ( ! $this->check_state( $request['state'] ) ) {
-			return new WP_Error( 'invalid-state', __( 'Invalid state.', 'daggerhart-openid-connect-generic' ), $request );
+			return new WP_Error( 'invalid-state', __( 'Invalid state.', 'hello-login' ), $request );
 		}
 
 		return $request;
@@ -192,7 +192,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function get_authentication_code( $request ) {
 		if ( ! isset( $request['code'] ) ) {
-			return new WP_Error( 'missing-authentication-code', __( 'Missing authentication code.', 'daggerhart-openid-connect-generic' ), $request );
+			return new WP_Error( 'missing-authentication-code', __( 'Missing authentication code.', 'hello-login' ), $request );
 		}
 
 		return $request['code'];
@@ -228,14 +228,14 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// Allow modifications to the request.
-		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token' );
+		$request = apply_filters( 'hello-login-alter-request', $request, 'get-authentication-token' );
 
 		// Call the server and ask for a token.
 		$this->logger->log( $this->endpoint_token, 'request_authentication_token' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ) {
-			$response->add( 'request_authentication_token', __( 'Request for authentication token failed.', 'daggerhart-openid-connect-generic' ) );
+			$response->add( 'request_authentication_token', __( 'Request for authentication token failed.', 'hello-login' ) );
 		}
 
 		return $response;
@@ -259,14 +259,14 @@ class OpenID_Connect_Generic_Client {
 		);
 
 		// Allow modifications to the request.
-		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
+		$request = apply_filters( 'hello-login-alter-request', $request, 'refresh-token' );
 
 		// Call the server and ask for new tokens.
 		$this->logger->log( $this->endpoint_token, 'request_new_tokens' );
 		$response = wp_remote_post( $this->endpoint_token, $request );
 
 		if ( is_wp_error( $response ) ) {
-			$response->add( 'refresh_token', __( 'Refresh token failed.', 'daggerhart-openid-connect-generic' ) );
+			$response->add( 'refresh_token', __( 'Refresh token failed.', 'hello-login' ) );
 		}
 
 		return $response;
@@ -281,7 +281,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function get_token_response( $token_result ) {
 		if ( ! isset( $token_result['body'] ) ) {
-			return new WP_Error( 'missing-token-body', __( 'Missing token body.', 'daggerhart-openid-connect-generic' ), $token_result );
+			return new WP_Error( 'missing-token-body', __( 'Missing token body.', 'hello-login' ), $token_result );
 		}
 
 		// Extract the token response from token.
@@ -289,7 +289,7 @@ class OpenID_Connect_Generic_Client {
 
 		// Check that the token response body was able to be parsed.
 		if ( is_null( $token_response ) ) {
-			return new WP_Error( 'invalid-token', __( 'Invalid token.', 'daggerhart-openid-connect-generic' ), $token_result );
+			return new WP_Error( 'invalid-token', __( 'Invalid token.', 'hello-login' ), $token_result );
 		}
 
 		if ( isset( $token_response['error'] ) ) {
@@ -313,7 +313,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function request_userinfo( $access_token ) {
 		// Allow modifications to the request.
-		$request = apply_filters( 'openid-connect-generic-alter-request', array(), 'get-userinfo' );
+		$request = apply_filters( 'hello-login-alter-request', array(), 'get-userinfo' );
 
 		/*
 		 * Section 5.3.1 of the spec recommends sending the access token using the authorization header
@@ -340,7 +340,7 @@ class OpenID_Connect_Generic_Client {
 		$response = wp_remote_post( $this->endpoint_userinfo, $request );
 
 		if ( is_wp_error( $response ) ) {
-			$response->add( 'request_userinfo', __( 'Request for userinfo failed.', 'daggerhart-openid-connect-generic' ) );
+			$response->add( 'request_userinfo', __( 'Request for userinfo failed.', 'hello-login' ) );
 		}
 
 		return $response;
@@ -349,19 +349,21 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Generate a new state, save it as a transient, and return the state hash.
 	 *
-	 * @param string $redirect_to The redirect URL to be used after IDP authentication.
+	 * @param string $redirect_to        The redirect URL to be used after IDP authentication.
+	 * @param string $pkce_code_verifier The PKCE code verifier to be sent during the authorization code exchange request.
 	 *
 	 * @return string
 	 */
-	public function new_state( $redirect_to ) {
+	public function new_state( $redirect_to, $pkce_code_verifier = '' ) {
 		// New state w/ timestamp.
 		$state = md5( mt_rand() . microtime( true ) );
 		$state_value = array(
 			$state => array(
-				'redirect_to' => $redirect_to,
+				'redirect_to'   => $redirect_to,
+				'code_verifier' => $pkce_code_verifier,
 			),
 		);
-		set_transient( 'openid-connect-generic-state--' . $state, $state_value, $this->state_time_limit );
+		set_transient( 'hello-login-state--' . $state, $state_value, $this->state_time_limit );
 
 		return $state;
 	}
@@ -377,15 +379,15 @@ class OpenID_Connect_Generic_Client {
 
 		$state_found = true;
 
-		if ( ! get_option( '_transient_openid-connect-generic-state--' . $state ) ) {
-			do_action( 'openid-connect-generic-state-not-found', $state );
+		if ( ! get_option( '_transient_hello-login-state--' . $state ) ) {
+			do_action( 'hello-login-state-not-found', $state );
 			$state_found = false;
 		}
 
-		$valid = get_transient( 'openid-connect-generic-state--' . $state );
+		$valid = get_transient( 'hello-login-state--' . $state );
 
 		if ( ! $valid && $state_found ) {
-			do_action( 'openid-connect-generic-state-expired', $state );
+			do_action( 'hello-login-state-expired', $state );
 		}
 
 		return boolval( $valid );
@@ -400,7 +402,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function get_authentication_state( $request ) {
 		if ( ! isset( $request['state'] ) ) {
-			return new WP_Error( 'missing-authentication-state', __( 'Missing authentication state.', 'daggerhart-openid-connect-generic' ), $request );
+			return new WP_Error( 'missing-authentication-state', __( 'Missing authentication state.', 'hello-login' ), $request );
 		}
 
 		return $request['state'];
@@ -437,14 +439,14 @@ class OpenID_Connect_Generic_Client {
 	public function get_id_token_claim( $token_response ) {
 		// Validate there is an id_token.
 		if ( ! isset( $token_response['id_token'] ) ) {
-			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
+			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'hello-login' ), $token_response );
 		}
 
 		// Break apart the id_token in the response for decoding.
 		$tmp = explode( '.', $token_response['id_token'] );
 
 		if ( ! isset( $tmp[1] ) ) {
-			return new WP_Error( 'missing-identity-token', __( 'Missing identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
+			return new WP_Error( 'missing-identity-token', __( 'Missing identity token.', 'hello-login' ), $token_response );
 		}
 
 		// Extract the id_token's claims from the token.
@@ -471,18 +473,18 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function validate_id_token_claim( $id_token_claim ) {
 		if ( ! is_array( $id_token_claim ) ) {
-			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim.', 'hello-login' ), $id_token_claim );
 		}
 
 		// Validate the identification data and it's value.
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
-			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'hello-login' ), $id_token_claim );
 		}
 
 		// Validate acr values when the option is set in the configuration.
 		if ( ! empty( $this->acr_values ) && isset( $id_token_claim['acr'] ) ) {
 			if ( $this->acr_values != $id_token_claim['acr'] ) {
-				return new WP_Error( 'no-match-acr', __( 'No matching acr values.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+				return new WP_Error( 'no-match-acr', __( 'No matching acr values.', 'hello-login' ), $id_token_claim );
 			}
 		}
 
@@ -502,7 +504,7 @@ class OpenID_Connect_Generic_Client {
 
 		// Make sure we didn't get an error, and that the response body exists.
 		if ( is_wp_error( $user_claim_result ) || ! isset( $user_claim_result['body'] ) ) {
-			return new WP_Error( 'bad-claim', __( 'Bad user claim.', 'daggerhart-openid-connect-generic' ), $user_claim_result );
+			return new WP_Error( 'bad-claim', __( 'Bad user claim.', 'hello-login' ), $user_claim_result );
 		}
 
 		$user_claim = json_decode( $user_claim_result['body'], true );
@@ -522,12 +524,12 @@ class OpenID_Connect_Generic_Client {
 	public function validate_user_claim( $user_claim, $id_token_claim ) {
 		// Validate the user claim.
 		if ( ! is_array( $user_claim ) ) {
-			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim.', 'daggerhart-openid-connect-generic' ), $user_claim );
+			return new WP_Error( 'invalid-user-claim', __( 'Invalid user claim.', 'hello-login' ), $user_claim );
 		}
 
 		// Allow for errors from the IDP.
 		if ( isset( $user_claim['error'] ) ) {
-			$message = __( 'Error from the IDP.', 'daggerhart-openid-connect-generic' );
+			$message = __( 'Error from the IDP.', 'hello-login' );
 			if ( ! empty( $user_claim['error_description'] ) ) {
 				$message = $user_claim['error_description'];
 			}
@@ -536,14 +538,14 @@ class OpenID_Connect_Generic_Client {
 
 		// Make sure the id_token sub equals the user_claim sub, according to spec.
 		if ( $id_token_claim['sub'] !== $user_claim['sub'] ) {
-			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim.', 'daggerhart-openid-connect-generic' ), func_get_args() );
+			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim.', 'hello-login' ), func_get_args() );
 		}
 
 		// Allow for other plugins to alter the login success.
-		$login_user = apply_filters( 'openid-connect-generic-user-login-test', true, $user_claim );
+		$login_user = apply_filters( 'hello-login-user-login-test', true, $user_claim );
 
 		if ( ! $login_user ) {
-			return new WP_Error( 'unauthorized', __( 'Unauthorized access.', 'daggerhart-openid-connect-generic' ), $login_user );
+			return new WP_Error( 'unauthorized', __( 'Unauthorized access.', 'hello-login' ), $login_user );
 		}
 
 		return true;

@@ -81,7 +81,7 @@ module.exports = function (grunt) {
 
 		addtextdomain: {
 			options: {
-				textdomain: 'daggerhart-openid-connect-generic',    // Project text domain.
+				textdomain: 'hello-login',    // Project text domain.
 			},
 			update_all_domains: {
 				options: {
@@ -113,11 +113,11 @@ module.exports = function (grunt) {
 						'vendor/.*', 							//composer
 						'wordpress/.*',
 					],                                // List of files or directories to ignore.
-					mainFile: 'openid-connect-generic.php',                     // Main project file.
-					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
+					mainFile: 'hello-login.php',                     // Main project file.
+					potFilename: 'hello-login.pot',                  // Name of the POT file.
 					potHeaders: {
 						poedit: true,                   // Includes common Poedit headers.
-						'report-msgid-bugs-to': 'https://github.com/daggerhart/openid-connect-generic/issues',
+						'report-msgid-bugs-to': 'https://github.com/hellocoop/wordpress/issues',
 						'x-poedit-keywordslist': true   // Include a list of all possible gettext functions.
 					},                                // Headers to add to the generated POT file.
 					type: 'wp-plugin',                // Type of project (wp-plugin or wp-theme).
@@ -145,7 +145,7 @@ module.exports = function (grunt) {
 
 		checktextdomain: {
 			options: {
-				text_domain: 'daggerhart-openid-connect-generic',
+				text_domain: 'hello-login',
 				keywords: [
 					'__:1,2d',
 					'_e:1,2d',
