@@ -16,7 +16,7 @@
  * Plugin Name:       Hellō Login
  * Plugin URI:        https://github.com/hellocoop/wordpress
  * Description:       A login and registration plugin for the Hellō service.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 4.9
  * Requires PHP:      7.2
  * Author:            hellocoop
@@ -87,7 +87,7 @@ class Hello_Login {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.0.0';
+	const VERSION = '1.0.1';
 
 	/**
 	 * Plugin settings.
@@ -358,9 +358,9 @@ class Hello_Login {
 				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
 				'alternate_redirect_uri' => 0,
 				'token_refresh_enable' => 0,
-				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
+				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 1,
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
-				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
+				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 1,
 				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
 				'enable_logging'  => 0,
 				'log_limit'       => 1000,
