@@ -441,10 +441,9 @@ class Hello_Login_Client_Wrapper {
 		}
 
 		$code_verifier = '';
-		$state         = $_GET['state'] ?? ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Sanitized later if not empty.
-		if ( ! empty( $state ) ) {
-			$state_object  = get_transient( 'hello-login-state--' . sanitize_text_field( $state ) );
-			$code_verifier = $state_object[ $state ]['code_verifier'] ?? '';
+		if ( ! empty( $_GET['state'] ) ) {
+			$state_object  = get_transient( 'hello-login-state--' . sanitize_text_field(  $_GET['state']  ) );
+			$code_verifier = $state_object[  $_GET['state'] ]['code_verifier'] ?? '';
 		}
 
 		$request['body']['code_verifier'] = $code_verifier;

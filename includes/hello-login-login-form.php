@@ -148,14 +148,14 @@ class Hello_Login_Login_Form {
 		$href = $this->client_wrapper->get_authentication_url( $atts );
 		$href = esc_url_raw( $href );
 
-		$login_button = <<<HTML
-<div class="hello-container" style="display: block; text-align: center;">
-  <button class="hello-btn" onclick="window.location.href = '{$href}'"></button>
-  <button class="hello-about"></button>
-</div>
-HTML;
-
-		return $login_button;
+		ob_start();
+		?>
+		<div class="hello-container" style="display: block; text-align: center;">
+			<button class="hello-btn" onclick="window.location.href = '<?php print esc_attr( $href ); ?>'"></button>
+			<button class="hello-about"></button>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**

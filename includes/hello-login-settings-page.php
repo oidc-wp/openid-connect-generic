@@ -452,7 +452,7 @@ class Hello_Login_Settings_Page {
 		}
 
 		if ( isset( $_GET['client_id'] ) ) {
-			$this->settings->client_id = $_GET['client_id'];
+			$this->settings->client_id = sanitize_text_field( $_GET['client_id'] );
 		}
 		?>
 		<div class="wrap">

@@ -29,11 +29,15 @@
 /.wp-env.json export-ignore
 /composer.json export-ignore
 /composer.lock export-ignore
-/Gruntfile.js export-ignore
+/docker-compose.yml export-ignore
 /docker-compose.override.yml export-ignore
+/docker-compose.wp-env.yml export-ignore
 /grumphp.yml.dist export-ignore
 /phpcs.xml.dist export-ignore
 /phpstan.neon.dist export-ignore
 /phpunit.xml.dist export-ignore
 /package.json export-ignore
 /package-lock.json export-ignore
+/Gruntfile.js export-ignore
+/HOWTO.md export-ignore
+/README.md export-ignore
