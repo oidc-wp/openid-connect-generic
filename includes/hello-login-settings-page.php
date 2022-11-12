@@ -223,8 +223,7 @@ class Hello_Login_Settings_Page {
 			*/
 			'client_id'         => array(
 				'title'       => __( 'Client ID', 'hello-login' ),
-				'description' => __( 'The client identifier provided by Hellō and set by Quickstart. Only edit if you have created a new client at console.hello.coop.', 'hello-login' ),
-				'example'     => 'my-wordpress-client-id',
+				'description' => __( 'The client identifier provided by Hellō and set by Quickstart.', 'hello-login' ),
 				'type'        => 'text',
 				'disabled'    => defined( 'OIDC_CLIENT_ID' ),
 				'section'     => 'client_settings',
@@ -446,37 +445,52 @@ class Hello_Login_Settings_Page {
 		wp_enqueue_style( 'hello-login-admin', plugin_dir_url( __DIR__ ) . 'css/styles-admin.css', array(), Hello_Login::VERSION, 'all' );
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=hello-login-callback' );
+		$plugin_settings_uri = admin_url( '/options-general.php?page=hello-login-settings' );
 
 		if ( $this->settings->alternate_redirect_uri ) {
 			$redirect_uri = site_url( '/hello-login-callback' );
 		}
 
-		if ( isset( $_GET['client_id'] ) ) {
+		if ( isset( $_GET['client_id'] ) && empty( $this->settings->client_id ) ) {
 			$this->settings->client_id = sanitize_text_field( $_GET['client_id'] );
+			$this->settings->save();
+			$this->logger->log("Client ID set through Quickstart: " . $this->settings->client_id, 'quickstart');
 		}
 		?>
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
 
+			<?php if ( empty( $this->settings->client_id ) ) { ?>
+			<p>The Hellō Login plug-in uses the Hellō Quickstart to get you up and running in seconds.</p>
+
 			<form method="get" action="https://quickstart.hello.coop/">
-				<input type="hidden" name="response_uri" id="response_uri" value="<?php print esc_attr( get_bloginfo('url') ); ?>/wp-admin/options-general.php?page=hello-login-settings" />
+				<input type="hidden" name="response_uri" id="response_uri" value="<?php print esc_attr( $plugin_settings_uri ); ?>" />
 				<input type="hidden" name="name" id="name" value="<?php print esc_attr( get_bloginfo('name') ); ?>" />
 				<input type="hidden" name="redirect_uri" id="redirect_uri" value="<?php print esc_attr( $redirect_uri ); ?>" />
 				<input type="submit" name="hello_quickstart" id="hello_quickstart" class="hello-btn" value="ō&nbsp;&nbsp;&nbsp;Continue with Hellō Quickstart" />
 			</form>
+
+			<?php } else { ?>
+
+			<p>Use the <a href="https://console.hello.coop/" target="_blank">Hellō Console</a> to update your Hellō configuration</p>
 
 			<form method="post" action="options.php">
 				<?php
 				settings_fields( $this->settings_field_group );
 				do_settings_sections( $this->options_page_name );
 				submit_button();
-
-				// Simple debug to view settings array.
-				if ( isset( $_GET['debug'] ) ) {
-					var_dump( $this->settings->get_values() );
-				}
 				?>
 			</form>
+
+			<?php } ?>
+
+			<?php if ( isset( $_GET['debug'] ) ) { ?>
+				<h4>Debug</h4>
+				<pre>
+				<?php print esc_html( var_dump( $this->settings->get_values() ) ); ?>
+				</pre>
+			}
+			<?php } ?>
 
 			<h4><?php esc_html_e( 'Notes', 'hello-login' ); ?></h4>
 
@@ -491,29 +505,6 @@ class Hello_Login_Settings_Page {
 			<p class="description">
 				<strong><?php esc_html_e( 'Authentication URL Shortcode', 'hello-login' ); ?></strong>
 				<code>[hello_login_auth_url]</code>
-			</p>
-
-			<h4><?php esc_html_e( 'Config', 'hello-login' ); ?></h4>
-
-			<p class="description">
-				<strong><?php esc_html_e( 'Client ID', 'hello-login' ); ?></strong>
-				<code><?php print esc_html_e( $this->settings->client_id ); ?></code>
-			</p>
-			<p class="description">
-				<strong><?php esc_html_e( 'Client Secret Length', 'hello-login' ); ?></strong>
-				<code><?php print strlen( $this->settings->client_secret ); ?></code>
-			</p>
-			<p class="description">
-				<strong><?php esc_html_e( 'Authorization Endpoint', 'hello-login' ); ?></strong>
-				<code><?php print esc_url( $this->settings->endpoint_login ); ?></code>
-			</p>
-			<p class="description">
-				<strong><?php esc_html_e( 'Token Endpoint', 'hello-login' ); ?></strong>
-				<code><?php print esc_url( $this->settings->endpoint_token ); ?></code>
-			</p>
-			<p class="description">
-				<strong><?php esc_html_e( 'User Info Endpoint', 'hello-login' ); ?></strong>
-				<code><?php print esc_url( $this->settings->endpoint_userinfo ); ?></code>
 			</p>
 
 			<?php if ( $this->settings->enable_logging ) { ?>
@@ -535,11 +526,17 @@ class Hello_Login_Settings_Page {
 	 * @return void
 	 */
 	public function do_text_field( $field ) {
+		$disabled = ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true;
+
+		if ( $field['key'] == 'client_id' ) {
+			$this->logger->log( 'Setting client_id as disabled', 'quickstart');
+			$disabled = true;
+		}
 		?>
 		<input type="<?php print esc_attr( $field['type'] ); ?>"
-				<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>
+				<?php echo ( $disabled ? ' disabled' : '' ); ?>
 			  id="<?php print esc_attr( $field['key'] ); ?>"
-			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>"
+			  class="large-text<?php echo ( $disabled ? ' disabled' : '' ); ?>"
 			  name="<?php print esc_attr( $field['name'] ); ?>"
 			  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php
