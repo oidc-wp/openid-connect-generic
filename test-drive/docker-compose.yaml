@@ -1,0 +1,29 @@
+version: '3.1'
+
+services:
+
+  hello_wordpress:
+    image: wordpress
+    restart: always
+    depends_on:
+      - hello_db
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: hello_db
+      WORDPRESS_DB_USER: exampleuser
+      WORDPRESS_DB_PASSWORD: examplepass
+      WORDPRESS_DB_NAME: exampledb
+    volumes:
+      - type: bind
+        source: ./plugin
+        target: /var/www/html/wp-content/plugins/hello-login
+
+  hello_db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: exampledb
+      MYSQL_USER: exampleuser
+      MYSQL_PASSWORD: examplepass
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
