@@ -1,0 +1,10 @@
+#login-form-toggle {
+	display: block;
+	background: none;
+	border: transparent;
+	margin: 20px auto;
+}
+#login-form-toggle:hover, #login-form-toggle:focus{
+	text-decoration: underline;
+	cursor: pointer;
+}

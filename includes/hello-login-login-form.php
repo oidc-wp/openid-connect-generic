@@ -104,6 +104,9 @@ class Hello_Login_Login_Form {
 		// Login button is appended to existing messages in case of error.
 		$message .= $this->make_login_button();
 
+		// Login form toggle is appended right after the button
+		$message .= $this->make_login_form_toggle();
+
 		return $message;
 	}
 
@@ -155,6 +158,24 @@ class Hello_Login_Login_Form {
 			<button class="hello-about"></button>
 		</div>
 		<?php
+
+		return ob_get_clean();
+	}
+
+	/**
+	 * Create a toggle for the login form.
+	 *
+	 * @return string
+	 */
+	public function make_login_form_toggle() {
+		wp_enqueue_script( 'hello-username-password-form', plugin_dir_url( __DIR__ ) . 'js/scripts-login.js' );
+		wp_enqueue_style( 'hello-username-password-form', plugin_dir_url( __DIR__ ) . 'css/styles-login.css' );
+
+		ob_start();
+		?>
+		<button id="login-form-toggle" onclick="toggleLoginForm()"></button>
+		<?php
+
 		return ob_get_clean();
 	}
 
