@@ -192,7 +192,7 @@ class Hello_Login {
 		$this->upgrade();
 
 		if ( is_admin() ) {
-			Hello_Login_Settings_Page::register( $this->settings, $this->logger );
+			Hello_Login_Settings_Page::register( $this->settings, $this->client_wrapper, $this->logger );
 		}
 	}
 

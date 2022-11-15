@@ -27,6 +27,13 @@ class Hello_Login_Settings_Page {
 	private $settings;
 
 	/**
+	 * Instance of the client wrapper.
+	 *
+	 * @var Hello_Login_Client_Wrapper
+	 */
+	private $client_wrapper;
+
+	/**
 	 * Instance of the plugin logger.
 	 *
 	 * @var Hello_Login_Option_Logger
@@ -61,9 +68,10 @@ class Hello_Login_Settings_Page {
 	 * @param Hello_Login_Option_Settings $settings The plugin settings object.
 	 * @param Hello_Login_Option_Logger   $logger   The plugin logging class object.
 	 */
-	public function __construct( Hello_Login_Option_Settings $settings, Hello_Login_Option_Logger $logger ) {
+	public function __construct( Hello_Login_Option_Settings $settings, Hello_Login_Client_Wrapper $client_wrapper, Hello_Login_Option_Logger $logger ) {
 
 		$this->settings             = $settings;
+		$this->client_wrapper		= $client_wrapper;
 		$this->logger               = $logger;
 		$this->settings_field_group = $this->settings->get_option_name() . '-group';
 
@@ -87,10 +95,10 @@ class Hello_Login_Settings_Page {
 	 *
 	 * @return void
 	 */
-	public static function register( Hello_Login_Option_Settings $settings, Hello_Login_Option_Logger $logger ) {
-		$settings_page = new self( $settings, $logger );
+	public static function register( Hello_Login_Option_Settings $settings, Hello_Login_Client_Wrapper $client_wrapper, Hello_Login_Option_Logger $logger ) {
+		$settings_page = new self( $settings, $client_wrapper, $logger );
 
-		// Add our options page the the admin menu.
+		// Add our options page to the admin menu.
 		add_action( 'admin_menu', array( $settings_page, 'admin_menu' ) );
 
 		// Register our settings.
@@ -451,9 +459,11 @@ class Hello_Login_Settings_Page {
 			$redirect_uri = site_url( '/hello-login-callback' );
 		}
 
+		$show_succeeded = false;
 		if ( isset( $_GET['client_id'] ) && empty( $this->settings->client_id ) ) {
 			$this->settings->client_id = sanitize_text_field( $_GET['client_id'] );
 			$this->settings->save();
+			$show_succeeded = true;
 			$this->logger->log("Client ID set through Quickstart: " . $this->settings->client_id, 'quickstart');
 		}
 
@@ -463,6 +473,10 @@ class Hello_Login_Settings_Page {
 			$custom_logo_data = wp_get_attachment_image_src( $custom_logo_id , 'full' );
 			$custom_logo_url = $custom_logo_data[0];
 		}
+
+		$href = $this->client_wrapper->get_authentication_url();
+		$href = esc_url_raw( $href );
+
 		?>
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
@@ -480,6 +494,13 @@ class Hello_Login_Settings_Page {
 			</form>
 
 			<?php } else { ?>
+
+			<?php if ( $show_succeeded ) { ?><p id="quickstart_success">Quickstart Succeeded!</p><?php } ?>
+
+			<?php if ( empty( get_user_meta( wp_get_current_user()->ID, 'hello-login-subject-identity', true ) ) ) { ?>
+				<p id="link-hello-wallet">You are logged in with a username and a password. Link your Hellō Wallet to use Hellō in the future.</p>
+				<button class="hello-btn" data-label="ō&nbsp;&nbsp;&nbsp;Link Hellō" onclick="window.location.href = '<?php print esc_attr( $href ); ?>'"></button>
+			<?php } ?>
 
 			<p>Use the <a href="https://console.hello.coop/" target="_blank">Hellō Console</a> to update your Hellō configuration</p>
 
