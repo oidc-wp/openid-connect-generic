@@ -1,10 +1,10 @@
 === Hellō Login ===
-Contributors: mariuss
+Contributors: marius1hello
 Donate link: https://www.hello.dev/
 Tags: security, login, oauth2, openidconnect, apps, authentication, sso
 Requires at least: 4.9
 Tested up to: 6.1.0
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -45,21 +45,29 @@ Hellō supports all popular OpenID Connect claims and we are continually adding 
 
 == Changelog ==
 
+= 1.0.2 =
+
+* first release in WordPress plugin repository
+* toggle settings page content based on settings and current user state
+* collapse username / password form on login page
+* send Privacy Policy and Custom Logo URLs to Quickstart
+* add "Link Hellō" button to settings page
+
 = 1.0.1 =
 
 * WordPress plugin submission feedback
-* Improvement: @mariuss - updated "Tested Up To" to 6.1.0
-* Improvement: @mariuss - fixed input/output sanitization and generation
-* Improvement: @mariuss - removed unused global functions
-* Improvement: @mariuss - enabled user linking and redirect after login
+* Improvement: @marius1hello - updated "Tested Up To" to 6.1.0
+* Improvement: @marius1hello - fixed input/output sanitization and generation
+* Improvement: @marius1hello - removed unused global functions
+* Improvement: @marius1hello - enabled user linking and redirect after login
 
 = 1.0.0 =
 
 * Forked https://github.com/oidc-wp/openid-connect-generic
-* Improvement: @mariuss - Merged PR that adds [PKCE support](https://github.com/oidc-wp/openid-connect-generic/pull/421)
-* Feature: @mariuss - Integrated Hellō Quickstart
-* Feature: @mariuss - Removed unnecessary configuration options
-* Improvement: @mariuss - Renamed all relevant identifiers to be Hellō Login specific
+* Improvement: @marius1hello - Merged PR that adds [PKCE support](https://github.com/oidc-wp/openid-connect-generic/pull/421)
+* Feature: @marius1hello - Integrated Hellō Quickstart
+* Feature: @marius1hello - Removed unnecessary configuration options
+* Improvement: @marius1hello - Renamed all relevant identifiers to be Hellō Login specific
 
 --------
 
