@@ -456,6 +456,13 @@ class Hello_Login_Settings_Page {
 			$this->settings->save();
 			$this->logger->log("Client ID set through Quickstart: " . $this->settings->client_id, 'quickstart');
 		}
+
+		$custom_logo_url = '';
+		if ( has_custom_logo() ) {
+			$custom_logo_id = get_theme_mod( 'custom_logo' );
+			$custom_logo_data = wp_get_attachment_image_src( $custom_logo_id , 'full' );
+			$custom_logo_url = $custom_logo_data[0];
+		}
 		?>
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
@@ -466,8 +473,10 @@ class Hello_Login_Settings_Page {
 			<form method="get" action="https://quickstart.hello.coop/">
 				<input type="hidden" name="response_uri" id="response_uri" value="<?php print esc_attr( $plugin_settings_uri ); ?>" />
 				<input type="hidden" name="name" id="name" value="<?php print esc_attr( get_bloginfo('name') ); ?>" />
+				<input type="hidden" name="pp_uri" id="pp_uri" value="<?php print esc_attr( get_privacy_policy_url() ); ?>" />
+				<input type="hidden" name="image_uri" id="image_uri" value="<?php print esc_attr( $custom_logo_url ); ?>" />
 				<input type="hidden" name="redirect_uri" id="redirect_uri" value="<?php print esc_attr( $redirect_uri ); ?>" />
-				<input type="submit" name="hello_quickstart" id="hello_quickstart" class="hello-btn" value="ō&nbsp;&nbsp;&nbsp;Continue with Hellō Quickstart" />
+				<input type="submit" id="hello_quickstart" class="hello-btn" value="ō&nbsp;&nbsp;&nbsp;Continue with Hellō Quickstart" />
 			</form>
 
 			<?php } else { ?>
@@ -529,7 +538,6 @@ class Hello_Login_Settings_Page {
 		$disabled = ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true;
 
 		if ( $field['key'] == 'client_id' ) {
-			$this->logger->log( 'Setting client_id as disabled', 'quickstart');
 			$disabled = true;
 		}
 		?>

@@ -90,6 +90,20 @@ class Hello_Login {
 	const VERSION = '1.0.1';
 
 	/**
+	 * Plugin option name.
+	 *
+	 * @var string
+	 */
+	const OPTION_NAME = 'hello_login_settings';
+
+	/**
+	 * Plugin logs option name.
+	 *
+	 * @var string
+	 */
+	const LOGS_OPTION_NAME = 'hello-login-logs';
+
+	/**
 	 * Plugin settings.
 	 *
 	 * @var Hello_Login_Option_Settings
@@ -287,6 +301,16 @@ class Hello_Login {
 	}
 
 	/**
+	 * Uninstall hook.
+	 *
+	 * @return void
+	 */
+	public static function uninstall() {
+		delete_option(self::OPTION_NAME);
+		delete_option(self::LOGS_OPTION_NAME);
+	}
+
+	/**
 	 * Simple autoloader.
 	 *
 	 * @param string $class The class name.
@@ -330,7 +354,7 @@ class Hello_Login {
 		spl_autoload_register( array( 'Hello_Login', 'autoload' ) );
 
 		$settings = new Hello_Login_Option_Settings(
-			'hello_login_settings',
+			self::OPTION_NAME,
 			// Default settings values.
 			array(
 				// OAuth client settings.
@@ -367,7 +391,7 @@ class Hello_Login {
 			)
 		);
 
-		$logger = new Hello_Login_Option_Logger( 'hello-login-logs', 'error', $settings->enable_logging, $settings->log_limit );
+		$logger = new Hello_Login_Option_Logger( self::LOGS_OPTION_NAME, 'error', $settings->enable_logging, $settings->log_limit );
 
 		$plugin = new self( $settings, $logger );
 
@@ -397,6 +421,7 @@ Hello_Login::instance();
 
 register_activation_hook( __FILE__, array( 'Hello_Login', 'activation' ) );
 register_deactivation_hook( __FILE__, array( 'Hello_Login', 'deactivation' ) );
+register_uninstall_hook( __FILE__, array( 'Hello_Login', 'uninstall' ) );
 
 // Provide publicly accessible plugin helper functions.
 require_once( 'includes/functions.php' );
