@@ -485,6 +485,7 @@ class Hello_Login_Settings_Page {
 			<p>The Hellō Login plug-in uses the Hellō Quickstart to get you up and running in seconds.</p>
 
 			<form method="get" action="https://quickstart.hello.coop/">
+				<input type="hidden" name="integration" id="integration" value="wordpress" />
 				<input type="hidden" name="response_uri" id="response_uri" value="<?php print esc_attr( $plugin_settings_uri ); ?>" />
 				<input type="hidden" name="name" id="name" value="<?php print esc_attr( get_bloginfo('name') ); ?>" />
 				<input type="hidden" name="pp_uri" id="pp_uri" value="<?php print esc_attr( get_privacy_policy_url() ); ?>" />
