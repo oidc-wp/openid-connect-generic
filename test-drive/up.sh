@@ -1,8 +1,4 @@
-#!/bin/zsh
-
-# start with an empty plugin subfolder
-rm -rf plugin
-mkdir -p plugin
+#!/bin/sh
 
 # start the docker containers, plugin subfolder is bound inside WordPress container
 docker-compose up  -d

@@ -90,8 +90,9 @@ class Hello_Login_Settings_Page {
 	/**
 	 * Hook the settings page into WordPress.
 	 *
-	 * @param Hello_Login_Option_Settings $settings A plugin settings object instance.
-	 * @param Hello_Login_Option_Logger   $logger   A plugin logger object instance.
+	 * @param Hello_Login_Option_Settings $settings       A plugin settings object instance.
+	 * @param Hello_Login_Client_Wrapper  $client_wrapper A client object instance.
+	 * @param Hello_Login_Option_Logger   $logger         A plugin logger object instance.
 	 *
 	 * @return void
 	 */
@@ -103,6 +104,19 @@ class Hello_Login_Settings_Page {
 
 		// Register our settings.
 		add_action( 'admin_init', array( $settings_page, 'admin_init' ) );
+
+		// Add "Settings" to the plugin in the plugin list
+		add_filter( 'plugin_action_links_hello-login/hello-login.php', array( $settings_page, 'hello_login_settings_action' ) );
+	}
+
+	public function hello_login_settings_action( $links ) {
+		// Build and escape the URL.
+		$url = esc_url( admin_url( '/options-general.php?page=hello-login-settings' ) );
+		// Create the link.
+		$settings_link = "<a href='$url'>" . __( 'Settings' ) . '</a>';
+		// Adds the link to the beginning of the array.
+		array_unshift($links, $settings_link);
+		return $links;
 	}
 
 	/**

@@ -101,11 +101,13 @@ class Hello_Login_Login_Form {
 			$message .= $this->make_error_output( sanitize_text_field( wp_unslash( $_GET['login-error'] ) ), $error_message );
 		}
 
-		// Login button is appended to existing messages in case of error.
-		$message .= $this->make_login_button();
+		if ( ! empty( $this->settings->client_id ) ) {
+			// Login button is appended to existing messages in case of error.
+			$message .= $this->make_login_button();
 
-		// Login form toggle is appended right after the button
-		$message .= $this->make_login_form_toggle();
+			// Login form toggle is appended right after the button
+			$message .= $this->make_login_form_toggle();
+		}
 
 		return $message;
 	}
