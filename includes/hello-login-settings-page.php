@@ -111,11 +111,11 @@ class Hello_Login_Settings_Page {
 
 	public function hello_login_settings_action( $links ) {
 		// Build and escape the URL.
-		$url = esc_url( admin_url( '/options-general.php?page=hello-login-settings' ) );
+		$url = admin_url( '/options-general.php?page=hello-login-settings' );
 		// Create the link.
-		$settings_link = "<a href='$url'>" . __( 'Settings' ) . '</a>';
+		$settings_link = sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html__( 'Settings' ) );
 		// Adds the link to the beginning of the array.
-		array_unshift($links, $settings_link);
+		array_unshift( $links, $settings_link );
 		return $links;
 	}
 
