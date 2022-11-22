@@ -1,5 +1,10 @@
 # Hellō Login Changelog
 
+**1.0.4**
+
+- Feature: added "Settings" link right in plugin list
+- Fix: show "Continue with Hellō" button on login page only if the plugin is configured
+
 **1.0.3**
 
 - Feature: added `integration` parameter to Quickstart request

@@ -4,7 +4,7 @@ Donate link: https://www.hello.dev/
 Tags: security, login, oauth2, openidconnect, apps, authentication, sso
 Requires at least: 4.9
 Tested up to: 6.1.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -44,6 +44,11 @@ Hellō lets users change their provider without any effort on your part.
 Hellō supports all popular OpenID Connect claims and we are continually adding claims to Hellō. You can see the full list at [Hellō Claims](https://www.hello.dev/documentation/hello-claims.html)
 
 == Changelog ==
+
+= 1.0.4 =
+
+* Feature: added "Settings" link right in plugin list
+* Fix: show "Continue with Hellō" button on login page only if the plugin is configured
 
 = 1.0.3 =
 

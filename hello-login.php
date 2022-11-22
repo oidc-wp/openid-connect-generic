@@ -16,7 +16,7 @@
  * Plugin Name:       Hellō Login
  * Plugin URI:        https://github.com/hellocoop/wordpress
  * Description:       A login and registration plugin for the Hellō service.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Requires at least: 4.9
  * Requires PHP:      7.2
  * Author:            hellocoop
@@ -87,7 +87,7 @@ class Hello_Login {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.0.3';
+	const VERSION = '1.0.4';
 
 	/**
 	 * Plugin option name.
