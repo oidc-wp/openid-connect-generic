@@ -58,9 +58,11 @@ module.exports = function (grunt) {
 					'!node_modules/**', '!Gruntfile.js', '!package.json', '!package-lock.json', //npm/Grunt
 					'!.wordpress-org/**', //wp-org assets
 					'!dist/**', //build directory
+					'!docker-compose.*',
 					'!.git/**', //version control
 					'!.github/**', //GitHub platform files
 					'!tests/**', '!scripts/**', '!phpunit.xml', '!phpunit.xml.dist', //unit testing
+					'!test-drive/**',
 					'!vendor/**', '!composer.lock', '!composer.phar', '!composer.json', //composer
 					'!wordpress/**',
 					'!.*', '!**/*~', //hidden files
