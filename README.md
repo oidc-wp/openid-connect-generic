@@ -4,7 +4,7 @@
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, sso  
 **Requires at least:** 4.9  
 **Tested up to:** 6.1  
-**Stable tag:** 1.0.4  
+**Stable tag:** 1.0.5  
 **Requires PHP:** 7.2  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -44,6 +44,13 @@ Hellō lets users change their provider without any effort on your part.
 Hellō supports all popular OpenID Connect claims and we are continually adding claims to Hellō. You can see the full list at [Hellō Claims](https://www.hello.dev/documentation/hello-claims.html)
 
 ## Changelog ##
+
+### 1.0.5 ###
+
+* Feature: added `given_name` and `family_name` scopes as defaults
+* Fix: admin account linking done based on curren session
+* Feature: link user account on sign-in, when account is matched on email
+* Fix: map `nickname` to new username, instead of `sub`
 
 ### 1.0.4 ###
 
