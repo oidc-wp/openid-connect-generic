@@ -59,13 +59,27 @@ class Hello_Login_Client_Wrapper {
 	public $cookie_redirect_key = 'hello-login-redirect';
 
 	/**
-	 * The return error onject.
+	 * The return error object.
 	 *
 	 * @example WP_Error if there was a problem, or false if no error
 	 *
 	 * @var bool|WP_Error
 	 */
 	private $error = false;
+
+	/**
+	 * User linking error code.
+	 *
+	 * @var string
+	 */
+	const LINK_ERROR_CODE = 'user_link_error';
+
+	/**
+	 * User linking error message.
+	 *
+	 * @var string
+	 */
+	const LINK_ERROR_MESSAGE = 'User already linked to a different Hellō account.';
 
 	/**
 	 * Inject necessary objects and services into the client.
@@ -552,16 +566,47 @@ class Hello_Login_Client_Wrapper {
 		$subject_identity = $client->get_subject_identity( $id_token_claim );
 		$user = $this->get_user_by_identity( $subject_identity );
 
-		// A pre-existing IDP mapped user wasn't found.
+		$link_error = new WP_Error( self::LINK_ERROR_CODE, __( self::LINK_ERROR_MESSAGE, 'hello-login' ) );
+		$link_error->add_data( $subject_identity );
+
 		if ( ! $user ) {
-			// If linking existing users or creating new ones call the `create_new_user` method which handles both cases.
-			if ( $this->settings->link_existing_users || $this->settings->create_if_does_not_exist ) {
-				$user = $this->create_new_user( $subject_identity, $user_claim );
-				if ( is_wp_error( $user ) ) {
-					$this->error_redirect( $user );
+			// A pre-existing Hellō mapped user wasn't found.
+			if ( is_user_logged_in() ) {
+				// current user session, no user found based on 'sub'
+
+				// check if current user is already linked to a different Hellō account
+				$current_user_hello_sub = get_user_meta( get_current_user_id(), 'hello-login-subject-identity', true );
+				if ( ! empty( $current_user_hello_sub ) && $current_user_hello_sub !== $subject_identity ) {
+					$link_error->add_data( $current_user_hello_sub );
+					$link_error->add_data( get_current_user_id() );
+					$this->error_redirect( $link_error );
 				}
+
+				// link accounts
+				$user = wp_get_current_user();
+				add_user_meta( $user->ID, 'hello-login-subject-identity', (string) $subject_identity, true );
 			} else {
-				$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user.', 'hello-login' ), $user_claim ) );
+				// no current user session and no user found based on 'sub'
+
+				if ( $this->settings->link_existing_users || $this->settings->create_if_does_not_exist ) {
+					// If linking existing users or creating new ones call the `create_new_user` method which
+					// handles both cases. Linking uses email.
+					$user = $this->create_new_user( $subject_identity, $user_claim );
+					if ( is_wp_error( $user ) ) {
+						$this->error_redirect( $user );
+					}
+				} else {
+					$this->error_redirect( new WP_Error( 'identity-not-map-existing-user', __( 'User identity is not linked to an existing WordPress user.', 'hello-login' ), $user_claim ) );
+				}
+			}
+		} else {
+			// Pre-existing Hellō mapped user was found
+
+			if ( is_user_logged_in() && get_current_user_id() !== $user->ID ) {
+				$link_error->add_data( get_user_meta( get_current_user_id(), 'hello-login-subject-identity', true ) );
+				$link_error->add_data( get_current_user_id() );
+				$link_error->add_data( $user->ID );
+				$this->error_redirect( $link_error );
 			}
 		}
 
@@ -1082,6 +1127,11 @@ class Hello_Login_Client_Wrapper {
 			}
 			if ( ! empty( $uid ) ) {
 				$user = $this->update_existing_user( $uid, $subject_identity );
+
+				if ( is_wp_error( $user ) ) {
+					return $user;
+				}
+
 				do_action( 'hello-login-update-user-using-current-claim', $user, $user_claim );
 				return $user;
 			}
@@ -1150,6 +1200,16 @@ class Hello_Login_Client_Wrapper {
 	 * @return WP_Error|WP_User
 	 */
 	public function update_existing_user( $uid, $subject_identity ) {
+		$uid_hello_sub = get_user_meta( $uid, 'hello-login-subject-identity', true );
+		if ( ! empty( $uid_hello_sub ) && $uid_hello_sub !== $subject_identity ) {
+			$link_error = new WP_Error( self::LINK_ERROR_CODE, __( self::LINK_ERROR_MESSAGE, 'hello-login' ) );
+			$link_error->add_data( $subject_identity );
+			$link_error->add_data( $uid_hello_sub );
+			$link_error->add_data( $uid );
+
+			return $link_error;
+		}
+
 		// Add the OpenID Connect meta data.
 		update_user_meta( $uid, 'hello-login-subject-identity', strval( $subject_identity ) );
 
