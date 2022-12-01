@@ -5,7 +5,7 @@
 Use `docker compose` (or the older `docker-compose`) to run the containers required for local testing. The `up.sh` and
 `down.sh` are simple wrappers around `docker compose` commands that also open a browser and prune volumes.
 
-Once the continers are running use the following URLs:
+Once the containers are running use the following URLs:
 * http://localhost:8080/ - WordPress instance
 * http://localhost:8025/ - MailHog web interface
 
@@ -16,11 +16,18 @@ You can run the `install.sh` script to copy local plugin files into the docker c
 
 ## WordPress CLI
 
-Use the wp-cli.sh script to run [WordPress CLI](https://wp-cli.org/) commands.
+Use the wp-cli.sh script to run [WordPress CLI](https://wp-cli.org/) commands. Command reference at
+https://developer.wordpress.org/cli/commands/
 
-Example:
+### Examples ###
+List users:
 ```shell
 ./wp-cli.sh user list
+```
+
+Unlink user 1 from Hellō:
+```shell
+./wp-cli.sh user meta delete 1 hello-login-subject-identity
 ```
 
 ## Docker Cheat Sheet

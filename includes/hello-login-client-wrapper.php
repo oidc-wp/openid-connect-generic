@@ -174,13 +174,17 @@ class Hello_Login_Client_Wrapper {
 			return '';
 		}
 
+		// If using the login form, default redirect to the home page
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
+			return home_url();
+		}
+
+		if ( is_admin() ) {
+			return admin_url(sprintf(basename($_SERVER['REQUEST_URI'])));
+		}
+
 		// Default redirect to the homepage.
 		$redirect_url = home_url();
-
-		// If using the login form, default redirect to the admin dashboard.
-		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] ) {
-			$redirect_url = admin_url();
-		}
 
 		// Honor Core WordPress & other plugin redirects.
 		if ( isset( $_REQUEST['redirect_to'] ) ) {
