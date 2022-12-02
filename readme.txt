@@ -49,15 +49,39 @@ Documentation, configuration, and settings can be found in Settings >  Hellō Lo
 
 == Frequently Asked Questions ==
 
-= How do users login? =
+= What is Hellō? =
 
-Hellō offers users all popular social login methods including Apple, Facebook, Google, Line, Microsoft, Twitch, and Yahoo;
-email or phone; or popular crypto wallets including MetaMask. The current choices can be seen at [https://wallet.hello.coop](https://wallet.hello.coop)
-Hellō lets users change their provider without any effort on your part.
+Hellō is a cloud identity wallet that empowers users to prove who they are to any site that accepts Hellō. Learn more at
+[hello.coop](https://www.hello.coop/).
 
-= What claims can I ask for about a user? =
+= How can users login to their wallet? =
 
-Hellō supports all popular OpenID Connect claims and we are continually adding claims to Hellō. You can see the full list at [Hellō Claims](https://www.hello.dev/documentation/hello-claims.html)
+Hellō supports all popular ways to login including Apple, Facebook, GitHub, Google, Line, Microsoft, Twitch, Twitter,
+Yahoo, as well as email, phone and crypto wallets. We are adding more methods on a regular basis. See
+[hello.coop](https://www.hello.coop/) for a complete list.
+
+= Does Hellō sell user data? =
+
+No. Hellō provides sites user data only with informed consent. User data is only accessible while the user has unlocked
+their wallet by logging in with their preferred provider.
+
+= How does Hellō make money? =
+
+The Hellō business model is to charge sites a few cents for each new verified claim the user provides to a site, such as
+a phone number and in the future claims such as a professional certification.
+
+= Why is Hellō free to sites now? =
+
+While we are building out the network, we are not charging sites for verified claims and rewarding early adopters of
+Hellō with credits for bringing users to Hellō.
+
+= How can I change the image for my site? =
+
+You can update your site configuration at [console.hello.coop](https://console.hello.coop/).
+
+= Where do I submit feature requests or bugs? =
+
+Please submit to [https://github.com/hellocoop/wordpress/issues](https://github.com/hellocoop/wordpress/issues)
 
 == Changelog ==
 
