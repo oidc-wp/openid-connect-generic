@@ -40,9 +40,21 @@ Much of the documentation can be found on the Settings > Hellō Login dashboard 
 
 ## Installation
 
-1. Upload to the `/wp-content/plugins/` directory
-1. Activate the plugin
-1. Visit Settings > Hellō Login and configure to meet your needs
+### Automatic Installation
+
+1. Search for “hello openid” through 'Plugins > Add New' interface.
+1. Find the plugin box of Hellō Login and click on the **Install Now** button.
+1. Activate the Hellō Login plugin, then click **Settings**.
+1. Click the **Quickstart** button and complete the Quickstart flow.
+1. Once back at the Hellō Login Settings page, link your admin account with your Hellō Wallet.
+
+### Manual Installation
+
+1. Download [Hellō Login](https://downloads.wordpress.org/plugin/hello-login.zip).
+1. Upload Hellō Login through 'Plugins > Add New > Upload' interface or upload hello-login folder to the `/wp-content/plugins/` directory.
+1. Activate the Hellō Login plugin, then click **Settings**.
+1. Click the **Quickstart** button and complete the Quickstart flow.
+1. Once back at the Hellō Login Settings page, link your admin account with your Hellō Wallet.
 
 ### Composer
 
