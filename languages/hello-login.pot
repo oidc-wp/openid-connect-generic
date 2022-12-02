@@ -505,7 +505,9 @@ msgid "https://github.com/hellocoop/wordpress"
 msgstr ""
 
 #. Description of the plugin/theme
-msgid "A login and registration plugin for the Hellō service."
+msgid ""
+"Free and simple plugin provides registration and login with the Hellō Wallet. Users choose from popular social login, "
+"email, or crypto wallet. Setup in 7 clicks, not 7 hours."
 msgstr ""
 
 #. Author of the plugin/theme

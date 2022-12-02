@@ -9,7 +9,8 @@ Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-A login and registration plugin for the Hellō service.
+Free and simple plugin provides registration and login with the Hellō Wallet. Users choose from popular social login,
+email, or crypto wallet. Setup in 7 clicks, not 7 hours.
 
 == Description ==
 
