@@ -83,6 +83,11 @@ You can update your site configuration at [console.hello.coop](https://console.h
 
 Please submit to [https://github.com/hellocoop/wordpress/issues](https://github.com/hellocoop/wordpress/issues)
 
+== Screenshots ==
+
+1. The `/wp-login.php` page with Hellō Login.
+2. The Hellō Wallet login choices offered.
+
 == Changelog ==
 
 = 1.0.5 =
