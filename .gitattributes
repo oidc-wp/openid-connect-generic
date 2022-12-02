@@ -14,6 +14,7 @@
 /.devcontainer export-ignore
 /.github export-ignore
 /.wordpress-org export-ignore
+/assets export-ignore
 /scripts export-ignore
 /tests export-ignore
 /tools export-ignore
