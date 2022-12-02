@@ -14,16 +14,20 @@ email, or crypto wallet. Setup in 7 clicks, not 7 hours.
 
 ## Description ##
 
-This plugin integrates the Hellō service with your site, simplifying login and registration of users.
-You can request name, nickname, profile picture, as well as a verified email, phone, or ethereum address.
+Provide your users a registration and login using their choice of popular social login, email, or even a crypto wallet.
+No need for you to configure your application at each provider or pay for a premium plugin.
 
-This plugin uses the Hellō Quickstart service to get your site up and running in minutes.
+Hellō Login verifies your users' email addresses so you don't have to. No longer do they have to manage another username
+and password to use your site.
 
-Configuration and settings can be found in the Settings > Hellō Login dashboard page
+Hellō is a cloud identity wallet cooperatively operated with a mission to empower users to control their identity. Learn
+more at [hello.coop](https://www.hello.coop/).
 
-For details on the Hellō service see [hello.dev](https://hello.dev)
+* Hellō Login installs with Hellō Quickstart to get you up and running in minutes.
+* Users control their identity with their Hellō Wallet. No need for you to manage how they login.
+* Hellō Login is free for users and early adopting sites. See [hello.coop](https://www.hello.coop/) for details.
 
-Please submit issues and feature requests to the Github repo: [https://github.com/hellocoop/wordpress](https://github.com/hellocoop/wordpress)
+Documentation, configuration, and settings can be found in Settings >  Hellō Login
 
 ## Installation ##
 
