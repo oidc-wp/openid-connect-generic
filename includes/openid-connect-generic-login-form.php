@@ -42,6 +42,37 @@ class OpenID_Connect_Generic_Login_Form {
 	public function __construct( $settings, $client_wrapper ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
+		add_action( 'login_form', array( $this, 'make_login_button' ) );
+	}
+
+	/**
+	 * Create a login button (link).
+	 *
+	 * @param array $atts Array of optional attributes to override login buton
+	 * functionality when used by shortcode.
+	 *
+	 * @return void
+	 */
+	public function make_login_button( $atts = array() ) {
+		$atts = shortcode_atts(
+			array(
+				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
+			),
+			$atts,
+			'openid_connect_generic_login_button'
+		);
+
+		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
+		$text = esc_html( $text );
+
+		$href = $this->client_wrapper->get_authentication_url( $atts );
+		$href = esc_url_raw( $href );
+
+		echo <<<HTML
+<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center; display: grid;">
+	<a class="button button-large" href="{$href}">{$text}</a>
+</div>
+HTML;
 	}
 
 	/**
@@ -57,9 +88,6 @@ class OpenID_Connect_Generic_Login_Form {
 
 		// Alter the login form as dictated by settings.
 		add_filter( 'login_message', array( $login_form, 'handle_login_page' ), 99 );
-
-		// Add a shortcode for the login button.
-		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
 
 		$login_form->handle_redirect_login_type_auto();
 	}
@@ -101,9 +129,6 @@ class OpenID_Connect_Generic_Login_Form {
 			$message .= $this->make_error_output( sanitize_text_field( wp_unslash( $_GET['login-error'] ) ), $error_message );
 		}
 
-		// Login button is appended to existing messages in case of error.
-		$message .= $this->make_login_button();
-
 		return $message;
 	}
 
@@ -125,40 +150,6 @@ class OpenID_Connect_Generic_Login_Form {
 		</div>
 		<?php
 		return wp_kses_post( ob_get_clean() );
-	}
-
-	/**
-	 * Create a login button (link).
-	 *
-	 * @param array $atts Array of optional attributes to override login buton
-	 * functionality when used by shortcode.
-	 *
-	 * @return string
-	 */
-	public function make_login_button( $atts = array() ) {
-
-		$atts = shortcode_atts(
-			array(
-				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
-			),
-			$atts,
-			'openid_connect_generic_login_button'
-		);
-
-		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
-		$text = esc_html( $text );
-
-		$href = $this->client_wrapper->get_authentication_url( $atts );
-		$href = esc_url_raw( $href );
-
-		$login_button = <<<HTML
-<div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
-	<a class="button button-large" href="{$href}">{$text}</a>
-</div>
-HTML;
-
-		return $login_button;
-
 	}
 
 	/**
