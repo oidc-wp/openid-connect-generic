@@ -31,6 +31,7 @@ nbproject
 *.sublime-workspace
 .idea
 clover.xml
+.vscode/launch.json
 
 # Dreamweaver added files
 _notes
