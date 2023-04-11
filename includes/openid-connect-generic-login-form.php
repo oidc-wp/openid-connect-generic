@@ -116,7 +116,7 @@ class OpenID_Connect_Generic_Login_Form {
 	public function handle_wp_login_and_signup() {
 
 		if ( $this->settings->disable_wp_login_and_signup ) {
-			// Login functionality (login, signup, password reset) may be implemented on only page, not only wp-login.php;
+			// Login functionality (login, signup, password reset) may be implemented on any page, not only wp-login.php;
 			// therefore, listen for these hooks globally.
 			add_filter( 'authenticate', array( $this, 'disable_authenticate' ), 99, 3 );
 			add_filter( 'lostpassword_errors', array( $this, 'disable_lostpassword' ), 99, 2 );
