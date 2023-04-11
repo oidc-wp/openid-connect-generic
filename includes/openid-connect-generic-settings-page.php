@@ -368,6 +368,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ),
 				'section'     => 'user_settings',
 			),
+			'disable_wp_login_and_signup'   => array(
+				'title'       => __( 'Disable WordPress login and signup forms', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If checked, built-in forms for login and registration (wp-login.php) will be disabled. It will be possible to login only via the configured Identity Provider.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_DISABLE_WP_LOGIN_AND_SIGNUP' ),
+				'section'     => 'user_settings',
+			),
 			'redirect_user_back'   => array(
 				'title'       => __( 'Redirect Back to Origin Page', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'After a successful OpenID Connect authentication, this will redirect the user back to the page on which they clicked the OpenID Connect login button. This will cause the login process to proceed in a traditional WordPress fashion. For example, users logging in through the default wp-login.php page would end up on the WordPress Dashboard and users logging in through the WooCommerce "My Account" page would end up on their account page.', 'daggerhart-openid-connect-generic' ),

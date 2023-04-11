@@ -363,6 +363,7 @@ class OpenID_Connect_Generic {
 				'token_refresh_enable' => 1,
 				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
+				'disable_wp_login_and_signup' => defined( 'OIDC_DISABLE_WP_LOGIN_AND_SIGNUP' ) ? intval( OIDC_DISABLE_WP_LOGIN_AND_SIGNUP ) : 0,
 				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
 				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
 				'enable_logging'  => 0,
