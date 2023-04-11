@@ -87,6 +87,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - Enforce privacy: `OIDC_ENFORCE_PRIVACY` (boolean)
 - Create user if they do not exist: `OIDC_CREATE_IF_DOES_NOT_EXIST` (boolean)
 - Link existing user: `OIDC_LINK_EXISTING_USERS` (boolean)
+- Disable WordPress login and signup forms: `OIDC_DISABLE_WP_LOGIN_AND_SIGNUP` (boolean)
 - Redirect user back to origin page: `OIDC_REDIRECT_USER_BACK` (boolean)
 - Redirect on logout: `OIDC_REDIRECT_ON_LOGOUT` (boolean)
 
