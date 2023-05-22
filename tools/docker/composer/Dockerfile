@@ -1,5 +1,5 @@
 # Start with the official PHP CLI image.
-FROM php:7.4-cli
+FROM php:8.0-cli
 
 # Increase the memory limit to allow for large processes, such as PHPStan.
 RUN cd /usr/local/etc/php/conf.d/ && \
