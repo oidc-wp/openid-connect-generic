@@ -243,8 +243,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			rawurlencode( $atts['acr_values'] )
 		);
 
-		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
-		return apply_filters( 'openid-connect-generic-auth-url', $url );
+		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
+		$this->logger->log( $url, 'make_authentication_url' );
+		return $url;
 	}
 
 	/**
