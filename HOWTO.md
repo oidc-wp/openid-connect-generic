@@ -225,7 +225,7 @@ Provides 2 arguments: the `$user_data` array that will be sent to `wp_insert_use
 server.
 
 ```
-add_filter('openid-connect-generic-alter-user-claim', function( $user_data, $user_claim ) {
+add_filter('openid-connect-generic-alter-user-data', function( $user_data, $user_claim ) {
     // Don't register any user with their real email address. Create a fake internal address.
     if ( !empty( $user_data['user_email'] ) ) {
         $email_array = explode( '@', $user_data['user_email'] );
