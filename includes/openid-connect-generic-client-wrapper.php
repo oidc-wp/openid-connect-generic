@@ -108,6 +108,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 */
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
+			add_action( 'openid-connect-generic-update-user-using-current-claim', array( $client_wrapper, 'update_existing_user_data' ), 99, 2);
 		}
 
 		if ( $settings->alternate_redirect_uri ) {
@@ -1132,5 +1133,23 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Return our updated user.
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * After a successful login of an existing user, update changed user data
+	 *
+	 * @param WP_USER $user       The existing wordpress user
+	 * @param array $user_claim   The claim which contains the changed user data
+	 */
+	public function update_existing_user_data($user, $user_claim) {
+		$user->data->first_name = isset( $user_claim['given_name'] ) ? $user_claim['given_name'] : '';;
+		$user->data->last_name = isset( $user_claim['family_name'] ) ? $user_claim['family_name'] : '';
+		$user->data->user_email = isset( $user_claim['email'] ) ? $user_claim['email'] : '';
+
+		$id = $user->data->ID;
+		$user_name = $user->data->user_login;
+
+		wp_update_user($user);
+		$this->logger->log( "User updated: " . $user_name . " (" . $id . ")", "update_existing_user_data" );
 	}
 }
