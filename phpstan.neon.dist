@@ -3,7 +3,7 @@
 
 includes:
   # @see https://github.com/phpstan/phpstan-src/blob/master/conf/bleedingEdge.neon
-  - phar://phpstan.phar/conf/bleedingEdge.neon
+  # - phar://phpstan.phar/conf/bleedingEdge.neon
   # Include this extension
   # - vendor/szepeviktor/phpstan-wordpress/extension.neon
 parameters:

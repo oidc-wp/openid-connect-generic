@@ -84,7 +84,6 @@ class OpenID_Connect_Generic_Login_Form {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
-
 	}
 
 	/**
@@ -158,7 +157,6 @@ class OpenID_Connect_Generic_Login_Form {
 HTML;
 
 		return $login_button;
-
 	}
 
 	/**
@@ -177,5 +175,4 @@ HTML;
 		</script>
 		<?php
 	}
-
 }
