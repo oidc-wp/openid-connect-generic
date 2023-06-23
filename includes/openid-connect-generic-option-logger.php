@@ -5,7 +5,7 @@
  * @package   OpenID_Connect_Generic
  * @category  Logging
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
@@ -146,7 +146,9 @@ class OpenID_Connect_Generic_Option_Logger {
 			$this->logs = get_option( $this->option_name, array() );
 		}
 
-		return $this->logs;
+		// Call the upkeep_logs function to give the appearance that logs have been reduced to the $this->log_limit.
+		// The logs are actually limited during a logging action but the logger isn't available during a simple settings update.
+		return $this->upkeep_logs( $this->logs );
 	}
 
 	/**
@@ -204,7 +206,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 		if ( $items_to_remove > 0 ) {
 			// Only keep the last $log_limit messages from the end.
-			$logs = array_slice( $logs, ( $items_to_remove * -1 ) );
+			$logs = array_slice( $logs, $items_to_remove );
 		}
 
 		return $logs;
