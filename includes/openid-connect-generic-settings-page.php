@@ -5,7 +5,7 @@
  * @package   OpenID_Connect_Generic
  * @category  Settings
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
@@ -386,18 +386,19 @@ class OpenID_Connect_Generic_Settings_Page {
 				'title'       => __( 'Enable Logging', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Very simple log messages for debugging purposes.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_ENABLE_LOGGING' ),
 				'section'     => 'log_settings',
 			),
 			'log_limit'         => array(
 				'title'       => __( 'Log Limit', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Number of items to keep in the log. These logs are stored as an option in the database, so space is limited.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'number',
+				'disabled'    => defined( 'OIDC_LOG_LIMIT' ),
 				'section'     => 'log_settings',
 			),
 		);
 
 		return apply_filters( 'openid-connect-generic-settings-fields', $fields );
-
 	}
 
 	/**
@@ -488,11 +489,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_text_field( $field ) {
 		?>
 		<input type="<?php print esc_attr( $field['type'] ); ?>"
-				<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>
-			  id="<?php print esc_attr( $field['key'] ); ?>"
-			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>"
-			  name="<?php print esc_attr( $field['name'] ); ?>"
-			  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
+			id="<?php print esc_attr( $field['key'] ); ?>"
+			class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>"
+			name="<?php print esc_attr( $field['name'] ); ?>"
+			<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>
+			value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
 		<?php
 		$this->do_field_description( $field );
 	}
@@ -506,11 +507,16 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function do_checkbox( $field ) {
+		$hidden_value = 0;
+		if ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) {
+			$hidden_value = intval( $this->settings->{ $field['key'] } );
+		}
 		?>
-		<input type="hidden" name="<?php print esc_attr( $field['name'] ); ?>" value="0">
+		<input type="hidden" name="<?php print esc_attr( $field['name'] ); ?>" value="<?php print esc_attr( strval( $hidden_value ) ); ?>">
 		<input type="checkbox"
 			   id="<?php print esc_attr( $field['key'] ); ?>"
-			   name="<?php print esc_attr( $field['name'] ); ?>"
+				 name="<?php print esc_attr( $field['name'] ); ?>"
+				 <?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled="disabled"' : ''; ?>
 			   value="1"
 			<?php checked( $this->settings->{ $field['key'] }, 1 ); ?>>
 		<?php
@@ -527,7 +533,11 @@ class OpenID_Connect_Generic_Settings_Page {
 	public function do_select( $field ) {
 		$current_value = isset( $this->settings->{ $field['key'] } ) ? $this->settings->{ $field['key'] } : '';
 		?>
-		<select name="<?php print esc_attr( $field['name'] ); ?>">
+		<select
+			id="<?php print esc_attr( $field['key'] ); ?>"
+			name="<?php print esc_attr( $field['name'] ); ?>"
+			<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>
+			>
 			<?php foreach ( $field['options'] as $value => $text ) : ?>
 				<option value="<?php print esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php print esc_html( $text ); ?></option>
 			<?php endforeach; ?>

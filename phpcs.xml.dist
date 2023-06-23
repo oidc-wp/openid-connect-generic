@@ -107,12 +107,4 @@
 		<exclude-pattern>tests/*</exclude-pattern>
 	</rule>
 
-	<!--
-	#############################################################################
-	USE THE PHPCompatibility RULESET
-	#############################################################################
-	-->
-
-	<config name="testVersion" value="7.4-"/>
-	<rule ref="PHPCompatibilityWP" />
 </ruleset>

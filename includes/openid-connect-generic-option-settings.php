@@ -5,7 +5,7 @@
  * @package   OpenID_Connect_Generic
  * @category  Settings
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
@@ -101,6 +101,8 @@ class OpenID_Connect_Generic_Option_Settings {
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
 		'acr_values'                => 'OIDC_ACR_VALUES',
+		'enable_logging'            => 'OIDC_ENABLE_LOGGING',
+		'log_limit'                 => 'OIDC_LOG_LIMIT',
 	);
 
 	/**
@@ -211,6 +213,5 @@ class OpenID_Connect_Generic_Option_Settings {
 		}
 
 		update_option( $this->option_name, $this->values );
-
 	}
 }

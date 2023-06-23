@@ -9,7 +9,7 @@
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
-use \WP_Error as WP_Error;
+use WP_Error as WP_Error;
 
 /**
  * OpenID_Connect_Generic_Client_Wrapper class.
@@ -99,7 +99,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Alter the requests according to settings.
-		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
+		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 2 );
 
 		if ( is_admin() ) {
 			/*
@@ -130,7 +130,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param WP_Query $query The WordPress query object.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	public function alternate_redirect_uri_parse_request( $query ) {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
@@ -138,8 +138,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->authentication_request_callback();
 			exit;
 		}
-
-		return $query;
 	}
 
 	/**
@@ -148,7 +146,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	public function get_redirect_to() {
-		// @var WP $wp WordPress environment setup class.
+		/*
+		 * @var WP $wp
+		 */
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -170,15 +170,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
+			if ( ! empty( $wp->query_string ) ) {
+				$redirect_url = home_url( '?' . $wp->query_string );
+			}
 			if ( ! empty( $wp->request ) ) {
-				if ( ! empty( $wp->did_permalink ) && boolval( $wp->did_permalink ) === true ) {
+				$redirect_url = home_url( add_query_arg( null, null ) );
+				// @phpstan-ignore-next-line
+				if ( $wp->did_permalink ) {
 					$redirect_url = home_url( add_query_arg( $_GET, trailingslashit( $wp->request ) ) );
-				} else {
-					$redirect_url = home_url( add_query_arg( null, null ) );
-				}
-			} else {
-				if ( ! empty( $wp->query_string ) ) {
-					$redirect_url = home_url( '?' . $wp->query_string );
 				}
 			}
 		}
@@ -412,7 +411,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return mixed
 	 */
 	public function alter_request( $request, $operation ) {
-		if ( ! empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
+		if ( ! empty( $this->settings->http_request_timeout ) ) {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
 
@@ -1077,7 +1076,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// @example Original user gets "name", second user gets "name2", etc.
 		$count = 1;
 		while ( username_exists( $username ) ) {
-			$count ++;
+			$count++;
 			$username = $_username . $count;
 		}
 

@@ -8,17 +8,17 @@
  * @package   OpenID_Connect_Generic
  * @category  General
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  * @link      https://github.com/daggerhart
  *
  * @wordpress-plugin
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
- * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
+ * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
  * Version:           3.9.1
- * Requires at least: 4.9
- * Requires PHP:      7.2
+ * Requires at least: 5.0
+ * Requires PHP:      7.4
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -313,7 +313,7 @@ class OpenID_Connect_Generic {
 			$filename  = str_replace( '\\', DIRECTORY_SEPARATOR, $filename );
 		}
 
-		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
+		$filepath = __DIR__ . '/includes/' . $filename;
 
 		if ( file_exists( $filepath ) ) {
 			require_once $filepath;
@@ -365,8 +365,8 @@ class OpenID_Connect_Generic {
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
 				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
 				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
-				'enable_logging'  => 0,
-				'log_limit'       => 1000,
+				'enable_logging'  => defined( 'OIDC_ENABLE_LOGGING' ) ? intval( OIDC_ENABLE_LOGGING ) : 0,
+				'log_limit'       => defined( 'OIDC_LOG_LIMIT' ) ? intval( OIDC_LOG_LIMIT ) : 1000,
 			)
 		);
 
@@ -402,4 +402,4 @@ register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
 
 // Provide publicly accessible plugin helper functions.
-require_once( 'includes/functions.php' );
+require_once 'includes/functions.php';

@@ -10,6 +10,9 @@
  * @link      https://github.com/daggerhart
  */
 
+// Define whether running under WP-CLI.
+defined( 'WP_CLI' ) || define( 'WP_CLI', false );
+
 // Define WordPress language directory.
 defined( 'WP_LANG_DIR' ) || define( 'WP_LANG_DIR', 'wordpress/src/wp-includes/languages/' );
 
@@ -30,3 +33,6 @@ defined( 'OIDC_ENFORCE_PRIVACY' ) || define( 'OIDC_ENFORCE_PRIVACY', 0 );
 defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) || define( 'OIDC_CREATE_IF_DOES_NOT_EXIST', 1 );
 defined( 'OIDC_REDIRECT_USER_BACK' ) || define( 'OIDC_REDIRECT_USER_BACK', 0 );
 defined( 'OIDC_REDIRECT_ON_LOGOUT' ) || define( 'OIDC_REDIRECT_ON_LOGOUT', 1 );
+defined( 'OIDC_ACR_VALUES' ) || define( 'OIDC_ACR_VALUES', '' );
+defined( 'OIDC_ENABLE_LOGGING' ) || define( 'OIDC_ENABLE_LOGGING', 0 );
+defined( 'OIDC_LOG_LIMIT' ) || define( 'OIDC_LOG_LIMIT', 1000 );
