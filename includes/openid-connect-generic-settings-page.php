@@ -342,6 +342,12 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
+			'require_prompt'  => array(
+				'title'       => __( 'Require Prompt', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'If checked, the IdP will always show the login prompt, regardless of whether the user used Remember Me.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
 			'state_time_limit'     => array(
 				'title'       => __( 'State time limit', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'State valid time in seconds. Defaults to 180', 'daggerhart-openid-connect-generic' ),

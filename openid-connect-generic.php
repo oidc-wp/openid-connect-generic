@@ -356,6 +356,7 @@ class OpenID_Connect_Generic {
 				'email_format'       => '{email}',
 				'displayname_format' => '',
 				'identify_with_username' => false,
+				'require_prompt' => false,
 
 				// Plugin settings.
 				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,

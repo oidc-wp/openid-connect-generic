@@ -211,6 +211,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				'redirect_uri' => $this->client->get_redirect_uri(),
 				'redirect_to' => $this->get_redirect_to(),
 				'acr_values' => $this->settings->acr_values,
+				'prompt' => $this->settings->require_prompt ? 'login' : '',
 			),
 			$atts,
 			'openid_connect_generic_auth_url'
@@ -230,6 +231,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( ! empty( $atts['acr_values'] ) ) {
 			$url_format .= '&acr_values=%7$s';
 		}
+		if ( ! empty( $atts['prompt'] ) ) {
+			$url_format .= '&prompt=%8$s';
+		}
 
 		$url = sprintf(
 			$url_format,
@@ -239,7 +243,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			rawurlencode( $atts['client_id'] ),
 			$this->client->new_state( $atts['redirect_to'] ),
 			rawurlencode( $atts['redirect_uri'] ),
-			rawurlencode( $atts['acr_values'] )
+			rawurlencode( $atts['acr_values'] ),
+			rawurlencode( $atts['prompt'] )
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );

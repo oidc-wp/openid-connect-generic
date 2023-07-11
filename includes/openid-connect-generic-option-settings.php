@@ -44,6 +44,7 @@
  * @property string $email_format           The key(s) in the user claim array to formulate the user's email address.
  * @property string $displayname_format     The key(s) in the user claim array to formulate the user's display name.
  * @property bool   $identify_with_username The flag which indicates how the user's identity will be determined.
+ * @property bool   $require_prompt			The flag which tells the IdP to show the login prompt every time.
  * @property int    $state_time_limit       The valid time limit of the state, in seconds. Defaults to 180 seconds.
  *
  * Plugin Settings:
