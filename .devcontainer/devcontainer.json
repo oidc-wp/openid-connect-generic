@@ -1,29 +1,57 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.192.0/containers/docker-in-docker
+// For format details, https://containers.dev/implementors/json_reference/.
 {
-	"name": "Docker in Docker",
-	"dockerFile": "Dockerfile",
-	"runArgs": ["--init", "--privileged"],
-	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
-	"overrideCommand": false,
+  "name": "WordPress Development Environment",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "app",
+  "mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": {},
+  "customizations": {
+    "vscode": {
+      // Set *default* container specific settings.json values on container create.
+      "settings": {},
 
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"ms-azuretools.vscode-docker"
-	],
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": ["ms-azuretools.vscode-docker"]
+    }
+  },
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  "features": {
+    "./local-features/welcome-message": "latest"
+  },
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm run setup",
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [8080, 8081, 8026, 3306],
 
-	// Use 'postStartCommand' to run commands after the container has started.
-	"postStartCommand": "npm start -- --update",
+  // Maps a port number, "host:port" value, range, or regular expression to a set of default options. See port attributes for available options
+  "portsAttributes": {
+    "8080": {
+      "label": "WordPress Development/Testing Site"
+    },
+    "8081": {
+      "label": "phpMyAdmin"
+    },
+    "8026": {
+      "label": "MailHog"
+    },
+    "3306": {
+      "label": "MariaDB"
+    }
+  },
 
-	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+  // Use `onCreateCommand` to run commands as part of the container creation.
+  //"onCreateCommand": "chmod +x .devcontainer/install.sh && .devcontainer/install.sh",
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh",
+
+  // Use 'postStartCommand' to run commands after the container has started.
+  "postStartCommand": "cd /app && wp plugin activate daggerhart-openid-connect-generic",
+
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "wp_php",
+
+  // A set of name-value pairs that sets or overrides environment variables for the devcontainer.json supporting service / tool (or sub-processes like terminals) but not the container as a whole.
+  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}" }
 }

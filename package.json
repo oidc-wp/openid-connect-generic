@@ -1,87 +1,64 @@
 {
-	"name": "openid-connect-generic",
-	"version": "3.9.1",
-	"description": "OpenID Connect generic WordPress plugin.",
-	"main": "Gruntfile.js",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/daggerhart/openid-connect-generic"
-	},
-	"keywords": [
-		"wordpress",
-		"openid"
-	],
-	"author": "Jonathan Daggerhart",
-	"license": "GPL-2.0-only",
-	"bugs": {
-		"url": "https://github.com/daggerhart/openid-connect-generic/issues"
-	},
-	"homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
-	"dependencies": {
-		"dev-require": "^0.1.0"
-	},
-	"engines": {
-		"node": "14.18.3",
-		"npm": "6.14.15"
-	},
-	"devDependencies": {
-		"@floatwork/grunt-po2mo": "^0.3.0",
-		"@ndigitals/grunt-checkrepo": "0.2.3",
-		"@wordpress/env": "7.0.0",
-		"@wordpress/scripts": "22.2.1",
-		"check-node-version": "~4.1.0",
-		"grunt": "1.5.3",
-		"grunt-checkbranch": "^1.0.4",
-		"grunt-checktextdomain": "^1.0.1",
-		"grunt-cli": "1.4.1",
-		"grunt-contrib-clean": "^2.0.0",
-		"grunt-contrib-copy": "^1.0.0",
-		"grunt-gitinfo": "^0.1.9",
-		"grunt-shell": "^2.1.0",
-		"grunt-version": "3.0.0",
-		"grunt-wp-i18n": "^1.0.3",
-		"grunt-wp-readme-to-markdown": "2.1.0",
-		"load-grunt-tasks": "^3.5",
-		"node": "14.18.3",
-		"npm": "9.6.7",
-		"puppeteer": "^1.20.0",
-		"typescript": "3.9.10"
-	},
-	"resolutions": {
-		"getobject": "1.0.0",
-		"shelljs": "0.8.5"
-	},
-	"wp-env": {
-		"plugin-dir": "daggerhart-openid-connect-generic",
-		"plugin-name": "OpenID Connect Generic",
-		"docker-template": "./docker-compose.wp-env.yml",
-		"welcome-build-command": "npm start"
-	},
-	"scripts": {
-		"preinstall": "npx force-resolutions",
-		"setup:composer": "docker-compose run composer install",
-		"composer": "docker-compose run composer",
-		"build": "npm run grunt build",
-		"release": "npm run grunt release",
-		"start": "wp-env start",
-		"stop": "wp-env stop",
-		"restart": "npm run wp-env stop && npm run wp-env start",
-		"grunt": "node_modules/.bin/grunt",
-		"version": "npm run grunt version",
-		"version:bump": "npm version --no-git-tag-version",
-		"check:engines": "wp-scripts check-engines",
-		"check:licenses": "wp-scripts check-licenses",
-		"wp-env": "wp-env",
-		"wp": "wp-env run cli wp",
-		"wp:tests": "wp-env run tests-cli wp",
-		"test": "npm run grunt test",
-		"i18n:check": "npm run grunt checktextdomain",
-		"i18n:make": "npm run grunt i18n",
-		"i18n:make:cli": "wp-env run cli wp i18n make-pot . languages/ --slug=daggerhart-openid-connect-generic --include=openid-connect-generic.php,includes",
-		"lint": "npm run lint:php",
-		"lint:php": "docker-compose run composer lint",
-		"lint:php:fix": "docker-compose run composer lint-fix",
-		"analyze": "npm run analyze:php",
-		"analyze:php": "docker-compose run composer analyze"
-	}
+  "name": "openid-connect-generic",
+  "version": "3.9.1",
+  "description": "OpenID Connect generic WordPress plugin.",
+  "main": "Gruntfile.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daggerhart/openid-connect-generic"
+  },
+  "keywords": [
+    "wordpress",
+    "openid"
+  ],
+  "author": "Jonathan Daggerhart",
+  "license": "GPL-2.0-only",
+  "bugs": {
+    "url": "https://github.com/daggerhart/openid-connect-generic/issues"
+  },
+  "homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
+  "dependencies": {
+    "dev-require": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=14.0.0 <18",
+    "npm": ">=6.0.0 <9"
+  },
+  "devDependencies": {
+    "@floatwork/grunt-po2mo": "^0.4.1",
+    "@ndigitals/grunt-checkrepo": "^0.2.5",
+    "@wordpress/scripts": "^26.16.0",
+    "check-node-version": "^4.2.1",
+    "grunt": "~1.5.3",
+    "grunt-checkbranch": "^1.0.4",
+    "grunt-checktextdomain": "^1.0.1",
+    "grunt-cli": "^1.4.3",
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-gitinfo": "^0.1.9",
+    "grunt-shell": "^4.0.0",
+    "grunt-version": "^3.0.1",
+    "grunt-wp-i18n": "^1.0.3",
+    "grunt-wp-readme-to-markdown": "^2.1.0",
+    "load-grunt-tasks": "^3.5.2",
+    "puppeteer": "^1.20.0",
+    "typescript": "^3.9.10"
+  },
+  "resolutions": {
+    "getobject": "^1.0.0",
+    "shelljs": "^0.8.5"
+  },
+  "scripts": {
+    "preinstall": "npx force-resolutions --yes",
+    "build": "npm run grunt build",
+    "release": "npm run grunt release",
+    "grunt": "node_modules/.bin/grunt",
+    "version": "npm run grunt version",
+    "version:bump": "npm version --no-git-tag-version",
+    "check:engines": "wp-scripts check-engines",
+    "check:licenses": "wp-scripts check-licenses",
+    "test": "npm run grunt test",
+    "i18n:check": "npm run grunt checktextdomain",
+    "i18n:make": "npm run grunt i18n"
+  }
 }

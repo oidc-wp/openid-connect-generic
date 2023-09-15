@@ -87,7 +87,7 @@ module.exports = function (grunt) {
 				options: {
 					updateDomains: true
 				},
-				src: ['*.php', '**/*.php', '!node_modules/**', '!tests/**', '!scripts/**', '!vendor/**', '!wordpress/**']
+				src: ['*.php', '**/*.php', '!node_modules/**', '!tests/**', '!tools/**', '!scripts/**', '!vendor/**', '!wp/**']
 			},
 		},
 
@@ -111,7 +111,7 @@ module.exports = function (grunt) {
 						'.github/.*',							//GitHub platform
 						'tests/.*', 'scripts/.*',	//unit testing
 						'vendor/.*', 							//composer
-						'wordpress/.*',
+						'tools/.*'
 					],                                // List of files or directories to ignore.
 					mainFile: 'openid-connect-generic.php',                     // Main project file.
 					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
@@ -171,7 +171,7 @@ module.exports = function (grunt) {
 					'!dist/**',
 					'!tests/**',
 					'!vendor/**',
-					'!wordpress/**',
+					'!tools/**',
 					'!*~',
 				],
 				expand: true,
@@ -208,8 +208,8 @@ module.exports = function (grunt) {
 	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain', 'phpcs']);
-	grunt.registerTask('build', ['gitinfo', 'test', 'i18n', 'readme']);
+	grunt.registerTask('test', ['checktextdomain', 'phpunit']);
+	grunt.registerTask('build', ['gitinfo', 'i18n', 'readme']);
 	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
 
 };
