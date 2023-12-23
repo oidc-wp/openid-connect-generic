@@ -7,8 +7,8 @@ on:
       - 'release/**'
 
 env:
-  COMPOSER_VERSION: '2.2'
-  ACTION_VERSION: 2
+  COMPOSER_VERSION: '2.6'
+  ACTION_VERSION: 3
 
 jobs:
   matrix_unit_testing:
