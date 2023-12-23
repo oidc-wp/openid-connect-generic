@@ -24,7 +24,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 *
 	 * @var string
 	 */
-	private $option_name;
+	const OPTION_NAME = 'openid-connect-generic-logs';
 
 	/**
 	 * The default message type.
@@ -57,13 +57,11 @@ class OpenID_Connect_Generic_Option_Logger {
 	/**
 	 * Setup the logger according to the needs of the instance.
 	 *
-	 * @param string    $option_name          The plugin log WordPress option name.
 	 * @param string    $default_message_type The log message type.
 	 * @param bool|TRUE $logging_enabled      Whether logging is enabled.
 	 * @param int       $log_limit            The log entry limit.
 	 */
-	public function __construct( $option_name, $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
-		$this->option_name = $option_name;
+	public function __construct( $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
 		$this->default_message_type = $default_message_type;
 		$this->logging_enabled = boolval( $logging_enabled );
 		$this->log_limit = intval( $log_limit );
@@ -143,7 +141,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 */
 	public function get_logs() {
 		if ( empty( $this->logs ) ) {
-			$this->logs = get_option( $this->option_name, array() );
+			$this->logs = get_option( self::OPTION_NAME, array() );
 		}
 
 		// Call the upkeep_logs function to give the appearance that logs have been reduced to the $this->log_limit.
@@ -157,7 +155,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 * @return string
 	 */
 	public function get_option_name() {
-		return $this->option_name;
+		return self::OPTION_NAME;
 	}
 
 	/**
@@ -222,7 +220,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	private function save_logs( $logs ) {
 		// Save the logs.
 		$this->logs = $logs;
-		return update_option( $this->option_name, $logs, false );
+		return update_option( self::OPTION_NAME, $logs, false );
 	}
 
 	/**

@@ -9,8 +9,6 @@
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
-use WP_Error as WP_Error;
-
 /**
  * OpenID_Connect_Generic_Client_Wrapper class.
  *
