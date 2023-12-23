@@ -6,7 +6,7 @@ on:
 
 env:
   WP_MULTISITE: 0
-  ACTION_VERSION: 2
+  ACTION_VERSION: 3
 
 jobs:
   release:
@@ -24,7 +24,7 @@ jobs:
       uses: actions/setup-node@v1
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 14.x
+        node-version: 16.x
 
     - name: Get NPM Cache Directory
       id: npm-cache
