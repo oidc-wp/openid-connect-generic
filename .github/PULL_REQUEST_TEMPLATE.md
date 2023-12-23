@@ -1,6 +1,6 @@
 ### All Submissions:
 
-* [ ] Have you followed the [plugin Contributing guideline](https://github.com/oidc-wp/openid-connect-generi/blob/dev/.github/CONTRIBUTING.md)?
+* [ ] Have you followed the [plugin Contributing guideline](https://github.com/oidc-wp/openid-connect-generi/blob/develop/.github/CONTRIBUTING.md)?
 * [ ] Does your code follow the [WordPress' coding standards](https://make.wordpress.org/core/handbook/best-practices/coding-standards/)?
 * [ ] Have you checked to ensure there aren't other open [Pull Requests](../pulls) for the same update/change?
 
