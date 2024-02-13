@@ -670,7 +670,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 		$expiration_days = $remember_me ? 14 : 2;
-		
+
 		// Create the WP session, so we know its token.
 		$expiration = time() + apply_filters( 'auth_cookie_expiration', $expiration_days * DAY_IN_SECONDS, $user->ID, false );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
