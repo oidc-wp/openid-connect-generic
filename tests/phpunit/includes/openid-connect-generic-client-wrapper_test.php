@@ -103,7 +103,7 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 
 		// Cleanup
 		remove_filter( 'openid-connect-generic-remember-me', '__return_true' );
-		remove_filter( 'openid-connect-generic-use-token-expiration', '__return_true' );
+		remove_filter( 'openid-connect-generic-use-token-refresh-expiration', '__return_true' );
 		$manager->destroy_all();
 		wp_clear_auth_cookie();
 	}
