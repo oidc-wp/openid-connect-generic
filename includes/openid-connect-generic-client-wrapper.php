@@ -684,7 +684,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// openid token expiration.
 		if (
 			$remember_me
-			&& apply_filters( 'openid-connect-generic-use-token-expiration', false )
+			&& apply_filters( 'openid-connect-generic-use-token-refresh-expiration', false )
 			&& ( $token_response['refresh_expires_in'] ?? 0 )
 		) {
 			$this->openid_token_refresh_expires_in = $token_response['refresh_expires_in'];

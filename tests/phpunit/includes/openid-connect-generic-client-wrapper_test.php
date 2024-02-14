@@ -84,7 +84,7 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	public function test_plugin_client_wrapper_token_expiration() {
 		// Set the remember me option to true
 		add_filter( 'openid-connect-generic-remember-me', '__return_true' );
-		add_filter( 'openid-connect-generic-use-token-expiration', '__return_true' );
+		add_filter( 'openid-connect-generic-use-token-refresh-expiration', '__return_true' );
 
 		// Create a user and log in using the login function of the client wrapper
 		$user = $this->factory()->user->create_and_get( array( 'user_login' => 'test-remember-me-user' ) );
