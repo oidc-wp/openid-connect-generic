@@ -679,9 +679,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 		$wp_expiration_days = $remember_me ? 14 : 2;
 
-		// If using token expiration is enabled, add a filter to overwrite the
-		// default cookie expiration with the openid token expiration.
-		if ( apply_filters( 'openid-connect-generic-use-token-expiration', false ) && ( $token_response['refresh_expires_in'] ?? 0 ) ) {
+		// If remember-me is enabled, and using token expiration is enabled,
+		// add a filter to overwrite the default cookie expiration with the
+		// openid token expiration.
+		if (
+			$remember_me
+			&& apply_filters( 'openid-connect-generic-use-token-expiration', false )
+			&& ( $token_response['refresh_expires_in'] ?? 0 )
+		) {
 			$this->openid_token_refresh_expires_in = $token_response['refresh_expires_in'];
 			add_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
 		}
