@@ -66,6 +66,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private $error = false;
 
 	/**
+	 * Used to pass the openid token refresh expiration time to the auth_cookie_expiration filter.
+	 *
+	 * @var integer
+	 */
+	private $openid_token_refresh_expires_in = 0;
+
+	/**
 	 * Inject necessary objects and services into the client.
 	 *
 	 * @param OpenID_Connect_Generic_Client          $client   A plugin client object instance.
@@ -668,11 +675,19 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
 		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
+		// Determine the amount of days before the cookie expires.
 		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
-		$expiration_days = $remember_me ? 14 : 2;
+		$wp_expiration_days = $remember_me ? 14 : 2;
+
+		// If using token expiration is enabled, add a filter to overwrite the
+		// default cookie expiration with the openid token expiration.
+		if ( apply_filters( 'openid-connect-generic-use-token-expiration', false ) && ( $token_response['refresh_expires_in'] ?? 0 ) ) {
+			$this->openid_token_refresh_expires_in = $token_response['refresh_expires_in'];
+			add_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
+		}
 
 		// Create the WP session, so we know its token.
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', $expiration_days * DAY_IN_SECONDS, $user->ID, false );
+		$expiration = time() + apply_filters( 'auth_cookie_expiration', $wp_expiration_days * DAY_IN_SECONDS, $user->ID, false );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		$token = $manager->create( $expiration );
 
@@ -682,6 +697,22 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// you did great, have a cookie!
 		wp_set_auth_cookie( $user->ID, $remember_me, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
+
+		// Remove the filter for the auth cookie expiration after all the auth cookies are set.
+		remove_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
+	}
+
+	/**
+	 * Filter callback to overwrite the default cookie expiration with the
+	 * openid token refresh expiration. This is applied both when creating the session
+	 * token as well as when wp_set_auth_cookie is called.
+	 *
+	 * @param integer $expiration_in_seconds The expiration time in seconds.
+	 * @return integer
+	 */
+	public function set_cookie_expiration_to_openid_token_refresh_expiration( $expiration_in_seconds ) {
+		$expiration_in_seconds = $this->openid_token_refresh_expires_in;
+		return $expiration_in_seconds;
 	}
 
 	/**
