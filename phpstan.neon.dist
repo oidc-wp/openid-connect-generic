@@ -1,11 +1,27 @@
 parameters:
   level: 5
   inferPrivatePropertyTypeFromConstructor: true
+
   bootstrapFiles:
     - tests/phpstan-bootstrap.php
+
   paths:
-    - openid-connect-generic.php 
+    - openid-connect-generic.php
     - includes/
+    - ./
+
+  excludePaths:
+    analyse:
+      - node_modules/
+      - scripts/
+      - tests/
+      - vendor/
+    analyseAndScan:
+      - tools/
+
+  dynamicConstantNames:
+    - DOING_AJAX
+
   ignoreErrors:
     # Uses func_get_args()
     #- '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'

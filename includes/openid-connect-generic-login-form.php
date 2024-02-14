@@ -1,6 +1,6 @@
 <?php
 /**
- * Login form and login button handlong class.
+ * Login form and login button handling class.
  *
  * @package   OpenID_Connect_Generic
  * @category  Login
@@ -12,7 +12,7 @@
 /**
  * OpenID_Connect_Generic_Login_Form class.
  *
- * Login form and login button handlong.
+ * Login form and login button handling.
  *
  * @package OpenID_Connect_Generic
  * @category  Login

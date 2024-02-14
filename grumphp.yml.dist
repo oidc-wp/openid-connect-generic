@@ -44,7 +44,6 @@ grumphp:
       triggered_by: [php]
     phpstan:
       configuration: './phpstan.neon.dist'
-      level: 5
       ignore_patterns:
         - '/^assets\/(.*)/'
       memory_limit: '-1'

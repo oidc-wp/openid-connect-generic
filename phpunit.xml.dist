@@ -1,28 +1,24 @@
 <?xml version="1.0"?>
-<phpunit
-	bootstrap="tests/bootstrap.php"
-	backupGlobals="false"
-	colors="true"
-	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
-	>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="tests/phpunit/bootstrap.php" backupGlobals="false" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+			<file>openid-connect-generic.php</file>
+      <directory suffix=".php">includes/</directory>
+    </include>
+    <report>
+      <clover outputFile="clover.xml"/>
+    </report>
+  </coverage>
+  <php>
+    <env name="WP_PHPUNIT__TESTS_CONFIG" value="tests/phpunit/wp-tests-config.php"/>
+  </php>
 	<testsuites>
-		<testsuite name="Includes">
-			<directory suffix="_test.php">./tests/phpunit/includes/</directory>
+		<testsuite name="Plugin">
+			<file>./tests/phpunit/openid-connect-generic_test.php</file>
 		</testsuite>
-	</testsuites>
-	<filter>
-		<whitelist processUncoveredFilesFromWhitelist="true">
-			<directory suffix=".php">src/</directory>
-			<!-- <file>/path/to/file</file> -->
-			<exclude>
-				<directory suffix=".php">src/views</directory>
-				<!-- <file>/path/to/file</file> -->
-			</exclude>
-		</whitelist>
-	</filter>
-	<logging>
-		<log type="coverage-clover" target="clover.xml"/>
-	</logging>
+    <testsuite name="Includes">
+      <directory suffix="_test.php">./tests/phpunit/includes/</directory>
+    </testsuite>
+  </testsuites>
+  <logging/>
 </phpunit>
