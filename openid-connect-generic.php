@@ -151,6 +151,7 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
+			$this->settings->endpoint_usercreation,
 			$this->get_redirect_uri( $this->settings ),
 			$this->settings->acr_values,
 			$this->get_state_time_limit( $this->settings ),
@@ -169,6 +170,11 @@ class OpenID_Connect_Generic {
 
 		// Add actions to our scheduled cron jobs.
 		add_action( 'openid-connect-generic-cron-daily', array( $this, 'cron_states_garbage_collection' ) );
+
+		// Add a user creation hook.
+		if ( $this->settings->endpoint_usercreation!==''){
+			add_filter('user_register', array( $this->client_wrapper, 'handle_user_creation'), 10, 2);
+		}
 
 		$this->upgrade();
 

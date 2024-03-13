@@ -258,6 +258,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ),
 				'section'     => 'client_settings',
 			),
+			'endpoint_usercreation' => array(
+				'title'       => __( 'User creation Endpoint URL (optional)', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identify provider User creation endpoint. Leave empty, when not in use. Works with keycloak.', 'daggerhart-openid-connect-generic' ),
+				'example'     => '	http://keycloak:8080/admin/realms/test-realm/users',
+				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_USER_CREATION_URL' ),
+				'section'     => 'client_settings',
+			),
 			'endpoint_token'    => array(
 				'title'       => __( 'Token Validation Endpoint URL', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Identify provider token endpoint.', 'daggerhart-openid-connect-generic' ),

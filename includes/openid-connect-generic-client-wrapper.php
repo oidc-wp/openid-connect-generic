@@ -246,6 +246,44 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	}
 
 	/**
+	 * Handle user creation and synchronization.
+	 * 
+	 * @param int   $user_id     The user ID.
+	 * @param array $user_claim  The user claim.
+	 * 
+	 * @return void
+	 */
+
+	public function handle_user_creation( $user_id, $user_claim ) {
+		$client = $this->client;
+		
+		// Get client token
+		$token_result  = $client->request_admin_client_token();;
+		if ( is_wp_error( $token_result ) ) {
+			error_log( print_r( $token_result, true ) );
+			return;
+		}
+
+		// Get the decoded response from the authentication request result.
+		$token_response = $client->get_token_response( $token_result );
+
+		$access_token = $token_response['access_token'];
+
+		$create_user_response = $client->create_oidc_user($access_token, $user_id, $user_claim);
+
+		if ( is_wp_error( $create_user_response ) ) {
+			error_log( print_r( $create_user_response, true ) );
+			return;
+
+		}
+		$set_password_response = $client->set_oidc_user_password($access_token, $user_claim['user_email'], $user_claim['user_pass']);
+
+		if ( is_wp_error( $set_password_response ) ) {
+			error_log( print_r( $set_password_response, true ) );
+		}
+	}
+
+	/**
 	 * Handle retrieval and validation of refresh_token.
 	 *
 	 * @return void

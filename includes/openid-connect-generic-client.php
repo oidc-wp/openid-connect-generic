@@ -74,6 +74,15 @@ class OpenID_Connect_Generic_Client {
 	private $endpoint_token;
 
 	/**
+	 * The OIDC user creation endpoint URL.
+	 * 
+	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_usercreation
+	 * 
+	 * @var string
+	 */
+	private $endpoint_usercreation;
+
+	/**
 	 * The login flow "ajax" endpoint URI.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::redirect_uri
@@ -110,23 +119,25 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Client constructor.
 	 *
-	 * @param string                               $client_id         @see OpenID_Connect_Generic_Option_Settings::client_id for description.
-	 * @param string                               $client_secret     @see OpenID_Connect_Generic_Option_Settings::client_secret for description.
-	 * @param string                               $scope             @see OpenID_Connect_Generic_Option_Settings::scope for description.
-	 * @param string                               $endpoint_login    @see OpenID_Connect_Generic_Option_Settings::endpoint_login for description.
-	 * @param string                               $endpoint_userinfo @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo for description.
-	 * @param string                               $endpoint_token    @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
-	 * @param string                               $redirect_uri      @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
-	 * @param string                               $acr_values        @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
-	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
-	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
+	 * @param string                               $client_id                @see OpenID_Connect_Generic_Option_Settings::client_id for description.
+	 * @param string                               $client_secret            @see OpenID_Connect_Generic_Option_Settings::client_secret for description.
+	 * @param string                               $scope                    @see OpenID_Connect_Generic_Option_Settings::scope for description.
+	 * @param string                               $endpoint_login           @see OpenID_Connect_Generic_Option_Settings::endpoint_login for description.
+	 * @param string                               $endpoint_userinfo        @see OpenID_Connect_Generic_Option_Settings::endpoint_userinfo for description.
+	 * @param string                               $endpoint_token           @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
+	 * @param string                               $endpoint_usercreation    @see OpenID_Connect_Generic_Option_Settings::endpoint_usercreation for description.
+	 * @param string                               $redirect_uri             @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
+	 * @param string                               $acr_values               @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
+	 * @param int                                  $state_time_limit         @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
+	 * @param OpenID_Connect_Generic_Option_Logger $logger                   The plugin logging object instance.
 	 */
-	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $endpoint_usercreation, $redirect_uri, $acr_values, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
-		$this->client_secret = $client_secret;
+		$this->client_secret = 'vQ0GZdGXbOTXiYoGdaMF9eWZhgjgGzZD';
 		$this->scope = $scope;
 		$this->endpoint_login = $endpoint_login;
 		$this->endpoint_userinfo = $endpoint_userinfo;
+		$this->endpoint_usercreation = $endpoint_usercreation;
 		$this->endpoint_token = $endpoint_token;
 		$this->redirect_uri = $redirect_uri;
 		$this->acr_values = $acr_values;
@@ -242,6 +253,38 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Using the .client id and client secret, request an admin client token from the IDP.
+	 *
+	 * @return array<mixed>|WP_Error
+	 */
+	public function request_admin_client_token() {
+
+		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
+		$parsed_url = parse_url( $this->endpoint_token );
+		$host = $parsed_url['host'];
+
+		$request = array(
+			'body' => array(
+				'client_id'     => $this->client_id,
+				'client_secret' => $this->client_secret,
+				'grant_type'    => 'client_credentials',
+				'scope'         => $this->scope,
+			),
+			'headers' => array( 'Host' => $host ),
+		);
+
+		// Call the server and ask for a token.
+		$this->logger->log( $this->endpoint_token, 'request_admin_client_token' );
+		$response = wp_remote_post( $this->endpoint_token, $request );
+
+		if ( is_wp_error( $response ) ) {
+			$response->add( 'request_admin_client_token', __( 'Request for admin client token failed.', 'daggerhart-openid-connect-generic' ) );
+		}
+
+		return $response;
+	}
+
+	/**
 	 * Using the refresh token, request new tokens from the idp
 	 *
 	 * @param string $refresh_token The refresh token previously obtained from token response.
@@ -345,6 +388,135 @@ class OpenID_Connect_Generic_Client {
 
 		return $response;
 	}
+
+	/** 
+	 * Create a new oidc user
+	 * 
+	 * @param string $access_token The access token supplied from authentication user claim.
+	 * @param int   $user_id     The user ID.
+	 * @param array $user_claim  The user claim.
+	 * 
+	 */
+	public function create_oidc_user($access_token, $user_id, $user_claim) {
+		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
+		$parsed_url = parse_url($this->endpoint_usercreation);
+		$host = $parsed_url['host'];
+
+		$request = array(
+			'body' => json_encode(array(
+				// 'attributes' => array(),
+				// 'requiredActions' => array(),
+				'email' => $user_claim['user_email'],
+				'username' => $user_claim['user_email'],
+				'emailVerified' => 'false',
+				'enabled' => 'true',
+				'firstName'=>'','lastName'=>'')
+				// ,'groups':[],'enabled':true}
+			),
+			'headers' => array(
+				'Host' => $host, 
+				'method' => 'POST',
+				'authorization' => 'Bearer ' . $access_token,
+				'Content-Type' => 'application/json'
+			),
+		);
+
+		// Call the server and ask for a token.
+		$this->logger->log($this->endpoint_userinfo, 'create_oidc_user');
+		$response = wp_remote_post($this->endpoint_usercreation, $request);
+
+		if (is_wp_error($response)) {
+			$response->add('create_oidc_user', __('Request for create oidc user failed.', 'daggerhart-openid-connect-generic'));
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Set password for oidc user
+	 * 
+	 * @param string $access_token The access token supplied from authentication user claim.
+	 * @param string $username The username of the user.
+	 * @param string $password The password of the user.
+	 */
+
+	public function set_oidc_user_password($access_token, $email, $password) {
+		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
+		$parsed_url = parse_url($this->endpoint_usercreation);
+		$host = $parsed_url['host'];
+		
+		// Get user info
+		$user_info = $this->get_oidc_user($access_token, $email);
+		if (is_wp_error($user_info)) {
+			error_log(print_r($user_info, TRUE)); 
+			return $user_info;
+		}
+		$user_id = $user_info['id'];
+		$endpoint = $this->endpoint_usercreation . '/' . $user_id . '/reset-password';
+		
+		$request = array(
+			'body' => json_encode(array(
+				'type' => 'password',
+				'value' => $password,
+				'temporary' => 'false'
+			)),
+			'method' => 'PUT',
+			'headers' => array(
+				'Host' => $host,
+				'authorization' => 'Bearer ' . $access_token,
+				'Content-Type' => 'application/json'
+			),
+		);
+
+		// Call the server and ask for a token.
+		$this->logger->log($endpoint, 'set_oidc_user_password');
+		$response = wp_remote_request($endpoint , $request);
+
+		if (is_wp_error($response)) {
+			$response->add('set_oidc_user_password', __('Request for set oidc user password failed.', 'daggerhart-openid-connect-generic'));
+			error_log(print_r($response, TRUE)); 
+		}
+		return $response;
+	}
+	
+	/** 
+	 * Get a user from the oidc server
+	 * 
+	 * @param string $access_token The access token supplied from authentication user claim.
+	 * @param string $email The email of the user.
+	 * 
+	 * @return array|WP_Error
+	 */
+	public function get_oidc_user($access_token, $email) {
+		$endpoint_usersearch = $this->endpoint_usercreation . '?q=email:' . $email;
+		$parsed_url = parse_url($this->endpoint_usercreation);
+		$host = $parsed_url['host'];
+
+		// Get user info
+		$request = array(
+			'body' => array(),
+			'headers' => array(
+				'Host' => $host,
+				'method' => 'GET',
+				'authorization' => 'Bearer ' . $access_token,
+			),
+		);
+		$this->logger->log($endpoint_usersearch, 'get_oidc_user');
+		$response = wp_remote_get($endpoint_usersearch, $request);
+
+		if (is_wp_error($response)) {
+			$response->add('get_oidc_user', __('Request for getting a ipd user by mail.', 'daggerhart-openid-connect-generic'));
+		}
+		$user = json_decode($response['body'], true);
+		if (empty($user)) {
+			return new WP_Error('no-user', __('No user found.', 'daggerhart-openid-connect-generic'), $response);
+		}
+		if (count($user) > 1) {
+			return new WP_Error('multiple-users', __('Multiple users found.', 'daggerhart-openid-connect-generic'), $response);
+		}
+		return $user[0];
+	}
+
 
 	/**
 	 * Generate a new state, save it as a transient, and return the state hash.
