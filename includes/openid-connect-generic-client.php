@@ -231,8 +231,10 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'get-authentication-token' );
 
 		// Call the server and ask for a token.
-		$this->logger->log( $this->endpoint_token, 'request_authentication_token' );
-		$response = wp_remote_post( $this->endpoint_token, $request );
+		$start_time = microtime( true );
+		$response   = wp_remote_post( $this->endpoint_token, $request );
+		$end_time   = microtime( true );
+		$this->logger->log( $this->endpoint_token, 'request_authentication_token', $end_time - $start_time );
 
 		if ( is_wp_error( $response ) ) {
 			$response->add( 'request_authentication_token', __( 'Request for authentication token failed.', 'daggerhart-openid-connect-generic' ) );
@@ -262,8 +264,10 @@ class OpenID_Connect_Generic_Client {
 		$request = apply_filters( 'openid-connect-generic-alter-request', $request, 'refresh-token' );
 
 		// Call the server and ask for new tokens.
-		$this->logger->log( $this->endpoint_token, 'request_new_tokens' );
-		$response = wp_remote_post( $this->endpoint_token, $request );
+		$start_time = microtime( true );
+		$response   = wp_remote_post( $this->endpoint_token, $request );
+		$end_time   = microtime( true );
+		$this->logger->log( $this->endpoint_token, 'request_new_tokens', $end_time - $start_time );
 
 		if ( is_wp_error( $response ) ) {
 			$response->add( 'refresh_token', __( 'Refresh token failed.', 'daggerhart-openid-connect-generic' ) );
@@ -336,8 +340,10 @@ class OpenID_Connect_Generic_Client {
 		$request['headers']['Host'] = $host;
 
 		// Attempt the request including the access token in the query string for backwards compatibility.
-		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo' );
-		$response = wp_remote_post( $this->endpoint_userinfo, $request );
+		$start_time = microtime( true );
+		$response   = wp_remote_post( $this->endpoint_userinfo, $request );
+		$end_time   = microtime( true );
+		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo', $end_time - $start_time );
 
 		if ( is_wp_error( $response ) ) {
 			$response->add( 'request_userinfo', __( 'Request for userinfo failed.', 'daggerhart-openid-connect-generic' ) );

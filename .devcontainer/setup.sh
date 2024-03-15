@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 
 # true is shell command and always return 0
 # false always return 1
@@ -17,17 +17,21 @@ sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
 
 # Install Composer dependencies.
 cd "${PLUGIN_DIR}"
-COMPOSER_ALLOW_XDEBUG=0 COMPOSER_MEMORY_LIMIT=-1 composer install
+echo "Installing Composer dependencies..."
+COMPOSER_NO_INTERACTION=1 COMPOSER_ALLOW_XDEBUG=0 COMPOSER_MEMORY_LIMIT=-1 composer install --no-progress --quiet
 
 # Install NPM dependencies.
 cd "${PLUGIN_DIR}"
 if [ ! -d "node_modules" ]; then
+	echo "Installing NPM dependencies..."
 	npm ci
 fi
 
 # Setup the WordPress environment.
 cd "/app"
-echo "Setting up WordPress at $SITE_HOST"
-wp core install --url="$SITE_HOST" --title="OpenID Connect Development" --admin_user="admin" --admin_email="admin@example.com" --admin_password="password" --skip-email
+if ! wp core is-installed 2>/dev/null; then
+	echo "Setting up WordPress at $SITE_HOST"
+	wp core install --url="$SITE_HOST" --title="OpenID Connect Development" --admin_user="admin" --admin_email="admin@example.com" --admin_password="password" --skip-email --quiet
+fi
 
 echo "Done!"

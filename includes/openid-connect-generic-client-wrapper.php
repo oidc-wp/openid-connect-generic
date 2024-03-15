@@ -549,13 +549,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Login the found / created user.
+		$start_time = microtime( true );
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$end_time = microtime( true );
+		// Log our success.
+		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success', $end_time - $start_time );
 
 		// Allow plugins / themes to take action once a user is logged in.
+		$start_time = microtime( true );
 		do_action( 'openid-connect-generic-user-logged-in', $user );
-
-		// Log our success.
-		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
+		$end_time = microtime( true );
+		$this->logger->log( 'openid-connect-generic-user-logged-in', 'do_action', $end_time - $start_time );
 
 		// Default redirect to the homepage.
 		$redirect_url = home_url();
@@ -996,6 +1000,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return \WP_Error | \WP_User
 	 */
 	public function create_new_user( $subject_identity, $user_claim ) {
+		$start_time = microtime( true );
 		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 
 		// Default username & email to the subject identity.
@@ -1093,6 +1098,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			if ( ! empty( $uid ) ) {
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
+				$end_time = microtime( true );
+				$this->logger->log( "Existing user updated: {$user->user_login} ($uid)", __METHOD__, $end_time - $start_time );
 				return $user;
 			}
 		}
@@ -1143,7 +1150,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
 
 		// Log the results.
-		$this->logger->log( "New user created: {$user->user_login} ($uid)", 'success' );
+		$end_time = microtime( true );
+		$this->logger->log( "New user created: {$user->user_login} ($uid)", __METHOD__, $end_time - $start_time );
 
 		// Allow plugins / themes to take action on new user creation.
 		do_action( 'openid-connect-generic-user-create', $user, $user_claim );

@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   # Triggers the workflow on pull request events
   pull_request:
+    branches:
+      - develop
 
 env:
   ACTION_VERSION: 3
@@ -36,7 +38,7 @@ jobs:
       run: docker compose down
 
     - name: Generate Coverage Report
-      if: success()
+      if: success() && ${{ github.event_name == 'pull_request' }}
       # https://github.com/marketplace/actions/coverage-report-as-comment-clover
       uses: lucassabreu/comment-coverage-clover@main
       with:
