@@ -672,8 +672,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
 		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
+		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$expiration_days = $remember_me ? 14 : 2;
+
 		// Create the WP session, so we know its token.
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
+		$expiration = time() + apply_filters( 'auth_cookie_expiration', $expiration_days * DAY_IN_SECONDS, $user->ID, false );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		$token = $manager->create( $expiration );
 
@@ -681,7 +684,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->save_refresh_token( $manager, $token, $token_response );
 
 		// you did great, have a cookie!
-		wp_set_auth_cookie( $user->ID, false, '', $token );
+		wp_set_auth_cookie( $user->ID, $remember_me, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
 	}
 
