@@ -375,6 +375,7 @@ class OpenID_Connect_Generic {
 				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
 				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
+				'enable_pkce'          => defined( 'OIDC_ENABLE_PKCE' ) ? OIDC_ENABLE_PKCE : false,
 
 				// Non-standard settings.
 				'no_sslverify'           => 0,

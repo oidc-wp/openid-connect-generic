@@ -127,6 +127,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
+		// Modify authentication-token request to include PKCE code verifier.
+		if ( true === (bool) $settings->enable_pkce ) {
+			add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_authentication_token_request' ), 15, 2 );
+		}
+
 		return $client_wrapper;
 	}
 
@@ -236,15 +241,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$url_format .= '&acr_values=%7$s';
 		}
 
+		if ( true === (bool) $this->settings->enable_pkce ) {
+			$pkce_data = $this->pkce_code_generator();
+			if ( false !== $pkce_data ) {
+				$url_format .= '&code_challenge=%8$s&code_challenge_method=%9$s';
+			}
+		}
+
 		$url = sprintf(
 			$url_format,
 			$atts['endpoint_login'],
 			$separator,
 			rawurlencode( $atts['scope'] ),
 			rawurlencode( $atts['client_id'] ),
-			$this->client->new_state( $atts['redirect_to'] ),
+			$this->client->new_state( $atts['redirect_to'], $pkce_data['code_verifier'] ?? '' ),
 			rawurlencode( $atts['redirect_uri'] ),
-			rawurlencode( $atts['acr_values'] )
+			rawurlencode( $atts['acr_values'] ),
+			rawurlencode( $pkce_data['code_challenge'] ?? '' ),
+			rawurlencode( $pkce_data['code_challenge_method'] ?? '' )
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
@@ -423,6 +437,31 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->no_sslverify ) {
 			$request['sslverify'] = false;
 		}
+
+		return $request;
+	}
+
+	/**
+	 * Include PKCE code verifier in authentication token request.
+	 *
+	 * @param array<mixed> $request   The outgoing request array.
+	 * @param string       $operation The request operation name.
+	 *
+	 * @return mixed
+	 */
+	public function alter_authentication_token_request( $request, $operation ) {
+		if ( 'get-authentication-token' !== $operation ) {
+			return $request;
+		}
+
+		$code_verifier = '';
+		$state         = $_GET['state'] ?? ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Sanitized later if not empty.
+		if ( ! empty( $state ) ) {
+			$state_object  = get_transient( 'openid-connect-generic-state--' . sanitize_text_field( $state ) );
+			$code_verifier = $state_object[ $state ]['code_verifier'] ?? '';
+		}
+
+		$request['body']['code_verifier'] = $code_verifier;
 
 		return $request;
 	}
@@ -1176,5 +1215,37 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Return our updated user.
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * Generate PKCE code for OAuth flow.
+	 *
+	 * @see : https://help.aweber.com/hc/en-us/articles/360036524474-How-do-I-use-Proof-Key-for-Code-Exchange-PKCE-
+	 *
+	 * @return array<string, mixed>|bool Code challenge array on success, false on error.
+	 */
+	private function pkce_code_generator() {
+		try {
+			$verifier_bytes = random_bytes( 64 );
+		} catch ( \Exception $e ) {
+			$this->logger->log(
+				sprintf( 'Fail to generate PKCE code challenge : %s', $e->getMessage() ),
+				'pkce_code_generator'
+			);
+
+			return false;
+		}
+
+		$verifier = rtrim( strtr( base64_encode( $verifier_bytes ), '+/', '-_' ), '=' );
+
+		// Very important, "raw_output" must be set to true or the challenge will not match the verifier.
+		$challenge_bytes = hash( 'sha256', $verifier, true );
+		$challenge       = rtrim( strtr( base64_encode( $challenge_bytes ), '+/', '-_' ), '=' );
+
+		return array(
+			'code_verifier'         => $verifier,
+			'code_challenge'        => $challenge,
+			'code_challenge_method' => 'S256',
+		);
 	}
 }

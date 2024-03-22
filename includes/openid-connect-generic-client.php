@@ -355,16 +355,18 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Generate a new state, save it as a transient, and return the state hash.
 	 *
-	 * @param string $redirect_to The redirect URL to be used after IDP authentication.
+	 * @param string $redirect_to        The redirect URL to be used after IDP authentication.
+	 * @param string $pkce_code_verifier The PKCE code verifier to be sent during the authorization code exchange request.
 	 *
 	 * @return string
 	 */
-	public function new_state( $redirect_to ) {
+	public function new_state( $redirect_to, $pkce_code_verifier = '' ) {
 		// New state w/ timestamp.
 		$state = md5( mt_rand() . microtime( true ) );
 		$state_value = array(
 			$state => array(
-				'redirect_to' => $redirect_to,
+				'redirect_to'   => $redirect_to,
+				'code_verifier' => $pkce_code_verifier,
 			),
 		);
 		set_transient( 'openid-connect-generic-state--' . $state, $state_value, $this->state_time_limit );
