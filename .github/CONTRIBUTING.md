@@ -28,7 +28,7 @@ OpenID Connect Generic Client is licensed under the GPLv2.0, and all contributio
 - Ensure you use LF line endings in your code editor. Use [EditorConfig](http://editorconfig.org/) if your editor supports it so that indentation, line endings and other settings are auto configured.
 - When committing, reference your issue number (#1234) and include a note about the fix.
 - Ensure that your code supports the minimum supported versions of PHP and WordPress; this is shown at the top of the `readme.txt` file.
-- Push the changes to your fork and submit a pull request on the `dev` branch of the plugin repository.
+- Push the changes to your fork and submit a pull request on the `develop` branch of the plugin repository.
 - Make sure to write good and detailed commit messages (see [this post](https://chris.beams.io/posts/git-commit/) for more on this) and follow all the applicable sections of the pull request template.
 - Please avoid modifying the changelog directly or updating the .pot files. These will be updated by the plugin team.
 

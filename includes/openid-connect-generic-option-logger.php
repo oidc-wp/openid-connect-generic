@@ -5,7 +5,7 @@
  * @package   OpenID_Connect_Generic
  * @category  Logging
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
@@ -24,28 +24,28 @@ class OpenID_Connect_Generic_Option_Logger {
 	 *
 	 * @var string
 	 */
-	private $option_name;
+	const OPTION_NAME = 'openid-connect-generic-logs';
 
 	/**
 	 * The default message type.
 	 *
 	 * @var string
 	 */
-	private $default_message_type;
+	private $default_message_type = 'none';
 
 	/**
 	 * The number of items to keep in the log.
 	 *
 	 * @var int
 	 */
-	private $log_limit;
+	private $log_limit = 1000;
 
 	/**
 	 * Whether or not logging is enabled.
 	 *
 	 * @var bool
 	 */
-	private $logging_enabled;
+	private $logging_enabled = true;
 
 	/**
 	 * Internal cache of logs.
@@ -57,78 +57,38 @@ class OpenID_Connect_Generic_Option_Logger {
 	/**
 	 * Setup the logger according to the needs of the instance.
 	 *
-	 * @param string    $option_name          The plugin log WordPress option name.
-	 * @param string    $default_message_type The log message type.
-	 * @param bool|TRUE $logging_enabled      Whether logging is enabled.
-	 * @param int       $log_limit            The log entry limit.
+	 * @param string|null    $default_message_type The log message type.
+	 * @param bool|TRUE|null $logging_enabled      Whether logging is enabled.
+	 * @param int|null       $log_limit            The log entry limit.
 	 */
-	public function __construct( $option_name, $default_message_type = 'none', $logging_enabled = true, $log_limit = 1000 ) {
-		$this->option_name = $option_name;
-		$this->default_message_type = $default_message_type;
-		$this->logging_enabled = boolval( $logging_enabled );
-		$this->log_limit = intval( $log_limit );
-	}
-
-	/**
-	 * Subscribe logger to a set of filters.
-	 *
-	 * @param array|string $filter_names The array, or string, of the name(s) of an filter(s) to hook the logger into.
-	 * @param int          $priority     The WordPress filter priority level.
-	 *
-	 * @return void
-	 */
-	public function log_filters( $filter_names, $priority = 10 ) {
-		if ( ! is_array( $filter_names ) ) {
-			$filter_names = array( $filter_names );
+	public function __construct( $default_message_type = null, $logging_enabled = null, $log_limit = null ) {
+		if ( ! is_null( $default_message_type ) ) {
+			$this->default_message_type = $default_message_type;
 		}
-
-		foreach ( $filter_names as $filter ) {
-			add_filter( $filter, array( $this, 'log_hook' ), $priority );
+		if ( ! is_null( $logging_enabled ) ) {
+			$this->logging_enabled = boolval( $logging_enabled );
 		}
-	}
-
-	/**
-	 * Subscribe logger to a set of actions.
-	 *
-	 * @param array|string $action_names The array, or string, of the name(s) of an action(s) to hook the logger into.
-	 * @param int          $priority     The WordPress action priority level.
-	 *
-	 * @return void
-	 */
-	public function log_actions( $action_names, $priority ) {
-		if ( ! is_array( $action_names ) ) {
-			$action_names = array( $action_names );
+		if ( ! is_null( $log_limit ) ) {
+			$this->log_limit = intval( $log_limit );
 		}
-
-		foreach ( $action_names as $action ) {
-			add_filter( $action, array( $this, 'log_hook' ), $priority );
-		}
-	}
-
-	/**
-	 * Log the data.
-	 *
-	 * @param mixed $arg1 The hook argument.
-	 *
-	 * @return mixed
-	 */
-	public function log_hook( $arg1 = null ) {
-		$this->log( func_get_args(), current_filter() );
-		return $arg1;
 	}
 
 	/**
 	 * Save an array of data to the logs.
 	 *
-	 * @param mixed $data The data to be logged.
-	 * @param mixed $type The type of log message.
+	 * @param string|array<string, string>|WP_Error $data            The log message data.
+	 * @param string|null                           $type            The log message type.
+	 * @param float|null                            $processing_time Optional event processing time.
+	 * @param int|null                              $time            The log message timestamp (default: time()).
+	 * @param int|null                              $user_ID         The current WordPress user ID (default: get_current_user_id()).
+	 * @param string|null                           $request_uri     The related HTTP request URI (default: $_SERVER['REQUEST_URI']|'Unknown').
 	 *
 	 * @return bool
 	 */
-	public function log( $data, $type = null ) {
+	public function log( $data, $type = null, $processing_time = null, $time = null, $user_ID = null, $request_uri = null ) {
 		if ( boolval( $this->logging_enabled ) ) {
 			$logs = $this->get_logs();
-			$logs[] = $this->make_message( $data, $type );
+			$logs[] = $this->make_message( $data, $type, $processing_time, $time, $user_ID, $request_uri );
 			$logs = $this->upkeep_logs( $logs );
 			return $this->save_logs( $logs );
 		}
@@ -143,10 +103,12 @@ class OpenID_Connect_Generic_Option_Logger {
 	 */
 	public function get_logs() {
 		if ( empty( $this->logs ) ) {
-			$this->logs = get_option( $this->option_name, array() );
+			$this->logs = get_option( self::OPTION_NAME, array() );
 		}
 
-		return $this->logs;
+		// Call the upkeep_logs function to give the appearance that logs have been reduced to the $this->log_limit.
+		// The logs are actually limited during a logging action but the logger isn't available during a simple settings update.
+		return $this->upkeep_logs( $this->logs );
 	}
 
 	/**
@@ -155,38 +117,50 @@ class OpenID_Connect_Generic_Option_Logger {
 	 * @return string
 	 */
 	public function get_option_name() {
-		return $this->option_name;
+		return self::OPTION_NAME;
 	}
 
 	/**
 	 * Create a message array containing the data and other information.
 	 *
-	 * @param mixed $data The log message data.
-	 * @param mixed $type The log message type.
+	 * @param string|array<string, string>|WP_Error $data            The log message data.
+	 * @param string|null                           $type            The log message type.
+	 * @param float|null                            $processing_time Optional event processing time.
+	 * @param int|null                              $time            The log message timestamp (default: time()).
+	 * @param int|null                              $user_ID         The current WordPress user ID (default: get_current_user_id()).
+	 * @param string|null                           $request_uri     The related HTTP request URI (default: $_SERVER['REQUEST_URI']|'Unknown').
 	 *
 	 * @return array
 	 */
-	private function make_message( $data, $type ) {
+	private function make_message( $data, $type, $processing_time, $time, $user_ID, $request_uri ) {
 		// Determine the type of message.
 		if ( empty( $type ) ) {
 			$type = $this->default_message_type;
 
 			if ( is_array( $data ) && isset( $data['type'] ) ) {
 				$type = $data['type'];
-			} else if ( is_wp_error( $data ) ) {
+				unset( $data['type'] );
+			}
+
+			if ( is_wp_error( $data ) ) {
 				$type = $data->get_error_code();
+				$data = $data->get_error_message( $type );
 			}
 		}
 
-		$request_uri = ( ! empty( $_SERVER['REQUEST_URI'] ) ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : 'Unknown';
+		if ( empty( $request_uri ) ) {
+			$request_uri = ( ! empty( $_SERVER['REQUEST_URI'] ) ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : 'Unknown';
+			$request_uri = preg_replace( '/code=([^&]+)/i', 'code=', $request_uri );
+		}
 
 		// Construct the message.
 		$message = array(
-			'type'    => $type,
-			'time'    => time(),
-			'user_ID' => get_current_user_id(),
-			'uri'     => preg_replace( '/code=([^&]+)/i', 'code=', $request_uri ),
-			'data'    => $data,
+			'type'            => $type,
+			'time'            => ! empty( $time ) ? $time : time(),
+			'user_ID'         => ! is_null( $user_ID ) ? $user_ID : get_current_user_id(),
+			'uri'             => $request_uri,
+			'data'            => $data,
+			'processing_time' => $processing_time,
 		);
 
 		return $message;
@@ -204,7 +178,7 @@ class OpenID_Connect_Generic_Option_Logger {
 
 		if ( $items_to_remove > 0 ) {
 			// Only keep the last $log_limit messages from the end.
-			$logs = array_slice( $logs, ( $items_to_remove * -1 ) );
+			$logs = array_slice( $logs, $items_to_remove );
 		}
 
 		return $logs;
@@ -220,7 +194,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	private function save_logs( $logs ) {
 		// Save the logs.
 		$this->logs = $logs;
-		return update_option( $this->option_name, $logs, false );
+		return update_option( self::OPTION_NAME, $logs, false );
 	}
 
 	/**
@@ -251,20 +225,20 @@ class OpenID_Connect_Generic_Option_Logger {
 		?>
 		<table id="logger-table" class="wp-list-table widefat fixed striped posts">
 			<thead>
-			<th class="col-details">Details</th>
-			<th class="col-data">Data</th>
+				<th class="col-details"><?php esc_html_e( 'Details', 'daggerhart-openid-connect-generic' ); ?></th>
+				<th class="col-data"><?php esc_html_e( 'Data', 'daggerhart-openid-connect-generic' ); ?></th>
 			</thead>
 			<tbody>
 			<?php foreach ( $logs as $log ) { ?>
 				<tr>
 					<td class="col-details">
 						<div>
-							<label><?php esc_html_e( 'Type', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print esc_html( $log['type'] ); ?>
+							<label><?php esc_html_e( 'Date', 'daggerhart-openid-connect-generic' ); ?></label>
+							<?php print esc_html( ! empty( $log['time'] ) ? gmdate( 'Y-m-d H:i:s', $log['time'] ) : '' ); ?>
 						</div>
 						<div>
-							<label><?php esc_html_e( 'Date', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print esc_html( gmdate( 'Y-m-d H:i:s', $log['time'] ) ); ?>
+							<label><?php esc_html_e( 'Type', 'daggerhart-openid-connect-generic' ); ?></label>
+							<?php print esc_html( ! empty( $log['type'] ) ? $log['type'] : '' ); ?>
 						</div>
 						<div>
 							<label><?php esc_html_e( 'User', 'daggerhart-openid-connect-generic' ); ?>: </label>
@@ -272,11 +246,14 @@ class OpenID_Connect_Generic_Option_Logger {
 						</div>
 						<div>
 							<label><?php esc_html_e( 'URI ', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print esc_url( $log['uri'] ); ?>
+							<?php print esc_url( ! empty( $log['uri'] ) ? $log['uri'] : '' ); ?>
+						</div>
+						<div>
+							<label><?php esc_html_e( 'Response&nbsp;Time&nbsp;(sec)', 'daggerhart-openid-connect-generic' ); ?></label>
+							<?php print esc_html( ! empty( $log['response_time'] ) ? $log['response_time'] : '' ); ?>
 						</div>
 					</td>
-
-					<td class="col-data"><pre><?php var_dump( $log['data'] ); ?></pre></td>
+					<td class="col-data"><pre><?php var_dump( ! empty( $log['data'] ) ? $log['data'] : '' ); ?></pre></td>
 				</tr>
 			<?php } ?>
 			</tbody>

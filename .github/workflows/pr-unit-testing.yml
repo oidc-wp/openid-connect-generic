@@ -5,13 +5,11 @@ on:
   workflow_dispatch:
   # Triggers the workflow on pull request events
   pull_request:
+    branches:
+      - develop
 
 env:
-  PHP_VERSION: '7.4'
-  WP_VERSION: '5.9.*'
-  WP_MULTISITE: 0
-  COMPOSER_VERSION: '2.2'
-  ACTION_VERSION: 2
+  ACTION_VERSION: 3
 
 jobs:
   pr_unit_testing:
@@ -24,47 +22,25 @@ jobs:
       # https://github.com/marketplace/actions/checkout
       uses: actions/checkout@v2
 
-    - name: Get Composer Cache Directory
-      id: composer-cache
-      if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-    - name: Cache Composer dependencies
-      if: ${{ !env.ACT }}
-      uses: actions/cache@v2
-      env:
-        composer-cache-name: cache-composer
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
       with:
-        path: ${{ steps.composer-cache.outputs.dir }}
-        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ env.WP_VERSION }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ env.WP_VERSION }}-v${{ env.ACTION_VERSION }}-
+        swap-size-gb: 10
 
-    - name: Setup Node Environment
-      # https://github.com/marketplace/actions/setup-node-js-environment
-      uses: actions/setup-node@v2
+    - name: Start Docker Environment
+      run: docker compose up -d
+
+    - name: Run PHPUnit Tests
+      run: docker compose exec app /bin/bash -c 'composer install && composer phpunit'
+
+    - name: Shutdown Docker Environment
+      if: success() || failure()
+      run: docker compose down
+
+    - name: Generate Coverage Report
+      if: success() && ${{ github.event_name == 'pull_request' }}
+      # https://github.com/marketplace/actions/coverage-report-as-comment-clover
+      uses: lucassabreu/comment-coverage-clover@main
       with:
-        node-version-file: '.nvmrc'
-        cache: ${{ !env.ACT && 'npm' || '' }}
+        file: clover.xml
 
-    - name: Setup PHP & Composer Environment
-      # https://github.com/marketplace/actions/setup-php-action
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: "${{ env.PHP_VERSION }}"
-        tools: "composer:${{ env.COMPOSER_VERSION }}"
-
-    - name: Environment Check
-      run: php -v && composer --version
-
-    - name: Require Specified WordPress Version
-      run: composer require johnpbloch/wordpress-core:${{ env.WP_VERSION }} php-stubs/wordpress-stubs:${{ env.WP_VERSION }} wp-phpunit/wp-phpunit:${{ env.WP_VERSION }} --dev --prefer-source --update-with-all-dependencies
-
-    - name: Install Composer Dependencies
-      run: composer install --prefer-dist
-
-    - name: NPM Setup
-      run: npm ci
-
-    - name: Unit Tests
-      run: npm run test

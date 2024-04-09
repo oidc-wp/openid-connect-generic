@@ -27,7 +27,7 @@ grumphp:
       allow_detached_head: false
     git_commit_message:
       allow_empty_message: false
-      enforce_capitalized_subject: true
+      enforce_capitalized_subject: false
       enforce_no_subject_punctuations: true
       enforce_no_subject_trailing_period: true
     npm_script:
@@ -44,7 +44,6 @@ grumphp:
       triggered_by: [php]
     phpstan:
       configuration: './phpstan.neon.dist'
-      level: 5
       ignore_patterns:
         - '/^assets\/(.*)/'
       memory_limit: '-1'

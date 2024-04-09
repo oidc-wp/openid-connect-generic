@@ -5,7 +5,7 @@
  * @package   OpenID_Connect_Generic
  * @category  Settings
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
@@ -65,7 +65,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 *
 	 * @var string
 	 */
-	private $option_name;
+	const OPTION_NAME = 'openid_connect_generic_settings';
 
 	/**
 	 * Stored option values array.
@@ -101,23 +101,21 @@ class OpenID_Connect_Generic_Option_Settings {
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
 		'acr_values'                => 'OIDC_ACR_VALUES',
+		'enable_logging'            => 'OIDC_ENABLE_LOGGING',
+		'log_limit'                 => 'OIDC_LOG_LIMIT',
 	);
 
 	/**
 	 * The class constructor.
 	 *
-	 * @param string       $option_name       The option name/key.
 	 * @param array<mixed> $default_settings  The default plugin settings values.
 	 * @param bool         $granular_defaults The granular defaults.
 	 */
-	public function __construct( $option_name, $default_settings = array(), $granular_defaults = true ) {
-		$this->option_name = $option_name;
+	public function __construct( $default_settings = array(), $granular_defaults = true ) {
 		$this->default_settings = $default_settings;
 		$this->values = array();
 
-		if ( ! empty( $this->option_name ) ) {
-			$this->values = (array) get_option( $this->option_name, $this->default_settings );
-		}
+		$this->values = (array) get_option( self::OPTION_NAME, $this->default_settings );
 
 		// For each defined environment variable/constant be sure the settings key is set.
 		foreach ( $this->environment_settings as $key => $constant ) {
@@ -193,7 +191,7 @@ class OpenID_Connect_Generic_Option_Settings {
 	 * @return string
 	 */
 	public function get_option_name() {
-		return $this->option_name;
+		return self::OPTION_NAME;
 	}
 
 	/**
@@ -210,7 +208,6 @@ class OpenID_Connect_Generic_Option_Settings {
 			}
 		}
 
-		update_option( $this->option_name, $this->values );
-
+		update_option( self::OPTION_NAME, $this->values );
 	}
 }

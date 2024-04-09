@@ -4,14 +4,14 @@ on:
   pull_request:
   push:
     branches:
-      - dev
+      - 'develop'
       - 'release/**'
       - 'feature/**'
       - 'fix/**'
 
 env:
   WP_MULTISITE: 0
-  ACTION_VERSION: 2
+  ACTION_VERSION: 3
 
 jobs:
   check_i18n:

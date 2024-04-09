@@ -1,6 +1,6 @@
 <?php
 /**
- * Login form and login button handlong class.
+ * Login form and login button handling class.
  *
  * @package   OpenID_Connect_Generic
  * @category  Login
@@ -12,7 +12,7 @@
 /**
  * OpenID_Connect_Generic_Login_Form class.
  *
- * Login form and login button handlong.
+ * Login form and login button handling.
  *
  * @package OpenID_Connect_Generic
  * @category  Login
@@ -84,7 +84,6 @@ class OpenID_Connect_Generic_Login_Form {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
-
 	}
 
 	/**
@@ -158,7 +157,6 @@ class OpenID_Connect_Generic_Login_Form {
 HTML;
 
 		return $login_button;
-
 	}
 
 	/**
@@ -177,5 +175,4 @@ HTML;
 		</script>
 		<?php
 	}
-
 }

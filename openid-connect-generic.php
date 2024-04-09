@@ -8,17 +8,17 @@
  * @package   OpenID_Connect_Generic
  * @category  General
  * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
- * @copyright 2015-2020 daggerhart
+ * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  * @link      https://github.com/daggerhart
  *
  * @wordpress-plugin
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
- * Description:       Connect to an OpenID Connect generic client using Authorization Code Flow.
- * Version:           3.9.1
- * Requires at least: 4.9
- * Requires PHP:      7.2
+ * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
+ * Version:           3.10.0
+ * Requires at least: 5.0
+ * Requires PHP:      7.4
  * Author:            daggerhart
  * Author URI:        http://www.daggerhart.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -91,7 +91,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.9.1';
+	const VERSION = '3.10.0';
 
 	/**
 	 * Plugin settings.
@@ -135,23 +135,14 @@ class OpenID_Connect_Generic {
 		self::$_instance = $this;
 	}
 
+	// @codeCoverageIgnoreStart
+
 	/**
 	 * WordPress Hook 'init'.
 	 *
 	 * @return void
 	 */
 	public function init() {
-
-		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
-
-		if ( $this->settings->alternate_redirect_uri ) {
-			$redirect_uri = site_url( '/openid-connect-authorize' );
-		}
-
-		$state_time_limit = 180;
-		if ( $this->settings->state_time_limit ) {
-			$state_time_limit = intval( $this->settings->state_time_limit );
-		}
 
 		$this->client = new OpenID_Connect_Generic_Client(
 			$this->settings->client_id,
@@ -160,9 +151,9 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_login,
 			$this->settings->endpoint_userinfo,
 			$this->settings->endpoint_token,
-			$redirect_uri,
+			$this->get_redirect_uri( $this->settings ),
 			$this->settings->acr_values,
-			$state_time_limit,
+			$this->get_state_time_limit( $this->settings ),
 			$this->logger
 		);
 
@@ -187,6 +178,40 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
+	 * Get the default redirect URI.
+	 *
+	 * @param OpenID_Connect_Generic_Option_Settings $settings The settings object.
+	 *
+	 * @return string
+	 */
+	public function get_redirect_uri( OpenID_Connect_Generic_Option_Settings $settings ) {
+		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
+
+		if ( $settings->alternate_redirect_uri ) {
+			$redirect_uri = site_url( '/openid-connect-authorize' );
+		}
+
+		return $redirect_uri;
+	}
+
+	/**
+	 * Get the default state time limit.
+	 *
+	 * @param OpenID_Connect_Generic_Option_Settings $settings The settings object.
+	 *
+	 * @return int
+	 */
+	public function get_state_time_limit( OpenID_Connect_Generic_Option_Settings $settings ) {
+		$state_time_limit = 180;
+		// State time limit cannot be zero.
+		if ( $settings->state_time_limit ) {
+			$state_time_limit = intval( $settings->state_time_limit );
+		}
+
+		return $state_time_limit;
+	}
+
+	/**
 	 * Check if privacy enforcement is enabled, and redirect users that aren't
 	 * logged in.
 	 *
@@ -195,7 +220,11 @@ class OpenID_Connect_Generic {
 	public function enforce_privacy_redirect() {
 		if ( $this->settings->enforce_privacy && ! is_user_logged_in() ) {
 			// The client endpoint relies on the wp-admin ajax endpoint.
-			if ( ! defined( 'DOING_AJAX' ) || ! constant( 'DOING_AJAX' ) || ! isset( $_GET['action'] ) || 'openid-connect-authorize' != $_GET['action'] ) {
+			if (
+				! defined( 'DOING_AJAX' ) ||
+				! boolval( constant( 'DOING_AJAX' ) ) ||
+				! isset( $_GET['action'] ) ||
+				'openid-connect-authorize' != $_GET['action'] ) {
 				auth_redirect();
 			}
 		}
@@ -313,7 +342,7 @@ class OpenID_Connect_Generic {
 			$filename  = str_replace( '\\', DIRECTORY_SEPARATOR, $filename );
 		}
 
-		$filepath = dirname( __FILE__ ) . '/includes/' . $filename;
+		$filepath = __DIR__ . '/includes/' . $filename;
 
 		if ( file_exists( $filepath ) ) {
 			require_once $filepath;
@@ -334,7 +363,6 @@ class OpenID_Connect_Generic {
 		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
-			'openid_connect_generic_settings',
 			// Default settings values.
 			array(
 				// OAuth client settings.
@@ -349,28 +377,29 @@ class OpenID_Connect_Generic {
 				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
 
 				// Non-standard settings.
-				'no_sslverify'    => 0,
-				'http_request_timeout' => 5,
-				'identity_key'    => 'preferred_username',
-				'nickname_key'    => 'preferred_username',
-				'email_format'       => '{email}',
-				'displayname_format' => '',
+				'no_sslverify'           => 0,
+				'http_request_timeout'   => 5,
+				'identity_key'           => 'preferred_username',
+				'nickname_key'           => 'preferred_username',
+				'email_format'           => '{email}',
+				'displayname_format'     => '',
 				'identify_with_username' => false,
+				'state_time_limit'       => 180,
 
 				// Plugin settings.
-				'enforce_privacy' => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
-				'alternate_redirect_uri' => 0,
-				'token_refresh_enable' => 1,
-				'link_existing_users' => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
+				'enforce_privacy'          => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
+				'alternate_redirect_uri'   => 0,
+				'token_refresh_enable'     => 1,
+				'link_existing_users'      => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
-				'redirect_user_back' => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
-				'redirect_on_logout' => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
-				'enable_logging'  => 0,
-				'log_limit'       => 1000,
+				'redirect_user_back'       => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
+				'redirect_on_logout'       => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
+				'enable_logging'           => defined( 'OIDC_ENABLE_LOGGING' ) ? intval( OIDC_ENABLE_LOGGING ) : 0,
+				'log_limit'                => defined( 'OIDC_LOG_LIMIT' ) ? intval( OIDC_LOG_LIMIT ) : 1000,
 			)
 		);
 
-		$logger = new OpenID_Connect_Generic_Option_Logger( 'openid-connect-generic-logs', 'error', $settings->enable_logging, $settings->log_limit );
+		$logger = new OpenID_Connect_Generic_Option_Logger( 'error', $settings->enable_logging, $settings->log_limit );
 
 		$plugin = new self( $settings, $logger );
 
@@ -402,4 +431,4 @@ register_activation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'activation
 register_deactivation_hook( __FILE__, array( 'OpenID_Connect_Generic', 'deactivation' ) );
 
 // Provide publicly accessible plugin helper functions.
-require_once( 'includes/functions.php' );
+require_once 'includes/functions.php';

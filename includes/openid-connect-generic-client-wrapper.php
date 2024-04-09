@@ -9,8 +9,6 @@
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
  */
 
-use \WP_Error as WP_Error;
-
 /**
  * OpenID_Connect_Generic_Client_Wrapper class.
  *
@@ -68,6 +66,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private $error = false;
 
 	/**
+	 * Used to pass the openid token refresh expiration time to the auth_cookie_expiration filter.
+	 *
+	 * @var integer
+	 */
+	private $openid_token_refresh_expires_in = 0;
+
+	/**
 	 * Inject necessary objects and services into the client.
 	 *
 	 * @param OpenID_Connect_Generic_Client          $client   A plugin client object instance.
@@ -99,7 +104,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Alter the requests according to settings.
-		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 3 );
+		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 2 );
 
 		if ( is_admin() ) {
 			/*
@@ -130,7 +135,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @param WP_Query $query The WordPress query object.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	public function alternate_redirect_uri_parse_request( $query ) {
 		if ( isset( $query->query_vars['openid-connect-authorize'] ) &&
@@ -138,8 +143,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$this->authentication_request_callback();
 			exit;
 		}
-
-		return $query;
 	}
 
 	/**
@@ -148,7 +151,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return string
 	 */
 	public function get_redirect_to() {
-		// @var WP $wp WordPress environment setup class.
+		/*
+		 * @var WP $wp
+		 */
 		global $wp;
 
 		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' == $GLOBALS['pagenow'] && isset( $_GET['action'] ) && 'logout' === $_GET['action'] ) {
@@ -170,15 +175,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Capture the current URL if set to redirect back to origin page.
 		if ( $this->settings->redirect_user_back ) {
+			if ( ! empty( $wp->query_string ) ) {
+				$redirect_url = home_url( '?' . $wp->query_string );
+			}
 			if ( ! empty( $wp->request ) ) {
-				if ( ! empty( $wp->did_permalink ) && boolval( $wp->did_permalink ) === true ) {
+				$redirect_url = home_url( add_query_arg( null, null ) );
+				// @phpstan-ignore-next-line
+				if ( $wp->did_permalink ) {
 					$redirect_url = home_url( add_query_arg( $_GET, trailingslashit( $wp->request ) ) );
-				} else {
-					$redirect_url = home_url( add_query_arg( null, null ) );
-				}
-			} else {
-				if ( ! empty( $wp->query_string ) ) {
-					$redirect_url = home_url( '?' . $wp->query_string );
 				}
 			}
 		}
@@ -243,8 +247,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			rawurlencode( $atts['acr_values'] )
 		);
 
-		$this->logger->log( apply_filters( 'openid-connect-generic-auth-url', $url ), 'make_authentication_url' );
-		return apply_filters( 'openid-connect-generic-auth-url', $url );
+		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
+		$this->logger->log( $url, 'make_authentication_url' );
+		return $url;
 	}
 
 	/**
@@ -411,7 +416,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return mixed
 	 */
 	public function alter_request( $request, $operation ) {
-		if ( ! empty( $this->settings->http_request_timeout ) && is_numeric( $this->settings->http_request_timeout ) ) {
+		if ( ! empty( $this->settings->http_request_timeout ) ) {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
 
@@ -544,13 +549,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Login the found / created user.
+		$start_time = microtime( true );
 		$this->login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$end_time = microtime( true );
+		// Log our success.
+		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success', $end_time - $start_time );
 
 		// Allow plugins / themes to take action once a user is logged in.
+		$start_time = microtime( true );
 		do_action( 'openid-connect-generic-user-logged-in', $user );
-
-		// Log our success.
-		$this->logger->log( "Successful login for: {$user->user_login} ({$user->ID})", 'login-success' );
+		$end_time = microtime( true );
+		$this->logger->log( 'openid-connect-generic-user-logged-in', 'do_action', $end_time - $start_time );
 
 		// Default redirect to the homepage.
 		$redirect_url = home_url();
@@ -670,8 +679,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
 		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
+		// Determine the amount of days before the cookie expires.
+		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
+		$wp_expiration_days = $remember_me ? 14 : 2;
+
+		// If remember-me is enabled, and using token expiration is enabled,
+		// add a filter to overwrite the default cookie expiration with the
+		// openid token expiration.
+		if (
+			$remember_me
+			&& apply_filters( 'openid-connect-generic-use-token-refresh-expiration', false )
+			&& ( $token_response['refresh_expires_in'] ?? 0 )
+		) {
+			$this->openid_token_refresh_expires_in = $token_response['refresh_expires_in'];
+			add_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
+		}
+
 		// Create the WP session, so we know its token.
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user->ID, false );
+		$expiration = time() + apply_filters( 'auth_cookie_expiration', $wp_expiration_days * DAY_IN_SECONDS, $user->ID, false );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		$token = $manager->create( $expiration );
 
@@ -679,8 +704,24 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$this->save_refresh_token( $manager, $token, $token_response );
 
 		// you did great, have a cookie!
-		wp_set_auth_cookie( $user->ID, false, '', $token );
+		wp_set_auth_cookie( $user->ID, $remember_me, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
+
+		// Remove the filter for the auth cookie expiration after all the auth cookies are set.
+		remove_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
+	}
+
+	/**
+	 * Filter callback to overwrite the default cookie expiration with the
+	 * openid token refresh expiration. This is applied both when creating the session
+	 * token as well as when wp_set_auth_cookie is called.
+	 *
+	 * @param integer $expiration_in_seconds The expiration time in seconds.
+	 * @return integer
+	 */
+	public function set_cookie_expiration_to_openid_token_refresh_expiration( $expiration_in_seconds ) {
+		$expiration_in_seconds = $this->openid_token_refresh_expires_in;
+		return $expiration_in_seconds;
 	}
 
 	/**
@@ -959,6 +1000,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return \WP_Error | \WP_User
 	 */
 	public function create_new_user( $subject_identity, $user_claim ) {
+		$start_time = microtime( true );
 		$user_claim = apply_filters( 'openid-connect-generic-alter-user-claim', $user_claim );
 
 		// Default username & email to the subject identity.
@@ -1056,6 +1098,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			if ( ! empty( $uid ) ) {
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
+				$end_time = microtime( true );
+				$this->logger->log( "Existing user updated: {$user->user_login} ($uid)", __METHOD__, $end_time - $start_time );
 				return $user;
 			}
 		}
@@ -1076,7 +1120,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// @example Original user gets "name", second user gets "name2", etc.
 		$count = 1;
 		while ( username_exists( $username ) ) {
-			$count ++;
+			$count++;
 			$username = $_username . $count;
 		}
 
@@ -1106,7 +1150,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
 
 		// Log the results.
-		$this->logger->log( "New user created: {$user->user_login} ($uid)", 'success' );
+		$end_time = microtime( true );
+		$this->logger->log( "New user created: {$user->user_login} ($uid)", __METHOD__, $end_time - $start_time );
 
 		// Allow plugins / themes to take action on new user creation.
 		do_action( 'openid-connect-generic-user-create', $user, $user_claim );
