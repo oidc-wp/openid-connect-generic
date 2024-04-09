@@ -1,15 +1,15 @@
-# Copyright (C) 2023 daggerhart
+# Copyright (C) 2024 daggerhart
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: OpenID Connect Generic 3.9.1\n"
+"Project-Id-Version: OpenID Connect Generic 3.10.0\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/daggerhart/openid-connect-generic/issues\n"
-"POT-Creation-Date: 2023-10-28 04:07:10+00:00\n"
+"POT-Creation-Date: 2024-04-09 01:24:09+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2023-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en\n"
@@ -25,45 +25,45 @@ msgstr ""
 "X-Textdomain-Support: yes\n"
 "X-Generator: grunt-wp-i18n 1.0.3\n"
 
-#: includes/openid-connect-generic-client-wrapper.php:288
+#: includes/openid-connect-generic-client-wrapper.php:293
 msgid "Session expired. Please login again."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:535
+#: includes/openid-connect-generic-client-wrapper.php:540
 msgid "User identity is not linked to an existing WordPress user."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:589
+#: includes/openid-connect-generic-client-wrapper.php:598
 msgid "Invalid user."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:775
+#: includes/openid-connect-generic-client-wrapper.php:816
 msgid "No appropriate username found."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:785
+#: includes/openid-connect-generic-client-wrapper.php:826
 #. translators: %1$s is the santitized version of the username from the IDP.
 msgid "Username %1$s could not be sanitized."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:807
+#: includes/openid-connect-generic-client-wrapper.php:848
 #. translators: %1$s is the configured User Claim nickname key.
 msgid "No nickname found in user claim using key: %1$s."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:904
+#: includes/openid-connect-generic-client-wrapper.php:945
 msgid "User claim incomplete."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1006
+#: includes/openid-connect-generic-client-wrapper.php:1048
 msgid "Bad user claim result."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1070
+#: includes/openid-connect-generic-client-wrapper.php:1114
 msgid "Can not authorize."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1099
+#: includes/openid-connect-generic-client-wrapper.php:1143
 msgid "Failed user creation."
 msgstr ""
 
@@ -79,67 +79,67 @@ msgstr ""
 msgid "Missing authentication code."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:238
+#: includes/openid-connect-generic-client.php:240
 msgid "Request for authentication token failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:269
+#: includes/openid-connect-generic-client.php:273
 msgid "Refresh token failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:284
+#: includes/openid-connect-generic-client.php:288
 msgid "Missing token body."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:292
+#: includes/openid-connect-generic-client.php:296
 msgid "Invalid token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:343
+#: includes/openid-connect-generic-client.php:349
 msgid "Request for userinfo failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:403
+#: includes/openid-connect-generic-client.php:409
 msgid "Missing authentication state."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:440
+#: includes/openid-connect-generic-client.php:446
 msgid "No identity token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:447
+#: includes/openid-connect-generic-client.php:453
 msgid "Missing identity token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:474
+#: includes/openid-connect-generic-client.php:480
 msgid "Bad ID token claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:479
+#: includes/openid-connect-generic-client.php:485
 msgid "No subject identity."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:485
+#: includes/openid-connect-generic-client.php:491
 msgid "No matching acr values."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:505
+#: includes/openid-connect-generic-client.php:511
 msgid "Bad user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:525
+#: includes/openid-connect-generic-client.php:531
 msgid "Invalid user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:530
+#: includes/openid-connect-generic-client.php:536
 msgid "Error from the IDP."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:539
+#: includes/openid-connect-generic-client.php:545
 msgid "Incorrect user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:546
+#: includes/openid-connect-generic-client.php:552
 msgid "Unauthorized access."
 msgstr ""
 
@@ -152,20 +152,32 @@ msgstr ""
 msgid "Login with OpenID Connect"
 msgstr ""
 
-#: includes/openid-connect-generic-option-logger.php:264
-msgid "Type"
+#: includes/openid-connect-generic-option-logger.php:228
+msgid "Details"
 msgstr ""
 
-#: includes/openid-connect-generic-option-logger.php:268
+#: includes/openid-connect-generic-option-logger.php:229
+msgid "Data"
+msgstr ""
+
+#: includes/openid-connect-generic-option-logger.php:236
 msgid "Date"
 msgstr ""
 
-#: includes/openid-connect-generic-option-logger.php:272
+#: includes/openid-connect-generic-option-logger.php:240
+msgid "Type"
+msgstr ""
+
+#: includes/openid-connect-generic-option-logger.php:244
 msgid "User"
 msgstr ""
 
-#: includes/openid-connect-generic-option-logger.php:276
+#: includes/openid-connect-generic-option-logger.php:248
 msgid "URI "
+msgstr ""
+
+#: includes/openid-connect-generic-option-logger.php:252
+msgid "Response&nbsp;Time&nbsp;(sec)"
 msgstr ""
 
 #: includes/openid-connect-generic-settings-page.php:108
@@ -492,7 +504,7 @@ msgstr ""
 msgid "Log information about login attempts through OpenID Connect Generic."
 msgstr ""
 
-#: openid-connect-generic.php:217
+#: openid-connect-generic.php:242
 msgid "Private site"
 msgstr ""
 

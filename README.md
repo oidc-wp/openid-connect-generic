@@ -3,8 +3,8 @@
 **Donate link:** http://www.daggerhart.com/  
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 5.0  
-**Tested up to:** 6.2.2  
-**Stable tag:** 3.9.1  
+**Tested up to:** 6.4.3  
+**Stable tag:** 3.10.0  
 **Requires PHP:** 7.4  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -50,6 +50,17 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 ## Changelog ##
+
+### 3.10.0 ###
+
+* Chore: @timnolte - Dependency updates.
+* Fix: @drzraf - Prevents running the auth url filter twice.
+* Fix: @timnolte - Updates the log cleanup handling to properly retain the configured number of log entries.
+* Fix: @timnolte - Updates the log display output to reflect the log retention policy.
+* Chore: @timnolte - Adds Unit Testing & New Local Development Environment.
+* Feature: @timnolte - Updates logging to allow for tracking processing time.
+* Feature: @menno-ll - Adds a remember me feature via a new filter.
+* Improvement: @menno-ll - Updates WP Cookie Expiration to Same as Session Length.
 
 ### 3.9.1 ###
 

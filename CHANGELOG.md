@@ -1,5 +1,16 @@
 # OpenId Connect Generic Changelog
 
+**3.10.0**
+
+- Chore: @timnolte - Dependency updates.
+- Fix: @drzraf - Prevents running the auth url filter twice.
+- Fix: @timnolte - Updates the log cleanup handling to properly retain the configured number of log entries.
+- Fix: @timnolte - Updates the log display output to reflect the log retention policy.
+- Chore: @timnolte - Adds Unit Testing & New Local Development Environment.
+- Feature: @timnolte - Updates logging to allow for tracking processing time.
+- Feature: @menno-ll - Adds a remember me feature via a new filter.
+- Improvement: @menno-ll - Updates WP Cookie Expiration to Same as Session Length.
+
 **3.9.1**
 
 - Improvement: @timnolte - Refactors Composer setup and GitHub Actions.
