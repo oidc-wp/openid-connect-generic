@@ -20,6 +20,22 @@
 class OpenID_Connect_Generic_Client_Wrapper {
 
 	/**
+	 * The user redirect cookie key.
+	 *
+	 * @deprecated Redirection should be done via state transient and not cookies.
+	 *
+	 * @var string
+	 */
+	const COOKIE_REDIRECT_KEY = 'openid-connect-generic-redirect';
+
+	/**
+	 * The token refresh info cookie key.
+	 *
+	 * @var string
+	 */
+	const COOKIE_TOKEN_REFRESH_KEY = 'openid-connect-generic-refresh';
+
+	/**
 	 * The client object instance.
 	 *
 	 * @var OpenID_Connect_Generic_Client
@@ -41,22 +57,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	private $logger;
 
 	/**
-	 * The token refresh info cookie key.
-	 *
-	 * @var string
-	 */
-	private $cookie_token_refresh_key = 'openid-connect-generic-refresh';
-
-	/**
-	 * The user redirect cookie key.
-	 *
-	 * @deprecated Redirection should be done via state transient and not cookies.
-	 *
-	 * @var string
-	 */
-	public $cookie_redirect_key = 'openid-connect-generic-redirect';
-
-	/**
 	 * The return error onject.
 	 *
 	 * @example WP_Error if there was a problem, or false if no error
@@ -64,13 +64,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @var bool|WP_Error
 	 */
 	private $error = false;
-
-	/**
-	 * Used to pass the openid token refresh expiration time to the auth_cookie_expiration filter.
-	 *
-	 * @var integer
-	 */
-	private $openid_token_refresh_expires_in = 0;
 
 	/**
 	 * Inject necessary objects and services into the client.
@@ -120,11 +113,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
 			add_rewrite_tag( '%openid-connect-authorize%', '1' );
 			add_action( 'parse_request', array( $client_wrapper, 'alternate_redirect_uri_parse_request' ) );
-		}
-
-		// Verify token for any logged in user.
-		if ( is_user_logged_in() ) {
-			add_action( 'wp_loaded', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
 		}
 
 		return $client_wrapper;
@@ -263,38 +251,34 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$user_id = wp_get_current_user()->ID;
+		$last_token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
+
+		if ( ! empty( $last_token_response['expires_in'] ) && ! empty( $last_token_response['time'] ) ) {
+			/*
+			 * @var int $expiration_time
+			 */
+			$expiration_time = intval( $last_token_response['time'] ) + intval( $last_token_response['expires_in'] );
+			if ( time() < $expiration_time ) {
+				// Access token is not expired so don't attempt to refresh.
+				return;
+			}
+		}
+
 		$manager = WP_Session_Tokens::get_instance( $user_id );
 		$token = wp_get_session_token();
 		$session = $manager->get( $token );
 
-		if ( ! isset( $session[ $this->cookie_token_refresh_key ] ) ) {
+		if ( ! isset( $session[ self::COOKIE_TOKEN_REFRESH_KEY ] ) ) {
 			// Not an OpenID-based session.
 			return;
 		}
 
-		$current_time = time();
-		$refresh_token_info = $session[ $this->cookie_token_refresh_key ];
+		$refresh_token_info = $session[ self::COOKIE_TOKEN_REFRESH_KEY ];
 
-		$next_access_token_refresh_time = $refresh_token_info['next_access_token_refresh_time'];
-
-		if ( $current_time < $next_access_token_refresh_time ) {
+		$refresh_token = $refresh_token_info['refresh_token'] ?? null;
+		if ( empty( $refresh_token ) ) {
+			// No valid refresh token.
 			return;
-		}
-
-		$refresh_token = $refresh_token_info['refresh_token'];
-		$refresh_expires = $refresh_token_info['refresh_expires'];
-
-		if ( ! $refresh_token || ( $refresh_expires && $current_time > $refresh_expires ) ) {
-			if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-				do_action( 'openid-connect-generic-session-expired', wp_get_current_user(), esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
-				wp_logout();
-
-				if ( $this->settings->redirect_on_logout ) {
-					$this->error_redirect( new WP_Error( 'access-token-expired', __( 'Session expired. Please login again.', 'daggerhart-openid-connect-generic' ) ) );
-				}
-
-				return;
-			}
 		}
 
 		$token_result = $this->client->request_new_tokens( $refresh_token );
@@ -305,11 +289,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$token_response = $this->client->get_token_response( $token_result );
-
 		if ( is_wp_error( $token_response ) ) {
 			wp_logout();
 			$this->error_redirect( $token_response );
 		}
+
+		// Capture the time so that access token expiration can be calculated later.
+		$token_response[] = time();
 
 		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
@@ -571,8 +557,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Provide backwards compatibility for customization using the deprecated cookie method.
-		if ( ! empty( $_COOKIE[ $this->cookie_redirect_key ] ) ) {
-			$redirect_url = esc_url_raw( wp_unslash( $_COOKIE[ $this->cookie_redirect_key ] ) );
+		if ( ! empty( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) );
 		}
 
 		// Only do redirect-user-back action hook when the plugin is configured for it.
@@ -671,7 +657,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 *
 	 * @return void
 	 */
-	public function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ) {
+	public function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ): void {
 		// Store the tokens for future reference.
 		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
 		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
@@ -683,20 +669,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$remember_me = apply_filters( 'openid-connect-generic-remember-me', false, $user, $token_response, $id_token_claim, $user_claim, $subject_identity );
 		$wp_expiration_days = $remember_me ? 14 : 2;
 
-		// If remember-me is enabled, and using token expiration is enabled,
-		// add a filter to overwrite the default cookie expiration with the
-		// openid token expiration.
-		if (
-			$remember_me
-			&& apply_filters( 'openid-connect-generic-use-token-refresh-expiration', false )
-			&& ( $token_response['refresh_expires_in'] ?? 0 )
-		) {
-			$this->openid_token_refresh_expires_in = $token_response['refresh_expires_in'];
-			add_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
-		}
-
 		// Create the WP session, so we know its token.
-		$expiration = time() + apply_filters( 'auth_cookie_expiration', $wp_expiration_days * DAY_IN_SECONDS, $user->ID, false );
+		$expiration = time() + apply_filters( 'auth_cookie_expiration', $wp_expiration_days * DAY_IN_SECONDS, $user->ID, $remember_me );
 		$manager = WP_Session_Tokens::get_instance( $user->ID );
 		$token = $manager->create( $expiration );
 
@@ -706,22 +680,6 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// you did great, have a cookie!
 		wp_set_auth_cookie( $user->ID, $remember_me, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
-
-		// Remove the filter for the auth cookie expiration after all the auth cookies are set.
-		remove_filter( 'auth_cookie_expiration', array( $this, 'set_cookie_expiration_to_openid_token_refresh_expiration' ) );
-	}
-
-	/**
-	 * Filter callback to overwrite the default cookie expiration with the
-	 * openid token refresh expiration. This is applied both when creating the session
-	 * token as well as when wp_set_auth_cookie is called.
-	 *
-	 * @param integer $expiration_in_seconds The expiration time in seconds.
-	 * @return integer
-	 */
-	public function set_cookie_expiration_to_openid_token_refresh_expiration( $expiration_in_seconds ) {
-		$expiration_in_seconds = $this->openid_token_refresh_expires_in;
-		return $expiration_in_seconds;
 	}
 
 	/**
@@ -731,25 +689,17 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @param string              $token          The current users session token.
 	 * @param array|WP_Error|null $token_response The authentication token response.
 	 */
-	public function save_refresh_token( $manager, $token, $token_response ) {
+	public function save_refresh_token( $manager, $token, $token_response ): void {
 		if ( ! $this->settings->token_refresh_enable ) {
 			return;
 		}
+
 		$session = $manager->get( $token );
-		$now = time();
-		$session[ $this->cookie_token_refresh_key ] = array(
-			'next_access_token_refresh_time' => $token_response['expires_in'] + $now,
-			'refresh_token' => isset( $token_response['refresh_token'] ) ? $token_response['refresh_token'] : false,
-			'refresh_expires' => false,
+
+		$session[ self::COOKIE_TOKEN_REFRESH_KEY ] = array(
+			'refresh_token' => $token_response['refresh_token'] ?? false,
 		);
-		if ( isset( $token_response['refresh_expires_in'] ) ) {
-			$refresh_expires_in = $token_response['refresh_expires_in'];
-			if ( $refresh_expires_in > 0 ) {
-				// Leave enough time for the actual refresh request to go through.
-				$refresh_expires = $now + $refresh_expires_in - 5;
-				$session[ $this->cookie_token_refresh_key ]['refresh_expires'] = $refresh_expires;
-			}
-		}
+
 		$manager->update( $token, $session );
 		return;
 	}
