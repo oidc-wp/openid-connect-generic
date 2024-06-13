@@ -218,7 +218,6 @@ class OpenID_Connect_Generic_Client {
 				'client_secret' => $this->client_secret,
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
-				'scope'         => $this->scope,
 			),
 			'headers' => array( 'Host' => $host ),
 		);
