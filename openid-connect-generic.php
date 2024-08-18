@@ -144,8 +144,8 @@ class OpenID_Connect_Generic {
 	 */
 	public function init() {
 
-		// Allow altering the settings
-		$this->settings = apply_filters('openid-connect-generic-settings', $this->settings);
+		// Allow altering the settings.
+		$this->settings = apply_filters( 'openid-connect-generic-settings', $this->settings );
 
 		$this->client = new OpenID_Connect_Generic_Client(
 			$this->settings->client_id,
