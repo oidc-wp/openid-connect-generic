@@ -369,7 +369,7 @@ class OpenID_Connect_Generic_Client {
 		);
 
 		// Allow storing more data with the state. Eg. to identify user relationships.
-		$state_value = apply_filters('openid-connect-generic-new-state-value', $state_value, $this);
+		$state_value = apply_filters( 'openid-connect-generic-new-state-value', $state_value, $this );
 
 		set_transient( 'openid-connect-generic-state--' . $state, $state_value, $this->state_time_limit );
 
