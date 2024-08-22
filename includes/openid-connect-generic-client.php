@@ -341,7 +341,7 @@ class OpenID_Connect_Generic_Client {
 
 		// Attempt the request including the access token in the query string for backwards compatibility.
 		$start_time = microtime( true );
-		$response   = wp_remote_post( $this->endpoint_userinfo, $request );
+		$response   = wp_remote_get( $this->endpoint_userinfo, $request );
 		$end_time   = microtime( true );
 		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo', $end_time - $start_time );
 
