@@ -490,7 +490,9 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __DIR__ ) . 'css/styles-admin.css', array(), OpenID_Connect_Generic::VERSION, 'all' );
 
-		$redirect_uri = OpenID_Connect_Generic::get_redirect_uri( $this->settings );
+		$plugin = OpenID_Connect_Generic::instance();
+
+		$redirect_uri = $plugin->get_redirect_uri( $this->settings );
 
 		?>
 		<div class="wrap">
