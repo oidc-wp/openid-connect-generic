@@ -35,3 +35,6 @@
 /phpunit.xml.dist export-ignore
 /package.json export-ignore
 /package-lock.json export-ignore
+/wp-cli.yml export-ignore
+/docker-compose.yml export-ignore
+/SECURITY.md export-ignore
