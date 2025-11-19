@@ -53,6 +53,7 @@ vendor
 dist
 
 # WordPress Development environment directories to ignore.
+wordpress
 tools/local-env/wp
 tools/local-env/wp-content/db.php
 tools/local-env/wp-content/.litespeed_conf.dat
@@ -69,4 +70,3 @@ tools/local-env/wp-content/upgrade/*
 !tools/local-env/wp-content/mu-plugins/*
 !tools/local-env/wp-content/plugins/.gitkeep
 !tools/local-env/wp-content/plugins/daggerhart-openid-connect-generic/.gitkeep
-
