@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: OpenID Connect Generic 3.10.0\n"
+"Project-Id-Version: OpenID Connect Generic 3.10.1\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/daggerhart/openid-connect-generic/issues\n"
 "POT-Creation-Date: 2024-04-09 01:24:09+00:00\n"
