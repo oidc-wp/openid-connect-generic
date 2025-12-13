@@ -44,7 +44,7 @@ jobs:
           ${{ runner.os }}-build-${{ env.npm-cache-name }}-v${{ env.ACTION_VERSION }}-
 
     - name: NPM Install
-      run: npm ci
+      run: npm install
 
     - name: Prepare a WordPress.org Release
       run: npm run release
