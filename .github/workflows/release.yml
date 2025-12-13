@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup Node Environment
       uses: actions/setup-node@v1
@@ -33,7 +33,7 @@ jobs:
 
     - name: Cache Node Modules
       if: ${{ !env.ACT }}
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
         npm-cache-name: cache-node-modules
       with:

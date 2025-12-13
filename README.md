@@ -1,6 +1,5 @@
 # OpenID Connect Generic Client #
 **Contributors:** [daggerhart](https://profiles.wordpress.org/daggerhart/), [tnolte](https://profiles.wordpress.org/tnolte/)  
-**Donate link:** http://www.daggerhart.com/  
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 5.0  
 **Tested up to:** 6.4.3  
@@ -20,7 +19,7 @@ new users are created in WordPress database.
 
 Much of the documentation can be found on the Settings > OpenID Connect Generic dashboard page.
 
-Please submit issues to the Github repo: https://github.com/daggerhart/openid-connect-generic
+Please submit issues to the Github repo: https://github.com/oidc-wp/openid-connect-generic
 
 ## Installation ##
 
@@ -50,6 +49,12 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 ## Changelog ##
+
+### 3.10.1 ###
+
+* Chore: @daggerhart - Readme updates and clarifications.
+* Chore: @daggerhart - Release workflow updates.
+* Improved error handling for malformed urls.
 
 ### 3.10.0 ###
 

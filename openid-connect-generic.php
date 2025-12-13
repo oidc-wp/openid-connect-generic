@@ -7,25 +7,25 @@
  *
  * @package   OpenID_Connect_Generic
  * @category  General
- * @author    Jonathan Daggerhart <jonathan@daggerhart.com>
+ * @author    Jonathan Daggerhart <jonathan@daggerhartlab.com>
  * @copyright 2015-2023 daggerhart
  * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL-2.0+
- * @link      https://github.com/daggerhart
+ * @link      https://github.com/oidc-wp
  *
  * @wordpress-plugin
  * Plugin Name:       OpenID Connect Generic
- * Plugin URI:        https://github.com/daggerhart/openid-connect-generic
+ * Plugin URI:        https://github.com/oidc-wp/openid-connect-generic
  * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
- * Version:           3.10.0
+ * Version:           3.10.1
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            daggerhart
- * Author URI:        http://www.daggerhart.com
+ * Author URI:        https://www.daggerhartlab.com
  * Text Domain:       daggerhart-openid-connect-generic
  * Domain Path:       /languages
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * GitHub Plugin URI: https://github.com/daggerhart/openid-connect-generic
+ * GitHub Plugin URI: https://github.com/oidc-wp/openid-connect-generic
  */
 
 /*
@@ -91,7 +91,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.10.0';
+	const VERSION = '3.10.1';
 
 	/**
 	 * Plugin settings.
