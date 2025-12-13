@@ -27,7 +27,7 @@
   "devDependencies": {
     "@floatwork/grunt-po2mo": "^0.4.1",
     "@ndigitals/grunt-checkrepo": "^0.2.5",
-    "@wordpress/scripts": "^26.19.0",
+    "@wordpress/scripts": "^31.1.0",
     "check-node-version": "^4.2.1",
     "grunt": "~1.5.3",
     "grunt-checkbranch": "^1.0.4",
