@@ -35,6 +35,7 @@ Notes
   Filters
   - openid-connect-generic-alter-request       - 3 args: request array, plugin settings, specific request op
   - openid-connect-generic-settings-fields     - modify the fields provided on the settings page
+  - openid-connect-generic-settings            - modify settings values early in plugin bootstrap.
   - openid-connect-generic-login-button-text   - modify the login button text
   - openid-connect-generic-cookie-redirect-url - modify the redirect url stored as a cookie
   - openid-connect-generic-user-login-test     - (bool) should the user be logged in based on their claim
@@ -44,6 +45,7 @@ Notes
   - openid-connect-generic-alter-user-data     - modify user data before a new user is created
   - openid-connect-modify-token-response-before-validation - modify the token response before validation
   - openid-connect-modify-id-token-claim-before-validation - modify the token claim before validation
+  - openid-connect-generic-new-state-value     - modify the user's state value before it us saved.
 
   Actions
   - openid-connect-generic-user-create                     - 2 args: fires when a new user is created by this plugin
