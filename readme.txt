@@ -55,6 +55,9 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 * Chore: @daggerhart - Readme updates and clarifications.
 * Chore: @daggerhart - Release workflow updates.
 * Improved error handling for malformed urls.
+* Fix: @JUVOJustin - Change request for userinfo to GET.
+* Feature: @JUVOJustin - New filter for settings values `openid-connect-generic-settings`.
+* Feature: @JUVOJustin - New filter for state values `openid-connect-generic-new-state-value`.
 
 = 3.10.0 =
 
