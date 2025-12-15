@@ -236,7 +236,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
-		$url = esc_url( $url );
+		$url = esc_url_raw( $url );
 		$this->logger->log( $url, 'make_authentication_url' );
 		return $url;
 	}
