@@ -40,9 +40,7 @@
     "grunt-version": "^3.0.1",
     "grunt-wp-i18n": "^1.0.3",
     "grunt-wp-readme-to-markdown": "^2.1.0",
-    "load-grunt-tasks": "^3.5.2",
-    "puppeteer": "^1.20.0",
-    "typescript": "^3.9.10"
+    "load-grunt-tasks": "^3.5.2"
   },
   "resolutions": {
     "getobject": "^1.0.0",
