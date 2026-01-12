@@ -58,13 +58,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
 
-    - name: Setup Node Environment
-      # https://github.com/marketplace/actions/setup-node-js-environment
-      uses: actions/setup-node@v2
-      with:
-        node-version-file: '.nvmrc'
-        cache: ${{ !env.ACT && 'npm' || '' }}
-
     - name: Setup PHP & Composer Environment
       # https://github.com/marketplace/actions/setup-php-action
       uses: shivammathur/setup-php@v2
@@ -105,10 +98,7 @@ jobs:
       if: matrix.php-version != '8.0' && matrix.php-version != '8.1'
       run: composer install --prefer-dist
 
-    - name: NPM Setup
-      run: npm ci
-
     - name: Unit Tests
       env:
         WP_MULTISITE: ${{ matrix.wp-multisite-mode }}
-      run: npm run test
+      run: composer phpunit

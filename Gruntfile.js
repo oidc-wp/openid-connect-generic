@@ -8,36 +8,6 @@ module.exports = function (grunt) {
 
 		composerBin: 'vendor/bin',
 
-		shell: {
-			phpcs: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcs'
-			},
-
-			phpcbf: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcbf'
-			},
-
-			phpstan: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpstan analyze .'
-			},
-
-			phpunit: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpunit'
-			},
-		},
-
 		gitinfo: {
 			commands: {
 				'local.tag.current.name': ['name-rev', '--tags', '--name-only', 'HEAD'],
@@ -202,15 +172,9 @@ module.exports = function (grunt) {
 
 	});
 
-	grunt.registerTask('phpcs', ['shell:phpcs']);
-	grunt.registerTask('phpcbf', ['shell:phpcbf']);
-	grunt.registerTask('phpstan', ['shell:phpstan']);
-	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain', 'phpunit']);
 	grunt.registerTask('build', ['gitinfo', 'i18n', 'readme']);
 	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
 
 };
-
