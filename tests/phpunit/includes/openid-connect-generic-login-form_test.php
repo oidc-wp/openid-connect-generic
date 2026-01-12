@@ -107,11 +107,12 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 			->method( 'get_authentication_url' )
 			->with( $this->callback( function( $atts ) {
 				// Verify custom attributes override defaults.
-				return $atts['button_text'] === 'Custom Login'
-					&& $atts['client_id'] === 'custom-client-id'
+				// Note: button_text is NOT passed to get_authentication_url, only used for rendering.
+				return $atts['client_id'] === 'custom-client-id'
 					&& $atts['scope'] === 'openid profile'
 					&& $atts['endpoint_login'] === 'https://idp.example.com/authorize'
-					&& $atts['redirect_uri'] === 'https://site.example.com/callback';
+					&& $atts['redirect_uri'] === 'https://site.example.com/callback'
+					&& $atts['redirect_to'] === '/dashboard';
 			} ) )
 			->willReturn( 'https://idp.example.com/authorize?client_id=custom-client-id' );
 
