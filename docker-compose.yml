@@ -5,7 +5,7 @@ version: "3.7"
 
 services:
   app:
-    image: ghcr.io/ndigitals/wp-dev-container:php-8.0-node-16
+    image: ghcr.io/ndigitals/wp-dev-container:php-8.1-node-20
     restart: always
     depends_on:
       - db

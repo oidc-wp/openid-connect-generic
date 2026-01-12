@@ -22,14 +22,14 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup Node Environment
       # https://github.com/marketplace/actions/setup-node-js-environment
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-        cache: ${{ !env.ACT && 'npm' || '' }}
+        cache: 'npm'
 
     - name: NPM Install
       run: npm ci
