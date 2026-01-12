@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['7.4','8.0']
+        php-version: ['7.4','8.0','8.1']
         wordpress-version: ['5.7.*','5.8.*','5.9.*']
         wp-multisite-mode: [0]
         bleeding-edge: [false]
@@ -31,7 +31,7 @@ jobs:
             wp-multisite-mode: 0
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
-            php-version: '8.0'
+            php-version: '8.1'
             wordpress-version: '5.9.*'
             wp-multisite-mode: 1
 
@@ -89,6 +89,11 @@ jobs:
       if: matrix.php-version == '8.0'
       run: |
         composer require phpunit/phpunit:^8.0 phpro/grumphp:^1.10.0 --dev -W --ignore-platform-req=php
+
+    - name: PHPUnit PHP 8.1 Support
+      if: matrix.php-version == '8.1'
+      run: |
+        composer require phpunit/phpunit:^9.0 phpro/grumphp:^2.0 --dev -W --ignore-platform-req=php
 
     - name: Install Composer Dependencies (PHP 8.x)
       if: matrix.php-version == '8.0' || matrix.php-version == '8.1'

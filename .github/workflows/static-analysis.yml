@@ -10,7 +10,7 @@ on:
       - 'fix/**'
 
 env:
-  PHP_VERSION: '8.0'
+  PHP_VERSION: '8.1'
   WP_MULTISITE: 0
   COMPOSER_VERSION: '2.6'
   ACTION_VERSION: 3
