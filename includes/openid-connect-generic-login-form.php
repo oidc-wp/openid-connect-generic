@@ -34,14 +34,23 @@ class OpenID_Connect_Generic_Login_Form {
 	private $client_wrapper;
 
 	/**
+	 * The client object instance.
+	 *
+	 * @var OpenID_Connect_Generic_Client
+	 */
+	private $client;
+
+	/**
 	 * The class constructor.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Client_Wrapper  $client_wrapper A plugin client wrapper object instance.
+	 * @param OpenID_Connect_Generic_Client          $client         A plugin client object instance.
 	 */
-	public function __construct( $settings, $client_wrapper ) {
+	public function __construct( $settings, $client_wrapper, $client ) {
 		$this->settings = $settings;
 		$this->client_wrapper = $client_wrapper;
+		$this->client = $client;
 	}
 
 	/**
@@ -49,11 +58,12 @@ class OpenID_Connect_Generic_Login_Form {
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
 	 * @param OpenID_Connect_Generic_Client_Wrapper  $client_wrapper A plugin client wrapper object instance.
+	 * @param OpenID_Connect_Generic_Client          $client         A plugin client object instance.
 	 *
 	 * @return void
 	 */
-	public static function register( $settings, $client_wrapper ) {
-		$login_form = new self( $settings, $client_wrapper );
+	public static function register( $settings, $client_wrapper, $client ) {
+		$login_form = new self( $settings, $client_wrapper, $client );
 
 		// Alter the login form as dictated by settings.
 		add_filter( 'login_message', array( $login_form, 'handle_login_page' ), 99 );
@@ -139,6 +149,12 @@ class OpenID_Connect_Generic_Login_Form {
 		$atts = shortcode_atts(
 			array(
 				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
+				'endpoint_login' => $this->settings->endpoint_login,
+				'scope' => $this->settings->scope,
+				'client_id' => $this->settings->client_id,
+				'redirect_uri' => $this->client->get_redirect_uri(),
+				'redirect_to' => $this->client_wrapper->get_redirect_to(),
+				'acr_values' => $this->settings->acr_values,
 			),
 			$atts,
 			'openid_connect_generic_login_button'
