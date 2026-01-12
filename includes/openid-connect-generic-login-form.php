@@ -163,7 +163,16 @@ class OpenID_Connect_Generic_Login_Form {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
 		$text = esc_html( $text );
 
-		$href = $this->client_wrapper->get_authentication_url( $atts );
+		$href = $this->client_wrapper->get_authentication_url(
+			array(
+				'endpoint_login' => $atts['endpoint_login'],
+				'scope' => $atts['scope'],
+				'client_id' => $atts['client_id'],
+				'redirect_uri' => $atts['redirect_uri'],
+				'redirect_to' => $atts['redirect_to'],
+				'acr_values' => $atts['acr_values'],
+			)
+		);
 		$href = esc_url_raw( $href );
 
 		$login_button = <<<HTML
