@@ -99,6 +99,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Alter the requests according to settings.
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 2 );
 
+		// Ensure tokens are refreshed before they expire.
+		if ( $settings->token_refresh_enable ) {
+			add_action( 'init', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
+		}
+
 		if ( is_admin() ) {
 			/*
 			 * Use the ajax url to handle processing authorization without any html output
