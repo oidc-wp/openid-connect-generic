@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
 
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
