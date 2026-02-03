@@ -24,7 +24,7 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
 
     - name: Get Composer Cache Directory
       id: composer-cache
@@ -34,7 +34,7 @@ jobs:
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}
       # https://github.com/marketplace/actions/cache
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       env:
         composer-cache-name: cache-composer
       with:

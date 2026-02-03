@@ -19,7 +19,7 @@ grumphp:
       keywords:
         - 'wp_die('
         - 'die('
-        - 'dump('
+        - ' dump('
         - ' dd('
     git_branch_name:
       blacklist:

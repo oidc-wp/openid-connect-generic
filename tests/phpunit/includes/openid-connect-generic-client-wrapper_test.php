@@ -115,4 +115,218 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 		$this->manager->destroy( $token );
 	}
 
+	/**
+	 * Test that ensure_tokens_still_fresh is hooked to init when token refresh is enabled.
+	 *
+	 * This test would have caught the bug where the method existed but was never hooked.
+	 *
+	 * @group ClientWrapperTests
+	 * @group TokenRefreshTests
+	 */
+	public function test_token_refresh_hook_registered_when_enabled() {
+		// Clean slate - remove all init hooks.
+		remove_all_actions( 'init' );
+
+		// Create settings with token refresh enabled.
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'token_refresh_enable' => 1,
+			)
+		);
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+
+		// Register the client wrapper.
+		$client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $client, $settings, $logger );
+
+		// Verify the hook is registered.
+		$this->assertGreaterThan(
+			0,
+			has_action( 'init', array( $client_wrapper, 'ensure_tokens_still_fresh' ) ),
+			'ensure_tokens_still_fresh should be hooked to init when token_refresh_enable is true'
+		);
+	}
+
+	/**
+	 * Test that ensure_tokens_still_fresh is NOT hooked when token refresh is disabled.
+	 *
+	 * @group ClientWrapperTests
+	 * @group TokenRefreshTests
+	 */
+	public function test_token_refresh_hook_not_registered_when_disabled() {
+		// Clean slate.
+		remove_all_actions( 'init' );
+
+		// Create settings with token refresh DISABLED.
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'token_refresh_enable' => 0,
+			)
+		);
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+
+		// Register the client wrapper.
+		$client_wrapper = OpenID_Connect_Generic_Client_Wrapper::register( $client, $settings, $logger );
+
+		// Verify the hook is NOT registered.
+		$this->assertFalse(
+			has_action( 'init', array( $client_wrapper, 'ensure_tokens_still_fresh' ) ),
+			'ensure_tokens_still_fresh should NOT be hooked to init when token_refresh_enable is false'
+		);
+	}
+
+	/**
+	 * Test that ensure_tokens_still_fresh method refreshes expired tokens.
+	 *
+	 * This tests the core logic of token refresh - not the hook registration.
+	 *
+	 * @group ClientWrapperTests
+	 * @group TokenRefreshTests
+	 */
+	public function test_ensure_tokens_still_fresh_refreshes_expired_tokens() {
+		// Create a logged-in user with expired token.
+		$user = $this->factory()->user->create_and_get();
+		wp_set_current_user( $user->ID );
+
+		// Create a real session by logging in the user.
+		$manager = WP_Session_Tokens::get_instance( $user->ID );
+		$session_token = $manager->create( time() + DAY_IN_SECONDS );
+
+		// Set the session token as current BEFORE setting up the refresh token.
+		$_COOKIE[LOGGED_IN_COOKIE] = wp_generate_auth_cookie( $user->ID, time() + DAY_IN_SECONDS, 'logged_in', $session_token );
+
+		// Now add refresh token to the session.
+		$session = $manager->get( $session_token );
+		$session[ OpenID_Connect_Generic_Client_Wrapper::COOKIE_TOKEN_REFRESH_KEY ] = array(
+			'refresh_token' => 'valid_refresh_token',
+		);
+		$manager->update( $session_token, $session );
+
+		// Set expired token in user meta.
+		$expired_token_response = array(
+			'access_token'  => 'expired_token',
+			'expires_in'    => 3600,
+			'time'          => time() - 7200, // Expired 2 hours ago.
+			'refresh_token' => 'valid_refresh_token',
+		);
+		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $expired_token_response );
+
+		// Mock the client to expect token refresh.
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->expects( $this->once() )
+			->method( 'request_new_tokens' )
+			->with( 'valid_refresh_token' )
+			->willReturn( array(
+				'body' => json_encode( array(
+					'access_token'  => 'new_token',
+					'expires_in'    => 3600,
+					'refresh_token' => 'new_refresh_token',
+					'id_token'      => 'new_id_token',
+				) ),
+			) );
+
+		$client->method( 'get_token_response' )
+			->willReturn( array(
+				'access_token'  => 'new_token',
+				'expires_in'    => 3600,
+				'refresh_token' => 'new_refresh_token',
+				'id_token'      => 'new_id_token',
+			) );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'token_refresh_enable' => 1,
+			)
+		);
+
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+
+		// Create wrapper directly (not using register to avoid init hook complications).
+		$client_wrapper = new OpenID_Connect_Generic_Client_Wrapper( $client, $settings, $logger );
+
+		// Call the method directly - this proves the logic works.
+		$client_wrapper->ensure_tokens_still_fresh();
+
+		// Verify new token was saved.
+		$updated_token = get_user_meta( $user->ID, 'openid-connect-generic-last-token-response', true );
+		$this->assertEquals( 'new_token', $updated_token['access_token'], 'Token should have been refreshed' );
+
+		// Cleanup.
+		unset( $_COOKIE[LOGGED_IN_COOKIE] );
+		wp_set_current_user( 0 );
+		$manager->destroy_all();
+	}
+
+	/**
+	 * Test that ensure_tokens_still_fresh does nothing when user not logged in.
+	 *
+	 * @group ClientWrapperTests
+	 * @group TokenRefreshTests
+	 */
+	public function test_ensure_tokens_still_fresh_skips_when_not_logged_in() {
+		// Ensure no user is logged in.
+		wp_set_current_user( 0 );
+
+		// Mock client that should NOT be called.
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->expects( $this->never() )
+			->method( 'request_new_tokens' );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'token_refresh_enable' => 1,
+			)
+		);
+
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		$client_wrapper = new OpenID_Connect_Generic_Client_Wrapper( $client, $settings, $logger );
+
+		// Should return early without calling client.
+		$client_wrapper->ensure_tokens_still_fresh();
+	}
+
+	/**
+	 * Test that ensure_tokens_still_fresh skips refresh when token not expired.
+	 *
+	 * @group ClientWrapperTests
+	 * @group TokenRefreshTests
+	 */
+	public function test_ensure_tokens_still_fresh_skips_when_token_not_expired() {
+		// Create logged-in user with VALID token.
+		$user = $this->factory()->user->create_and_get();
+		wp_set_current_user( $user->ID );
+
+		// Set non-expired token.
+		$valid_token_response = array(
+			'access_token'  => 'valid_token',
+			'expires_in'    => 3600,
+			'time'          => time(), // Just created, not expired.
+			'refresh_token' => 'refresh_token',
+		);
+		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $valid_token_response );
+
+		// Mock client that should NOT be called.
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->expects( $this->never() )
+			->method( 'request_new_tokens' );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'token_refresh_enable' => 1,
+			)
+		);
+
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		$client_wrapper = new OpenID_Connect_Generic_Client_Wrapper( $client, $settings, $logger );
+
+		// Should return early since token is still valid.
+		$client_wrapper->ensure_tokens_still_fresh();
+
+		// Cleanup.
+		wp_set_current_user( 0 );
+	}
+
 }

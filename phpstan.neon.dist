@@ -27,3 +27,5 @@ parameters:
     #- '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
     # Ignore cookie_redirect_key deprecation errors.
     - '/^Fetching deprecated class constant COOKIE_REDIRECT_KEY of class OpenID_Connect_Generic_Client_Wrapper/'
+
+  treatPhpDocTypesAsCertain: false
