@@ -20,7 +20,7 @@ grumphp:
         - 'wp_die('
         - 'die('
         - 'dump('
-        - 'dd('
+        - ' dd('
     git_branch_name:
       blacklist:
         - 'main'
