@@ -381,7 +381,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = home_url();
 		}
 
-		$token_response = get_user_option('openid-connect-generic-last-id-token-claim', $user->ID);
+		$token_response = get_user_option('openid-connect-generic-last-token-response', $user->ID);
 		if ( ! $token_response ) {
 			// Happens if non-openid login was used.
 			return $redirect_url;
