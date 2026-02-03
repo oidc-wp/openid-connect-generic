@@ -342,7 +342,15 @@ class OpenID_Connect_Generic_Client {
 		// Attempt the request including the access token in the query string for backwards compatibility.
 		$start_time = microtime( true );
 		$response   = wp_remote_get( $this->endpoint_userinfo, $request );
-		$end_time   = microtime( true );
+
+		// This endpoint can support GET or POST requests according to spec, but some IDPs only allow one.
+		// If the GET request failed to produce valid json, attempt a POST request.
+		// Spec: https://openid.net/specs/openid-connect-core-1_0.html#UserInfoRequest.
+		if ( ! is_wp_error( $response ) && json_decode( $response['body'] ) === null ) {
+			$response = wp_remote_post( $this->endpoint_userinfo, $request );
+		}
+
+		$end_time = microtime( true );
 		$this->logger->log( $this->endpoint_userinfo, 'request_userinfo', $end_time - $start_time );
 
 		if ( is_wp_error( $response ) ) {
