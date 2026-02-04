@@ -16,6 +16,7 @@
 phpcs.xml
 phpstan.neon
 phpunit.xml
+grumphp.yml
 .phpunit.result.cache
 clover.xml
 
