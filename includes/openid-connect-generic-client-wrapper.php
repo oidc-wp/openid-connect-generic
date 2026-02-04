@@ -257,7 +257,15 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$user_id = wp_get_current_user()->ID;
-		$last_token_response = get_user_meta( $user_id, 'openid-connect-generic-last-token-response', true );
+		$last_token_response = get_user_option( 'openid-connect-generic-last-token-response', $user_id );
+
+		if ( false === $last_token_response ) {
+			$last_token_response = get_user_meta(
+				$user_id,
+				'openid-connect-generic-last-token-response',
+				true
+			);
+		}
 
 		if ( ! empty( $last_token_response['expires_in'] ) && ! empty( $last_token_response['time'] ) ) {
 			/*
@@ -303,7 +311,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Capture the time so that access token expiration can be calculated later.
 		$token_response[] = time();
 
-		update_user_meta( $user_id, 'openid-connect-generic-last-token-response', $token_response );
+		update_user_option( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
 	}
 
@@ -373,7 +381,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = home_url();
 		}
 
-		$token_response = $user->get( 'openid-connect-generic-last-token-response' );
+		$token_response = get_user_option( 'openid-connect-generic-last-token-response', $user->ID );
 		if ( ! $token_response ) {
 			// Happens if non-openid login was used.
 			return $redirect_url;
@@ -382,7 +390,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$redirect_url = site_url( $redirect_url );
 		}
 
-		$claim = $user->get( 'openid-connect-generic-last-id-token-claim' );
+		$claim = get_user_option( 'openid-connect-generic-last-id-token-claim', $user->ID );
 
 		if ( isset( $claim['iss'] ) && 'https://accounts.google.com' == $claim['iss'] ) {
 			/*
@@ -645,9 +653,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Store the tokens for future reference.
-		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
-		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
-		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		update_user_option( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
+		update_user_option( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
+		update_user_option( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 
 		return $user_claim;
 	}
@@ -665,9 +673,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	public function login_user( $user, $token_response, $id_token_claim, $user_claim, $subject_identity ): void {
 		// Store the tokens for future reference.
-		update_user_meta( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
-		update_user_meta( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
-		update_user_meta( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
+		update_user_option( $user->ID, 'openid-connect-generic-last-token-response', $token_response );
+		update_user_option( $user->ID, 'openid-connect-generic-last-id-token-claim', $id_token_claim );
+		update_user_option( $user->ID, 'openid-connect-generic-last-user-claim', $user_claim );
 		// Allow plugins / themes to take action using current claims on existing user (e.g. update role).
 		do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 
@@ -1103,7 +1111,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$user = get_user_by( 'id', $uid );
 
 		// Save some meta data about this new user for the future.
-		add_user_meta( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
+		update_user_option( $user->ID, 'openid-connect-generic-subject-identity', (string) $subject_identity, true );
 
 		// Log the results.
 		$end_time = microtime( true );
@@ -1125,7 +1133,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	public function update_existing_user( $uid, $subject_identity ) {
 		// Add the OpenID Connect meta data.
-		update_user_meta( $uid, 'openid-connect-generic-subject-identity', strval( $subject_identity ) );
+		update_user_option( $uid, 'openid-connect-generic-subject-identity', strval( $subject_identity ) );
 
 		// Allow plugins / themes to take action on user update.
 		do_action( 'openid-connect-generic-user-update', $uid );
