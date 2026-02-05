@@ -26,12 +26,12 @@ jobs:
         include:
           - job-name: 'Unit Test Bleeding Edge Requirements'
             bleeding-edge: true
-            php-version: '8.1'
+            php-version: '8.3'
             wordpress-version: 'dev-master'
             wp-multisite-mode: 0
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
-            php-version: '8.1'
+            php-version: '8.3'
             wordpress-version: '6.9.*'
             wp-multisite-mode: 1
 
