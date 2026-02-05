@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenID Connect Generic 3.10.1\n"
 "Report-Msgid-Bugs-To: "
-"https://github.com/daggerhart/openid-connect-generic/issues\n"
+"https://github.com/oidc-wp/openid-connect-generic/issues\n"
 "POT-Creation-Date: 2024-04-09 01:24:09+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -513,7 +513,7 @@ msgid "OpenID Connect Generic"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "https://github.com/daggerhart/openid-connect-generic"
+msgid "https://github.com/oidc-wp/openid-connect-generic"
 msgstr ""
 
 #. Description of the plugin/theme
