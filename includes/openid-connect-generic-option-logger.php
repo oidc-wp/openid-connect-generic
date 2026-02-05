@@ -174,7 +174,9 @@ class OpenID_Connect_Generic_Option_Logger {
 	 * @return array
 	 */
 	private function upkeep_logs( $logs ) {
-		$items_to_remove = count( $logs ) - $this->log_limit;
+		$items_to_remove = is_array( $logs ) ?
+			count( $logs ) - $this->log_limit :
+			0;
 
 		if ( $items_to_remove > 0 ) {
 			// Only keep the last $log_limit messages from the end.

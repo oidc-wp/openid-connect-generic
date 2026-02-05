@@ -14,7 +14,7 @@ function getenv_docker($env, $default) {
 
 
 /* Path to the WordPress codebase you'd like to test. Add a forward slash in the end. */
-define( 'ABSPATH', '/app/wp/' );
+define( 'ABSPATH', getenv_docker('WORDPRESS_ABSPATH', '/app/wp/') );
 
 /*
  * Path to the theme to test with.

@@ -19,20 +19,20 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['7.4','8.0']
-        wordpress-version: ['5.7.*','5.8.*','5.9.*']
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+        wordpress-version: ['6.7.*','6.8.*','6.9.*']
         wp-multisite-mode: [0]
         bleeding-edge: [false]
         include:
           - job-name: 'Unit Test Bleeding Edge Requirements'
             bleeding-edge: true
-            php-version: '8.1'
+            php-version: '8.3'
             wordpress-version: 'dev-master'
             wp-multisite-mode: 0
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
-            php-version: '8.0'
-            wordpress-version: '5.9.*'
+            php-version: '8.3'
+            wordpress-version: '6.9.*'
             wp-multisite-mode: 1
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
@@ -40,7 +40,7 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
 
     - name: Get Composer Cache Directory
       id: composer-cache
@@ -49,7 +49,7 @@ jobs:
 
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}
-      uses: actions/cache@v2
+      uses: actions/cache@v5
       env:
         composer-cache-name: cache-composer
       with:
@@ -57,13 +57,6 @@ jobs:
         key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
-
-    - name: Setup Node Environment
-      # https://github.com/marketplace/actions/setup-node-js-environment
-      uses: actions/setup-node@v2
-      with:
-        node-version-file: '.nvmrc'
-        cache: ${{ !env.ACT && 'npm' || '' }}
 
     - name: Setup PHP & Composer Environment
       # https://github.com/marketplace/actions/setup-php-action
@@ -97,6 +90,11 @@ jobs:
       run: |
         composer require phpunit/phpunit:^8.0 phpro/grumphp:^1.10.0 --dev -W --ignore-platform-req=php
 
+    - name: PHPUnit PHP 8.1 Support
+      if: matrix.php-version == '8.1'
+      run: |
+        composer require phpunit/phpunit:^9.0 phpro/grumphp:^2.0 --dev -W --ignore-platform-req=php
+
     - name: Install Composer Dependencies (PHP 8.x)
       if: matrix.php-version == '8.0' || matrix.php-version == '8.1'
       run: composer install --prefer-dist --ignore-platform-req=php
@@ -105,10 +103,7 @@ jobs:
       if: matrix.php-version != '8.0' && matrix.php-version != '8.1'
       run: composer install --prefer-dist
 
-    - name: NPM Setup
-      run: npm ci
-
     - name: Unit Tests
       env:
         WP_MULTISITE: ${{ matrix.wp-multisite-mode }}
-      run: npm run test
+      run: composer phpunit

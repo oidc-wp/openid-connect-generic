@@ -1,11 +1,11 @@
 {
   "name": "openid-connect-generic",
-  "version": "3.10.2",
+  "version": "3.10.3",
   "description": "OpenID Connect generic WordPress plugin.",
   "main": "Gruntfile.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/daggerhart/openid-connect-generic"
+    "url": "https://github.com/oidc-wp/openid-connect-generic"
   },
   "keywords": [
     "wordpress",
@@ -14,15 +14,11 @@
   "author": "Jonathan Daggerhart",
   "license": "GPL-2.0-only",
   "bugs": {
-    "url": "https://github.com/daggerhart/openid-connect-generic/issues"
+    "url": "https://github.com/oidc-wp/openid-connect-generic/issues"
   },
-  "homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
+  "homepage": "https://github.com/oidc-wp/openid-connect-generic#readme",
   "dependencies": {
     "dev-require": "^0.1.0"
-  },
-  "engines": {
-    "node": ">=14.0.0 <18",
-    "npm": ">=6.0.0 <9"
   },
   "devDependencies": {
     "@floatwork/grunt-po2mo": "^0.4.1",
@@ -40,25 +36,16 @@
     "grunt-version": "^3.0.1",
     "grunt-wp-i18n": "^1.0.3",
     "grunt-wp-readme-to-markdown": "^2.1.0",
-    "load-grunt-tasks": "^3.5.2",
-    "puppeteer": "^1.20.0",
-    "typescript": "^3.9.10"
-  },
-  "resolutions": {
-    "getobject": "^1.0.0",
-    "shelljs": "^0.8.5"
+    "load-grunt-tasks": "^3.5.2"
   },
   "scripts": {
-    "preinstall": "npx force-resolutions --yes",
-    "build": "npm run grunt build",
-    "release": "npm run grunt release",
     "grunt": "node_modules/.bin/grunt",
     "version": "npm run grunt version",
-    "version:bump": "npm version --no-git-tag-version",
-    "check:engines": "wp-scripts check-engines",
+    "build": "npm run grunt build",
+    "release": "npm run grunt release",
     "check:licenses": "wp-scripts check-licenses",
-    "test": "npm run grunt test",
     "i18n:check": "npm run grunt checktextdomain",
-    "i18n:make": "npm run grunt i18n"
+    "i18n:make": "npm run grunt i18n",
+    "readme": "npm run grunt readme"
   }
 }

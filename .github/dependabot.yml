@@ -1,0 +1,52 @@
+version: 2
+updates:
+  # Monitor GitHub Actions (these actually run your CI/CD)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      # Group all GitHub Actions updates into a single PR
+      github-actions:
+        patterns:
+          - "*"
+
+  # Monitor npm packages - SECURITY ONLY
+  # These are dev-only packages never shipped with the plugin
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Only create PRs for security vulnerabilities
+    open-pull-requests-limit: 3
+    # This tells Dependabot to only open PRs for security updates
+    # Routine dependency updates will be ignored
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+    groups:
+      npm-security:
+        patterns:
+          - "*"
+
+  # Monitor Composer packages - SECURITY ONLY
+  # These are mostly dev-only packages (phpunit, phpstan, etc.)
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Only create PRs for security vulnerabilities
+    open-pull-requests-limit: 3
+    # This tells Dependabot to only open PRs for security updates
+    # Routine dependency updates will be ignored
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+    groups:
+      composer-security:
+        patterns:
+          - "*"

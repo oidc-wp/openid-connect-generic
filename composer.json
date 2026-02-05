@@ -3,7 +3,7 @@
   "type": "wordpress-plugin",
   "license": "GPL-2.0-only",
   "description": "OpenID Connect generic WordPress plugin.",
-  "homepage": "https://github.com/daggerhart/openid-connect-generic",
+  "homepage": "https://github.com/oidc-wp/openid-connect-generic",
   "authors": [
     {
       "name": "Jonathan Daggerhart",
@@ -21,7 +21,7 @@
     "openid"
   ],
   "support": {
-    "issues": "https://github.com/daggerhart/openid-connect-generic/issues"
+    "issues": "https://github.com/oidc-wp/openid-connect-generic/issues"
   },
   "repositories": [
     {
@@ -31,7 +31,7 @@
   ],
   "config": {
     "platform": {
-      "php": "8.0"
+      "php": "8.1"
     },
     "optimize-autoloader": true,
     "sort-packages": true,
@@ -48,14 +48,14 @@
     "composer/installers": "~1.0|~2.0"
   },
   "require-dev": {
-    "php": ">=7.4",
+    "php": ">=8.1",
     "brain/monkey": "^2.6",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
     "johnpbloch/wordpress-core": "~6.2.0",
     "johnpbloch/wordpress-core-installer": "^2.0",
     "mockery/mockery": "^1.5",
     "php-stubs/wordpress-stubs": "~6.2.0",
-    "phpro/grumphp": "^1.16",
+    "phpro/grumphp": "^2.0",
     "phpstan/extension-installer": "^1.3",
     "phpstan/phpstan": "^1.10",
     "phpstan/phpstan-deprecation-rules": "^1.1",

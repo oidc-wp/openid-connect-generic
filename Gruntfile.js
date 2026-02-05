@@ -8,36 +8,6 @@ module.exports = function (grunt) {
 
 		composerBin: 'vendor/bin',
 
-		shell: {
-			phpcs: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcs'
-			},
-
-			phpcbf: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcbf'
-			},
-
-			phpstan: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpstan analyze .'
-			},
-
-			phpunit: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpunit'
-			},
-		},
-
 		gitinfo: {
 			commands: {
 				'local.tag.current.name': ['name-rev', '--tags', '--name-only', 'HEAD'],
@@ -117,7 +87,7 @@ module.exports = function (grunt) {
 					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
 					potHeaders: {
 						poedit: true,                   // Includes common Poedit headers.
-						'report-msgid-bugs-to': 'https://github.com/daggerhart/openid-connect-generic/issues',
+						'report-msgid-bugs-to': 'https://github.com/oidc-wp/openid-connect-generic/issues',
 						'x-poedit-keywordslist': true   // Include a list of all possible gettext functions.
 					},                                // Headers to add to the generated POT file.
 					type: 'wp-plugin',                // Type of project (wp-plugin or wp-theme).
@@ -202,15 +172,9 @@ module.exports = function (grunt) {
 
 	});
 
-	grunt.registerTask('phpcs', ['shell:phpcs']);
-	grunt.registerTask('phpcbf', ['shell:phpcbf']);
-	grunt.registerTask('phpstan', ['shell:phpstan']);
-	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain', 'phpunit']);
 	grunt.registerTask('build', ['gitinfo', 'i18n', 'readme']);
 	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
 
 };
-
