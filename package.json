@@ -1,11 +1,11 @@
 {
   "name": "openid-connect-generic",
-  "version": "3.10.2",
+  "version": "3.10.3",
   "description": "OpenID Connect generic WordPress plugin.",
   "main": "Gruntfile.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/daggerhart/openid-connect-generic"
+    "url": "https://github.com/oidc-wp/openid-connect-generic"
   },
   "keywords": [
     "wordpress",
@@ -14,9 +14,9 @@
   "author": "Jonathan Daggerhart",
   "license": "GPL-2.0-only",
   "bugs": {
-    "url": "https://github.com/daggerhart/openid-connect-generic/issues"
+    "url": "https://github.com/oidc-wp/openid-connect-generic/issues"
   },
-  "homepage": "https://github.com/daggerhart/openid-connect-generic#readme",
+  "homepage": "https://github.com/oidc-wp/openid-connect-generic#readme",
   "dependencies": {
     "dev-require": "^0.1.0"
   },

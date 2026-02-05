@@ -3,7 +3,7 @@
   "type": "wordpress-plugin",
   "license": "GPL-2.0-only",
   "description": "OpenID Connect generic WordPress plugin.",
-  "homepage": "https://github.com/daggerhart/openid-connect-generic",
+  "homepage": "https://github.com/oidc-wp/openid-connect-generic",
   "authors": [
     {
       "name": "Jonathan Daggerhart",
@@ -21,7 +21,7 @@
     "openid"
   ],
   "support": {
-    "issues": "https://github.com/daggerhart/openid-connect-generic/issues"
+    "issues": "https://github.com/oidc-wp/openid-connect-generic/issues"
   },
   "repositories": [
     {

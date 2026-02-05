@@ -1,12 +1,12 @@
 # OpenID Connect Generic Client #
-**Contributors:** [daggerhart](https://profiles.wordpress.org/daggerhart/), [tnolte](https://profiles.wordpress.org/tnolte/)
-**Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso
-**Requires at least:** 5.0
-**Tested up to:** 6.9.0
-**Stable tag:** 3.10.2
-**Requires PHP:** 7.4
-**License:** GPLv2 or later
-**License URI:** http://www.gnu.org/licenses/gpl-2.0.html
+**Contributors:** [daggerhart](https://profiles.wordpress.org/daggerhart/), [tnolte](https://profiles.wordpress.org/tnolte/)  
+**Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
+**Requires at least:** 5.0  
+**Tested up to:** 6.9.0  
+**Stable tag:** 3.10.3  
+**Requires PHP:** 7.4  
+**License:** GPLv2 or later  
+**License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
 A simple client that provides SSO or opt-in authentication against a generic OAuth2 Server implementation.
 
@@ -49,6 +49,13 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 ## Changelog ##
+
+### 3.10.3 ###
+
+* Fix issue with log corruption causing fatal error.
+* Fix: Fallback to a POST request for userinfo when GET fails.
+* Fix: Improves multisite compatibility by switching to *_user_options() functions.
+* Fix: Fix for WordPress user session length being very short when refresh tokens are enabled.
 
 ### 3.10.2 ###
 

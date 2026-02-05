@@ -87,7 +87,7 @@ module.exports = function (grunt) {
 					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
 					potHeaders: {
 						poedit: true,                   // Includes common Poedit headers.
-						'report-msgid-bugs-to': 'https://github.com/daggerhart/openid-connect-generic/issues',
+						'report-msgid-bugs-to': 'https://github.com/oidc-wp/openid-connect-generic/issues',
 						'x-poedit-keywordslist': true   // Include a list of all possible gettext functions.
 					},                                // Headers to add to the generated POT file.
 					type: 'wp-plugin',                // Type of project (wp-plugin or wp-theme).
