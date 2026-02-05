@@ -1133,7 +1133,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 */
 	public function update_existing_user( $uid, $subject_identity ) {
 		// Add the OpenID Connect meta data.
-		update_user_option( $uid, 'openid-connect-generic-subject-identity', strval( $subject_identity ) );
+		update_user_option( $uid, 'openid-connect-generic-subject-identity', strval( $subject_identity ), true );
 
 		// Allow plugins / themes to take action on user update.
 		do_action( 'openid-connect-generic-user-update', $uid );
