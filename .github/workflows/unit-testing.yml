@@ -19,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['7.4','8.0','8.1']
-        wordpress-version: ['5.7.*','5.8.*','5.9.*']
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+        wordpress-version: ['6.7.*','6.8.*','6.9.*']
         wp-multisite-mode: [0]
         bleeding-edge: [false]
         include:
@@ -32,7 +32,7 @@ jobs:
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
             php-version: '8.1'
-            wordpress-version: '5.9.*'
+            wordpress-version: '6.9.*'
             wp-multisite-mode: 1
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
