@@ -402,6 +402,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 * if he was initially disconnected to them)
 			 */
 			return $redirect_url;
+		} elseif (isset( $claim['iss'] ) && strncmp($claim['iss'], 'https://cognito-idp', 19) === 0) {
+			return $url . sprintf( 'client_id=%s&logout_uri=%s', $this->settings->client_id, urlencode( $redirect_url ) );
 		} else {
 			return $url . sprintf( 'id_token_hint=%s&post_logout_redirect_uri=%s', $token_response['id_token'], urlencode( $redirect_url ) );
 		}
