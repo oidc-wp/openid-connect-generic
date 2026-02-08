@@ -111,7 +111,9 @@ class OpenID_Connect_Generic_Login_Form {
 		}
 
 		// Login button is appended to existing messages in case of error.
-		$message .= $this->make_login_button();
+		if ( 'shortcode' !== $this->settings->login_type ) {
+			$message .= $this->make_login_button();
+		}
 
 		return $message;
 	}

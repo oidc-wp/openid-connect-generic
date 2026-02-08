@@ -213,8 +213,9 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Select how the client (login form) should provide login options.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'select',
 				'options'     => array(
-					'button' => __( 'OpenID Connect button on login form', 'daggerhart-openid-connect-generic' ),
-					'auto'   => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
+					'button'    => __( 'OpenID Connect button on login form', 'daggerhart-openid-connect-generic' ),
+					'auto'      => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
+					'shortcode' => __( 'Shortcode Only', 'daggerhart-openid-connect-generic' ),
 				),
 				'disabled'    => defined( 'OIDC_LOGIN_TYPE' ),
 				'section'     => 'client_settings',
