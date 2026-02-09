@@ -726,12 +726,19 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return false|WP_User
 	 */
 	public function get_user_by_identity( $subject_identity ) {
+		global $wpdb;
+		
 		// Look for user by their openid-connect-generic-subject-identity value.
 		$user_query = new WP_User_Query(
 			array(
 				'meta_query' => array(
+					'relation' => 'OR',
 					array(
 						'key'   => 'openid-connect-generic-subject-identity',
+						'value' => $subject_identity,
+					),
+					array(
+						'key'   => $wpdb->get_blog_prefix() . 'openid-connect-generic-subject-identity',
 						'value' => $subject_identity,
 					),
 				),
