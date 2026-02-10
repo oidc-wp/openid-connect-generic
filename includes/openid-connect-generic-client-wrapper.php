@@ -440,6 +440,32 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$authentication_request = $client->validate_authentication_request( $_GET );
 
 		if ( is_wp_error( $authentication_request ) ) {
+			// Check if this is a retryable IDP error (e.g. Safari ITP causing
+			// Keycloak session cookies to be blocked on cross-site navigation).
+			$retryable_idp_errors = array(
+				'temporarily_unavailable',
+				'authentication_expired',
+				'login_required',
+			);
+
+			$error_code = $authentication_request->get_error_code();
+			$is_retryable = in_array( $error_code, $retryable_idp_errors, true );
+			$already_retried = isset( $_GET['openid-connect-generic-retry'] );
+
+			if ( $is_retryable && ! $already_retried ) {
+				// Log the original error before retrying.
+				$this->logger->log( $authentication_request, 'retry' );
+				$this->logger->log( "Retrying authentication due to IDP error: {$error_code}", 'retry' );
+
+				// Build a fresh authentication URL and append a retry flag
+				// to prevent infinite redirect loops (max 1 retry).
+				$auth_url = $this->get_authentication_url();
+				$auth_url = add_query_arg( 'openid-connect-generic-retry', '1', $auth_url );
+
+				wp_redirect( $auth_url );
+				exit;
+			}
+
 			$this->error_redirect( $authentication_request );
 		}
 
@@ -726,12 +752,19 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	 * @return false|WP_User
 	 */
 	public function get_user_by_identity( $subject_identity ) {
+		global $wpdb;
+
 		// Look for user by their openid-connect-generic-subject-identity value.
 		$user_query = new WP_User_Query(
 			array(
 				'meta_query' => array(
+					'relation' => 'OR',
 					array(
 						'key'   => 'openid-connect-generic-subject-identity',
+						'value' => $subject_identity,
+					),
+					array(
+						'key'   => $wpdb->get_blog_prefix() . 'openid-connect-generic-subject-identity',
 						'value' => $subject_identity,
 					),
 				),
