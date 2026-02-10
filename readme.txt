@@ -3,7 +3,7 @@ Contributors: daggerhart, tnolte
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 5.0
 Tested up to: 6.9.0
-Stable tag: 3.10.3
+Stable tag: 3.10.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -49,6 +49,11 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 == Changelog ==
+
+= 3.10.4 =
+
+* Fix issue with finding users on multisite after switch to user options in place of user meta.
+* Improvement: Retry logins for some IDP errors to bypass issue with Safari ITP. Also improves display of error messages that come from the IDP.
 
 = 3.10.3 =
 
