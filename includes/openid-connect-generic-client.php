@@ -162,7 +162,19 @@ class OpenID_Connect_Generic_Client {
 	public function validate_authentication_request( $request ) {
 		// Look for an existing error of some kind.
 		if ( isset( $request['error'] ) ) {
-			return new WP_Error( 'unknown-error', 'An unknown error occurred.', $request );
+			$error_code = sanitize_text_field( $request['error'] );
+			$error_message = 'An unknown error occurred.';
+
+			// Use the IDP's error description if available for better diagnostics.
+			if ( ! empty( $request['error_description'] ) ) {
+				$error_message = sprintf(
+					'IDP error %s: %s',
+					$error_code,
+					sanitize_text_field( $request['error_description'] )
+				);
+			}
+
+			return new WP_Error( $error_code, $error_message, $request );
 		}
 
 		// Make sure we have a legitimate authentication code and valid state.
