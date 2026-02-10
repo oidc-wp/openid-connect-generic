@@ -59,11 +59,11 @@ Notes
 
   Callable actions
 
-  User Meta
-  - openid-connect-generic-subject-identity    - the identity of the user provided by the idp
-  - openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
-  - openid-connect-generic-last-user-claim     - the user's most recent user_claim
-  - openid-connect-generic-last-token-response - the user's most recent token response
+  User Meta (since v3.10.4 prefixed with the blog database prefix, for example wp_2_openid-connect-generic-subject-identity)
+  - [[BLOG_DB_PREFIX]]openid-connect-generic-subject-identity    - the identity of the user provided by the idp
+  - [[BLOG_DB_PREFIX]]openid-connect-generic-last-id-token-claim - the user's most recent id_token claim, decoded
+  - [[BLOG_DB_PREFIX]]openid-connect-generic-last-user-claim     - the user's most recent user_claim
+  - [[BLOG_DB_PREFIX]]openid-connect-generic-last-token-response - the user's most recent token response
 
   Options
   - openid_connect_generic_settings     - plugin settings

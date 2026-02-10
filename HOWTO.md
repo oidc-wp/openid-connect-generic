@@ -377,7 +377,9 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
 
 This plugin stores meta data about the user for both practical and debugging purposes.
 
-* `openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
-* `openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
-* `openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
-* `openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.
+Since v3.10.4 the meta is prefixed with the blog database prefix, for example `wp_2_openid-connect-generic-subject-identity`.
+
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.
