@@ -309,7 +309,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Capture the time so that access token expiration can be calculated later.
-		$token_response[] = time();
+		$token_response['time'] = time();
 
 		update_user_option( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
