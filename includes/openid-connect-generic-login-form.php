@@ -147,7 +147,7 @@ class OpenID_Connect_Generic_Login_Form {
 	public function make_login_button( $atts = array() ) {
 
 		// Use admin-configured button text, or fall back to default.
-		$default_button_text = ! empty( trim( $this->settings->login_button_text ) )
+		$default_button_text = ! empty( trim( $this->settings->login_button_text ?? '' ) )
 			? $this->settings->login_button_text
 			: __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
 
