@@ -181,6 +181,7 @@ class OpenID_Connect_Generic {
 
 		if ( is_admin() ) {
 			OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
+			add_action( 'admin_notices', array( $this, 'admin_notice_jwks_required' ) );
 		}
 	}
 
@@ -249,6 +250,59 @@ class OpenID_Connect_Generic {
 			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
 		}
 		return $content;
+	}
+
+	/**
+	 * Display admin notice when JWKS endpoint is not configured.
+	 *
+	 * @return void
+	 */
+	public function admin_notice_jwks_required() {
+		// Only show to users who can manage options.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Check if JWKS endpoint is configured.
+		if ( ! empty( $this->settings->endpoint_jwks ) ) {
+			return;
+		}
+
+		// Check if any OIDC endpoints are configured (plugin is actually being used).
+		if ( empty( $this->settings->endpoint_login ) ) {
+			return;
+		}
+
+		$settings_url = admin_url( 'options-general.php?page=openid-connect-generic-settings' );
+		?>
+		<div class="notice notice-error">
+			<p>
+				<strong><?php esc_html_e( 'OpenID Connect Generic - Security Configuration Required', 'daggerhart-openid-connect-generic' ); ?></strong>
+			</p>
+			<p>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: %s is a link to the settings page */
+						__( 'Your OpenID Connect authentication is using an insecure fallback method. You must configure the <strong>JWKS endpoint</strong> in <a href="%s">plugin settings</a> as soon as possible.', 'daggerhart-openid-connect-generic' ),
+						esc_url( $settings_url )
+					)
+				);
+				?>
+			</p>
+			<p>
+				<?php esc_html_e( 'The current insecure fallback will be removed in version 3.12.0. After that update, authentication will fail until the JWKS endpoint is configured.', 'daggerhart-openid-connect-generic' ); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e( 'Common JWKS endpoints:', 'daggerhart-openid-connect-generic' ); ?></strong><br>
+				• Keycloak: <code>https://your-domain/realms/your-realm/protocol/openid-connect/certs</code><br>
+				• Auth0: <code>https://your-domain.auth0.com/.well-known/jwks.json</code><br>
+				• Okta: <code>https://your-domain.okta.com/oauth2/default/v1/keys</code><br>
+				• Azure AD: <code>https://login.microsoftonline.com/your-tenant/discovery/v2.0/keys</code><br>
+				• Google: <code>https://www.googleapis.com/oauth2/v3/certs</code>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
