@@ -47,8 +47,30 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 **Alternate Redirect URI**. When checked, the plugin will use the Redirect URI
 `https://example.com/openid-connect-authorize`.
 
+== Upgrade Notice ==
+
+= 3.11.0 =
+
+SECURITY UPDATE: Fixes critical authentication vulnerabilities including JWT signature bypass. Update immediately.
 
 == Changelog ==
+
+= 3.11.0 =
+
+**SECURITY RELEASE**
+
+* Security: Added JWT signature verification using JWKS to prevent token forgery
+* Security: Enhanced token claim validation (exp, aud, iss, iat, nonce)
+* Security: Replaced weak state generation with cryptographically secure random_bytes()
+* Security: Fixed open redirect vulnerability in authentication flow
+* Security: Restricted SSL verification bypass to local development environments only
+* Security: Added nonce protection to debug mode to prevent information disclosure
+* Feature: Added JWKS endpoint configuration setting
+* Feature: Added OpenID Connect discovery document support
+* Feature: Added customizable login button text setting
+* Improvement: Migrated to Composer-managed dependencies
+* Fix: Corrected issuer validation to properly extract base URL from endpoints
+* Fix: Identity token timestamp tracking
 
 = 3.10.4 =
 
