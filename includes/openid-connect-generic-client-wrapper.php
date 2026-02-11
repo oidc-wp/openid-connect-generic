@@ -598,7 +598,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Provide backwards compatibility for customization using the deprecated cookie method.
 		if ( ! empty( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) ) {
-			$redirect_url = esc_url_raw( wp_unslash( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) );
+			$redirect_url = wp_validate_redirect(
+				esc_url_raw( wp_unslash( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) ),
+				home_url()
+			);
 		}
 
 		// Only do redirect-user-back action hook when the plugin is configured for it.
