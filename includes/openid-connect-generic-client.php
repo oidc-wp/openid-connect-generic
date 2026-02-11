@@ -498,7 +498,7 @@ class OpenID_Connect_Generic_Client {
 			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
 				$this->endpoint_jwks,
 				$this->client_id,
-				$this->endpoint_login,
+				$this->get_issuer_from_endpoint( $this->endpoint_login ),
 				$this->jwks_cache_ttl,
 				$this->logger
 			);
@@ -539,6 +539,41 @@ class OpenID_Connect_Generic_Client {
 		);
 
 		return $id_token_claim;
+	}
+
+	/**
+	 * Extract issuer URL from endpoint URL.
+	 *
+	 * The issuer is typically the base URL (scheme + host + trailing slash).
+	 *
+	 * @param string $endpoint_url The full endpoint URL.
+	 *
+	 * @return string The issuer URL.
+	 */
+	public function get_issuer_from_endpoint( $endpoint_url ) {
+		$parsed = wp_parse_url( $endpoint_url );
+
+		if ( ! $parsed || ! isset( $parsed['scheme'] ) || ! isset( $parsed['host'] ) ) {
+			return $endpoint_url;
+		}
+
+		$issuer = $parsed['scheme'] . '://' . $parsed['host'];
+
+		// Add port if non-standard.
+		if ( isset( $parsed['port'] ) ) {
+			$default_ports = array(
+				'http' => 80,
+				'https' => 443,
+			);
+			if ( ! isset( $default_ports[ $parsed['scheme'] ] ) || $parsed['port'] != $default_ports[ $parsed['scheme'] ] ) {
+				$issuer .= ':' . $parsed['port'];
+			}
+		}
+
+		// Add trailing slash (common for issuers).
+		$issuer .= '/';
+
+		return $issuer;
 	}
 
 	/**
@@ -595,8 +630,17 @@ class OpenID_Connect_Generic_Client {
 				return new WP_Error( 'missing-iss', __( 'Token missing issuer claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 			}
 
-			if ( $id_token_claim['iss'] !== $this->endpoint_login ) {
-				return new WP_Error( 'invalid-iss', __( 'Token issuer does not match expected issuer.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			// Extract expected issuer from endpoint_login (base URL).
+			$expected_issuer = $this->get_issuer_from_endpoint( $this->endpoint_login );
+
+			if ( $id_token_claim['iss'] !== $expected_issuer ) {
+				return new WP_Error(
+					'invalid-iss',
+					sprintf(
+						__( 'Token issuer does not match expected issuer.', 'daggerhart-openid-connect-generic' ),
+					),
+					$id_token_claim
+				);
 			}
 		}
 

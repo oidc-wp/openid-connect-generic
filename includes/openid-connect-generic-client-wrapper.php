@@ -918,7 +918,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
 				$this->settings->endpoint_jwks,
 				$this->settings->client_id,
-				$this->settings->endpoint_login,
+				$this->client->get_issuer_from_endpoint( $this->settings->endpoint_login ),
 				$this->settings->jwks_cache_ttl,
 				$this->logger
 			);
