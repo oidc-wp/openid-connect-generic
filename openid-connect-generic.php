@@ -362,12 +362,7 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function bootstrap() {
-		/**
-		 * This is a documented valid call for spl_autoload_register.
-		 *
-		 * @link https://www.php.net/manual/en/function.spl-autoload-register.php#71155
-		 */
-		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
+		require_once __DIR__ . '/vendor/autoload.php';
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			// Default settings values.
