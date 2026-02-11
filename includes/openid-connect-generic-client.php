@@ -553,9 +553,51 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'bad-id-token-claim', __( 'Bad ID token claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
 
-		// Validate the identification data and it's value.
+		// Validate the identification data and its value.
 		if ( ! isset( $id_token_claim['sub'] ) || empty( $id_token_claim['sub'] ) ) {
 			return new WP_Error( 'no-subject-identity', __( 'No subject identity.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		// Validate expiration claim.
+		if ( ! isset( $id_token_claim['exp'] ) ) {
+			return new WP_Error( 'missing-exp', __( 'Token missing expiration claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+		if ( time() >= $id_token_claim['exp'] ) {
+			return new WP_Error( 'token-expired', __( 'Token has expired.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		// Validate issued at claim.
+		if ( ! isset( $id_token_claim['iat'] ) ) {
+			return new WP_Error( 'missing-iat', __( 'Token missing issued at claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		// Validate audience claim matches client_id (can be string or array).
+		if ( ! isset( $id_token_claim['aud'] ) ) {
+			return new WP_Error( 'missing-aud', __( 'Token missing audience claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		$aud = $id_token_claim['aud'];
+		$audience_valid = false;
+
+		if ( is_array( $aud ) ) {
+			$audience_valid = in_array( $this->client_id, $aud, true );
+		} elseif ( is_string( $aud ) ) {
+			$audience_valid = ( $aud === $this->client_id );
+		}
+
+		if ( ! $audience_valid ) {
+			return new WP_Error( 'invalid-aud', __( 'Token audience does not match client.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		// Validate issuer claim if endpoint_login is configured.
+		if ( ! empty( $this->endpoint_login ) ) {
+			if ( ! isset( $id_token_claim['iss'] ) ) {
+				return new WP_Error( 'missing-iss', __( 'Token missing issuer claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			}
+
+			if ( $id_token_claim['iss'] !== $this->endpoint_login ) {
+				return new WP_Error( 'invalid-iss', __( 'Token issuer does not match expected issuer.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+			}
 		}
 
 		// Validate acr values when the option is set in the configuration.
