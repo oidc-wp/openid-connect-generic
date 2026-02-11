@@ -13,7 +13,7 @@ fi
 PLUGIN_DIR=/workspaces/openid-connect-generic
 
 # Attempt to make ipv4 traffic have a higher priority than ipv6.
-sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
+grep -qxF 'precedence ::ffff:0:0/96 100' /etc/gai.conf || sudo sh -c "echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf"
 
 # Install Composer dependencies.
 cd "${PLUGIN_DIR}"
