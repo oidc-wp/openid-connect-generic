@@ -380,8 +380,8 @@ class OpenID_Connect_Generic_Client {
 	 * @return string
 	 */
 	public function new_state( $redirect_to ) {
-		// New state w/ timestamp.
-		$state = md5( mt_rand() . microtime( true ) );
+		// New state with cryptographically secure random bytes.
+		$state = bin2hex( random_bytes( 16 ) );
 		$state_value = array(
 			$state => array(
 				'redirect_to' => $redirect_to,
