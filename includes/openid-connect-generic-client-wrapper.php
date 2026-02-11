@@ -420,8 +420,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
 
-		if ( $this->settings->no_sslverify ) {
+		// Only allow SSL bypass in local development environments.
+		if (
+			$this->settings->no_sslverify &&
+			defined( 'WP_DEBUG' ) && WP_DEBUG === true &&
+			( ! defined( 'WP_ENVIRONMENT_TYPE' ) || WP_ENVIRONMENT_TYPE === 'local' )
+		) {
+
 			$request['sslverify'] = false;
+
+			// Log warning every time this is used.
+			$this->logger->log(
+				'SSL verification disabled - ONLY for development. NEVER use in production!',
+				'ssl-bypass-warning'
+			);
 		}
 
 		return $request;

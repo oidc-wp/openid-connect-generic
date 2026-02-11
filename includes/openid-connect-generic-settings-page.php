@@ -290,8 +290,8 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'no_sslverify'      => array(
 				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
-				// translators: %1$s HTML tags for layout/styles, %2$s closing HTML tag for styles.
-				'description' => sprintf( __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.%1$sNot recommended for production sites.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong>', '</strong>' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with red color), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Do not require SSL verification during authorization. %1$sDANGER: Only works in local development (WP_DEBUG=true, WP_ENVIRONMENT_TYPE=local).%2$s This setting is automatically disabled in production. If you need this in production, fix your SSL certificates instead.', 'daggerhart-openid-connect-generic' ), '<br><strong style="color:red;">', '</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
