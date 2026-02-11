@@ -252,7 +252,7 @@ class OpenID_Connect_Generic_Option_Logger {
 						</div>
 						<div>
 							<label><?php esc_html_e( 'Response&nbsp;Time&nbsp;(sec)', 'daggerhart-openid-connect-generic' ); ?></label>
-							<?php print esc_html( ! empty( $log['response_time'] ) ? $log['response_time'] : '' ); ?>
+							<?php print esc_html( ! empty( $log['processing_time'] ) ? $log['processing_time'] : '' ); ?>
 						</div>
 					</td>
 					<td class="col-data"><pre><?php var_dump( ! empty( $log['data'] ) ? $log['data'] : '' ); ?></pre></td>
