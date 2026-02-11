@@ -908,13 +908,42 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return false;
 		}
 		/**
-		 * Extract claim from JWT.
-		 * FIXME: We probably want to verify the JWT signature/issuer here.
-		 * For example, using JWKS if applicable. For symmetrically signed
-		 * JWTs (HMAC), we need a way to specify the acceptable secrets
-		 * and each possible issuer in the config.
+		 * Extract claim from JWT with signature verification.
 		 */
 		$jwt = $src['JWT'];
+
+		// Check if JWKS endpoint is configured for JWT signature verification.
+		if ( ! empty( $this->settings->endpoint_jwks ) ) {
+			// Use JWT validator for secure signature verification.
+			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
+				$this->settings->endpoint_jwks,
+				$this->settings->client_id,
+				$this->settings->endpoint_login,
+				$this->settings->jwks_cache_ttl,
+				$this->logger
+			);
+
+			// Validate JWT signature and claims.
+			$body_json = $jwt_validator->validate_id_token( $jwt );
+
+			if ( is_wp_error( $body_json ) ) {
+				$this->logger->log( $body_json, 'aggregated-claim-jwt-validation-failed' );
+				return false;
+			}
+
+			if ( ! array_key_exists( $claimname, $body_json ) ) {
+				return false;
+			}
+			$claimvalue = $body_json[ $claimname ];
+			return true;
+		}
+
+		$this->logger->log(
+			'SECURITY WARNING: JWKS endpoint not configured. Aggregated claim JWT signatures are NOT being verified. This is a security vulnerability. Configure the JWKS endpoint to secure aggregated claims.',
+			'aggregated-jwt-not-verified'
+		);
+
+		// Legacy JWT decoding without signature verification (INSECURE).
 		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
 		$body_str = base64_decode( $body, false );
 		if ( ! $body_str ) {
