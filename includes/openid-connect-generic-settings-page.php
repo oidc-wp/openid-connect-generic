@@ -274,6 +274,21 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ),
 				'section'     => 'client_settings',
 			),
+			'endpoint_jwks' => array(
+				'title'       => __( 'JWKS URI', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identity provider JWKS (JSON Web Key Set) endpoint for JWT signature verification. Usually found at /.well-known/jwks.json', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'https://example.com/.well-known/jwks.json',
+				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_JWKS_URL' ),
+				'section'     => 'client_settings',
+			),
+			'jwks_cache_ttl' => array(
+				'title'       => __( 'JWKS Cache TTL (seconds)', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Time in seconds to cache JWKS keys. Default: 3600 (1 hour)', 'daggerhart-openid-connect-generic' ),
+				'example'     => 3600,
+				'type'        => 'number',
+				'section'     => 'client_settings',
+			),
 			'acr_values'    => array(
 				'title'       => __( 'ACR values', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Use a specific defined authentication contract from the IDP - optional.', 'daggerhart-openid-connect-generic' ),
