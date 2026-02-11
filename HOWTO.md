@@ -182,7 +182,7 @@ do not currently exist within WordPress.
 Provides 2 arguments: the boolean result of the test (default `TRUE`), and the `$user_claim` array from the server.
 
 ```
-add_filter('', function( $result, $user_claim ) {
+add_filter('openid-connect-generic-user-creation-test', function( $result, $user_claim ) {
     // Don't let anyone from example.com create an account.
     $email_array = explode( '@', $user_claim['email'] );
     if ( $email_array[1] == 'example.com' ) {
