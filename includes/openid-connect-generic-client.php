@@ -92,6 +92,24 @@ class OpenID_Connect_Generic_Client {
 	private $acr_values;
 
 	/**
+	 * The JWKS endpoint URL for JWT signature verification.
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::endpoint_jwks
+	 *
+	 * @var string
+	 */
+	private $endpoint_jwks;
+
+	/**
+	 * The JWKS cache TTL in seconds.
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::jwks_cache_ttl
+	 *
+	 * @var int
+	 */
+	private $jwks_cache_ttl;
+
+	/**
 	 * The state time limit. States are only valid for 3 minutes.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::state_time_limit
@@ -118,10 +136,12 @@ class OpenID_Connect_Generic_Client {
 	 * @param string                               $endpoint_token    @see OpenID_Connect_Generic_Option_Settings::endpoint_token for description.
 	 * @param string                               $redirect_uri      @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
 	 * @param string                               $acr_values        @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
+	 * @param string                               $endpoint_jwks     @see OpenID_Connect_Generic_Option_Settings::endpoint_jwks for description.
+	 * @param int                                  $jwks_cache_ttl    @see OpenID_Connect_Generic_Option_Settings::jwks_cache_ttl for description.
 	 * @param int                                  $state_time_limit  @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger            The plugin logging object instance.
 	 */
-	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $state_time_limit, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $endpoint_jwks, $jwks_cache_ttl, $state_time_limit, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -130,6 +150,8 @@ class OpenID_Connect_Generic_Client {
 		$this->endpoint_token = $endpoint_token;
 		$this->redirect_uri = $redirect_uri;
 		$this->acr_values = $acr_values;
+		$this->endpoint_jwks = $endpoint_jwks;
+		$this->jwks_cache_ttl = $jwks_cache_ttl;
 		$this->state_time_limit = $state_time_limit;
 		$this->logger = $logger;
 	}
@@ -458,7 +480,7 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
-	 * Extract the id_token_claim from the token_response.
+	 * Extract and validate the id_token_claim from the token_response.
 	 *
 	 * @param array $token_response The token response.
 	 *
@@ -470,14 +492,41 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'no-identity-token', __( 'No identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
 		}
 
-		// Break apart the id_token in the response for decoding.
+		// Check if JWKS endpoint is configured for JWT signature verification.
+		if ( ! empty( $this->endpoint_jwks ) ) {
+			// Use JWT validator for secure signature verification.
+			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
+				$this->endpoint_jwks,
+				$this->client_id,
+				$this->endpoint_login,
+				$this->jwks_cache_ttl,
+				$this->logger
+			);
+
+			// Validate JWT signature and claims.
+			$id_token_claim = $jwt_validator->validate_id_token( $token_response['id_token'] );
+
+			if ( is_wp_error( $id_token_claim ) ) {
+				$this->logger->log( $id_token_claim, 'jwt-validation-failed' );
+				return $id_token_claim;
+			}
+
+			return $id_token_claim;
+		}
+
+		$this->logger->log(
+			'SECURITY WARNING: JWKS endpoint not configured. JWT signatures are NOT being verified. This is a critical security vulnerability. Configure the JWKS endpoint immediately in Settings > OpenID Connect Client to secure authentication.',
+			'jwks-not-configured-insecure'
+		);
+
+		// Legacy JWT decoding without signature verification (INSECURE).
 		$tmp = explode( '.', $token_response['id_token'] );
 
 		if ( ! isset( $tmp[1] ) ) {
 			return new WP_Error( 'missing-identity-token', __( 'Missing identity token.', 'daggerhart-openid-connect-generic' ), $token_response );
 		}
 
-		// Extract the id_token's claims from the token.
+		// Extract the id_token's claims from the token (no signature verification).
 		$id_token_claim = json_decode(
 			base64_decode(
 				str_replace( // Because token is encoded in base64 URL (and not just base64).
