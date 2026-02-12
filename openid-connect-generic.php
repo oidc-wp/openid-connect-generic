@@ -16,7 +16,7 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/oidc-wp/openid-connect-generic
  * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
- * Version:           3.10.4
+ * Version:           3.11.0
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            daggerhart
@@ -93,7 +93,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.10.4';
+	const VERSION = '3.11.0';
 
 	/**
 	 * Plugin settings.
@@ -158,7 +158,10 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_token,
 			$this->get_redirect_uri( $this->settings ),
 			$this->settings->acr_values,
+			$this->settings->endpoint_jwks,
+			$this->settings->jwks_cache_ttl,
 			$this->get_state_time_limit( $this->settings ),
+			$this->settings->allow_internal_idp,
 			$this->logger
 		);
 
@@ -179,6 +182,7 @@ class OpenID_Connect_Generic {
 
 		if ( is_admin() ) {
 			OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
+			add_action( 'admin_notices', array( $this, 'admin_notice_jwks_required' ) );
 		}
 	}
 
@@ -247,6 +251,59 @@ class OpenID_Connect_Generic {
 			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
 		}
 		return $content;
+	}
+
+	/**
+	 * Display admin notice when JWKS endpoint is not configured.
+	 *
+	 * @return void
+	 */
+	public function admin_notice_jwks_required() {
+		// Only show to users who can manage options.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Check if JWKS endpoint is configured.
+		if ( ! empty( $this->settings->endpoint_jwks ) ) {
+			return;
+		}
+
+		// Check if any OIDC endpoints are configured (plugin is actually being used).
+		if ( empty( $this->settings->endpoint_login ) ) {
+			return;
+		}
+
+		$settings_url = admin_url( 'options-general.php?page=openid-connect-generic-settings' );
+		?>
+		<div class="notice notice-error">
+			<p>
+				<strong><?php esc_html_e( 'OpenID Connect Generic - Security Configuration Required', 'daggerhart-openid-connect-generic' ); ?></strong>
+			</p>
+			<p>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: %s is a link to the settings page */
+						__( 'Your OpenID Connect authentication is using an insecure fallback method. You must configure the <strong>JWKS endpoint</strong> in <a href="%s">plugin settings</a> as soon as possible.', 'daggerhart-openid-connect-generic' ),
+						esc_url( $settings_url )
+					)
+				);
+				?>
+			</p>
+			<p>
+				<?php esc_html_e( 'The current insecure fallback will be removed in version 3.12.0. After that update, authentication will fail until the JWKS endpoint is configured.', 'daggerhart-openid-connect-generic' ); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e( 'Common JWKS endpoints:', 'daggerhart-openid-connect-generic' ); ?></strong><br>
+				• Keycloak: <code>https://your-domain/realms/your-realm/protocol/openid-connect/certs</code><br>
+				• Auth0: <code>https://your-domain.auth0.com/.well-known/jwks.json</code><br>
+				• Okta: <code>https://your-domain.okta.com/oauth2/default/v1/keys</code><br>
+				• Azure AD: <code>https://login.microsoftonline.com/your-tenant/discovery/v2.0/keys</code><br>
+				• Google: <code>https://www.googleapis.com/oauth2/v3/certs</code>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -360,18 +417,14 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function bootstrap() {
-		/**
-		 * This is a documented valid call for spl_autoload_register.
-		 *
-		 * @link https://www.php.net/manual/en/function.spl-autoload-register.php#71155
-		 */
-		spl_autoload_register( array( 'OpenID_Connect_Generic', 'autoload' ) );
+		require_once __DIR__ . '/vendor/autoload.php';
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			// Default settings values.
 			array(
 				// OAuth client settings.
 				'login_type'           => defined( 'OIDC_LOGIN_TYPE' ) ? OIDC_LOGIN_TYPE : 'button',
+				'login_button_text'    => '',
 				'client_id'            => defined( 'OIDC_CLIENT_ID' ) ? OIDC_CLIENT_ID : '',
 				'client_secret'        => defined( 'OIDC_CLIENT_SECRET' ) ? OIDC_CLIENT_SECRET : '',
 				'scope'                => defined( 'OIDC_CLIENT_SCOPE' ) ? OIDC_CLIENT_SCOPE : '',
@@ -379,11 +432,14 @@ class OpenID_Connect_Generic {
 				'endpoint_userinfo'    => defined( 'OIDC_ENDPOINT_USERINFO_URL' ) ? OIDC_ENDPOINT_USERINFO_URL : '',
 				'endpoint_token'       => defined( 'OIDC_ENDPOINT_TOKEN_URL' ) ? OIDC_ENDPOINT_TOKEN_URL : '',
 				'endpoint_end_session' => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ) ? OIDC_ENDPOINT_LOGOUT_URL : '',
+				'endpoint_jwks'        => defined( 'OIDC_ENDPOINT_JWKS_URL' ) ? OIDC_ENDPOINT_JWKS_URL : '',
+				'jwks_cache_ttl'       => 3600,
 				'acr_values'           => defined( 'OIDC_ACR_VALUES' ) ? OIDC_ACR_VALUES : '',
 
 				// Non-standard settings.
 				'no_sslverify'           => 0,
 				'http_request_timeout'   => 5,
+				'allow_internal_idp'     => 0,
 				'identity_key'           => 'preferred_username',
 				'nickname_key'           => 'preferred_username',
 				'email_format'           => '{email}',

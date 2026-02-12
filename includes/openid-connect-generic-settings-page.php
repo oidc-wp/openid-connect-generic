@@ -80,6 +80,25 @@ class OpenID_Connect_Generic_Settings_Page {
 	}
 
 	/**
+	 * Make a safe HTTP GET request with optional internal endpoint support.
+	 *
+	 * By default, uses wp_safe_remote_get() which blocks requests to internal/private
+	 * networks (SSRF protection). If allow_internal_idp is enabled, uses wp_remote_get()
+	 * to allow connections to localhost and private network identity providers.
+	 *
+	 * @param string $url  The URL to request.
+	 * @param array  $args Optional. Request arguments.
+	 *
+	 * @return array|WP_Error Response array or WP_Error on failure.
+	 */
+	private function http_get( $url, $args = array() ) {
+		if ( $this->settings->allow_internal_idp ) {
+			return wp_remote_get( $url, $args );
+		}
+		return wp_safe_remote_get( $url, $args );
+	}
+
+	/**
 	 * Hook the settings page into WordPress.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings A plugin settings object instance.
@@ -219,6 +238,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_LOGIN_TYPE' ),
 				'section'     => 'client_settings',
 			),
+			'login_button_text' => array(
+				'title'       => __( 'Login Button Text', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Customize the text shown on the OpenID Connect login button. Leave empty to use the default text.', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'Login with Single Sign-On',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
 			'client_id'         => array(
 				'title'       => __( 'Client ID', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.', 'daggerhart-openid-connect-generic' ),
@@ -274,6 +300,21 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_LOGOUT_URL' ),
 				'section'     => 'client_settings',
 			),
+			'endpoint_jwks' => array(
+				'title'       => __( 'JWKS URI', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identity provider JWKS (JSON Web Key Set) endpoint for JWT signature verification. Usually found at /.well-known/jwks.json', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'https://example.com/.well-known/jwks.json',
+				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ENDPOINT_JWKS_URL' ),
+				'section'     => 'client_settings',
+			),
+			'jwks_cache_ttl' => array(
+				'title'       => __( 'JWKS Cache TTL (seconds)', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Time in seconds to cache JWKS keys. Default: 3600 (1 hour)', 'daggerhart-openid-connect-generic' ),
+				'example'     => 3600,
+				'type'        => 'number',
+				'section'     => 'client_settings',
+			),
 			'acr_values'    => array(
 				'title'       => __( 'ACR values', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Use a specific defined authentication contract from the IDP - optional.', 'daggerhart-openid-connect-generic' ),
@@ -286,13 +327,6 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'Where in the user claim array to find the user\'s identification data. Possible standard values: preferred_username, name, or sub. If you\'re having trouble, use "sub".', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'preferred_username',
 				'type'        => 'text',
-				'section'     => 'client_settings',
-			),
-			'no_sslverify'      => array(
-				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
-				// translators: %1$s HTML tags for layout/styles, %2$s closing HTML tag for styles.
-				'description' => sprintf( __( 'Do not require SSL verification during authorization. The OAuth extension uses curl to make the request. By default CURL will generally verify the SSL certificate to see if its valid an issued by an accepted CA. This setting disabled that verification.%1$sNot recommended for production sites.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong>', '</strong>' ),
-				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
 			'http_request_timeout'      => array(
@@ -351,6 +385,20 @@ class OpenID_Connect_Generic_Settings_Page {
 			'token_refresh_enable'   => array(
 				'title'       => __( 'Enable Refresh Token', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
+			'no_sslverify'      => array(
+				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Do not require SSL verification during authorization. %1$sOnly works in local development (WP_DEBUG=true, WP_ENVIRONMENT_TYPE=local).%2$s This setting is automatically disabled in production. If you need this in production, fix your SSL certificates instead.', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
+			'allow_internal_idp'      => array(
+				'title'       => __( 'Allow Internal IDP', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Allow HTTP requests to internal/private network endpoints (localhost, 127.0.0.1, 10.x.x.x, 192.168.x.x, 172.16-31.x.x). %1$sOnly enable this for local development or corporate internal identity providers. Disabling SSRF protection can expose your server to security risks.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
@@ -429,6 +477,9 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function settings_page() {
+		// Handle discovery form submission before any output.
+		$this->handle_discovery_import();
+
 		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __DIR__ ) . 'css/styles-admin.css', array(), OpenID_Connect_Generic::VERSION, 'all' );
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
@@ -440,16 +491,16 @@ class OpenID_Connect_Generic_Settings_Page {
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
 
+			<?php
+			// Render discovery document import form.
+			$this->render_discovery_form();
+			?>
+
 			<form method="post" action="options.php">
 				<?php
 				settings_fields( $this->settings_field_group );
 				do_settings_sections( $this->options_page_name );
 				submit_button();
-
-				// Simple debug to view settings array.
-				if ( isset( $_GET['debug'] ) ) {
-					var_dump( $this->settings->get_values() );
-				}
 				?>
 			</form>
 
@@ -599,5 +650,281 @@ class OpenID_Connect_Generic_Settings_Page {
 	 */
 	public function log_settings_description() {
 		esc_html_e( 'Log information about login attempts through OpenID Connect Generic.', 'daggerhart-openid-connect-generic' );
+	}
+
+	/**
+	 * Fetch OpenID Connect discovery document from provider.
+	 *
+	 * @param string $discovery_url The discovery document URL (.well-known/openid-configuration).
+	 *
+	 * @return array|WP_Error Array of discovery data on success, WP_Error on failure.
+	 */
+	private function fetch_discovery_document( $discovery_url ) {
+		// Validate URL is provided.
+		if ( empty( $discovery_url ) ) {
+			return new WP_Error(
+				'empty-discovery-url',
+				__( 'Please enter a discovery URL.', 'daggerhart-openid-connect-generic' )
+			);
+		}
+
+		// Validate HTTPS in production.
+		$parsed_url = wp_parse_url( $discovery_url );
+		if ( ! $parsed_url || ! isset( $parsed_url['scheme'] ) ) {
+			return new WP_Error(
+				'invalid-discovery-url',
+				__( 'Invalid discovery URL format.', 'daggerhart-openid-connect-generic' )
+			);
+		}
+
+		// Require HTTPS except in local development.
+		$is_local_dev = defined( 'WP_DEBUG' ) && WP_DEBUG === true &&
+			( ! defined( 'WP_ENVIRONMENT_TYPE' ) || WP_ENVIRONMENT_TYPE === 'local' );
+
+		if ( 'https' !== $parsed_url['scheme'] && ! $is_local_dev ) {
+			return new WP_Error(
+				'discovery-url-not-https',
+				__( 'Discovery URL must use HTTPS in production environments.', 'daggerhart-openid-connect-generic' )
+			);
+		}
+
+		// Fetch discovery document.
+		$response = $this->http_get(
+			$discovery_url,
+			array(
+				'timeout' => 10,
+				'headers' => array(
+					'Accept' => 'application/json',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error(
+				'discovery-fetch-failed',
+				sprintf(
+					/* translators: %s: error message */
+					__( 'Failed to fetch discovery document: %s', 'daggerhart-openid-connect-generic' ),
+					$response->get_error_message()
+				)
+			);
+		}
+
+		$response_code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $response_code ) {
+			return new WP_Error(
+				'discovery-fetch-failed',
+				sprintf(
+					/* translators: %d: HTTP status code */
+					__( 'Discovery document request returned HTTP %d.', 'daggerhart-openid-connect-generic' ),
+					$response_code
+				)
+			);
+		}
+
+		// Parse JSON response.
+		$body = wp_remote_retrieve_body( $response );
+		$discovery = json_decode( $body, true );
+
+		if ( null === $discovery || ! is_array( $discovery ) ) {
+			return new WP_Error(
+				'discovery-invalid-json',
+				__( 'Discovery document is not valid JSON.', 'daggerhart-openid-connect-generic' )
+			);
+		}
+
+		// Validate required fields are present.
+		$required_fields = array( 'authorization_endpoint', 'token_endpoint', 'jwks_uri' );
+		$missing_fields = array();
+
+		foreach ( $required_fields as $field ) {
+			if ( ! isset( $discovery[ $field ] ) || empty( $discovery[ $field ] ) ) {
+				$missing_fields[] = $field;
+			}
+		}
+
+		if ( ! empty( $missing_fields ) ) {
+			return new WP_Error(
+				'discovery-missing-fields',
+				sprintf(
+					/* translators: %s: comma-separated list of missing fields */
+					__( 'Discovery document is missing required fields: %s', 'daggerhart-openid-connect-generic' ),
+					implode( ', ', $missing_fields )
+				)
+			);
+		}
+
+		return $discovery;
+	}
+
+	/**
+	 * Populate plugin settings from discovery document.
+	 *
+	 * Maps discovery document fields to plugin setting keys.
+	 * Does not save to database - only updates in-memory values.
+	 *
+	 * @param array $discovery The discovery document data.
+	 *
+	 * @return array Array of setting keys that were populated.
+	 */
+	private function populate_settings_from_discovery( $discovery ) {
+		$populated_fields = array();
+
+		// Map discovery fields to plugin settings.
+		$field_mapping = array(
+			'authorization_endpoint' => 'endpoint_login',
+			'token_endpoint'         => 'endpoint_token',
+			'userinfo_endpoint'      => 'endpoint_userinfo',
+			'jwks_uri'               => 'endpoint_jwks',
+			'end_session_endpoint'   => 'endpoint_end_session',
+		);
+
+		foreach ( $field_mapping as $discovery_key => $setting_key ) {
+			if ( isset( $discovery[ $discovery_key ] ) && ! empty( $discovery[ $discovery_key ] ) ) {
+				// Update the setting value (not saved yet).
+				$this->settings->{ $setting_key } = $discovery[ $discovery_key ];
+				$populated_fields[] = $setting_key;
+			}
+		}
+
+		return $populated_fields;
+	}
+
+	/**
+	 * Handle discovery document import form submission.
+	 *
+	 * Checks if the discovery form was submitted, validates it,
+	 * fetches the discovery document, and populates settings.
+	 *
+	 * @return void
+	 */
+	private function handle_discovery_import() {
+		// Check if discovery form was submitted.
+		if ( ! isset( $_POST['oidc_discovery_submit'] ) ) {
+			return;
+		}
+
+		// Verify nonce.
+		if (
+			! isset( $_POST['oidc_discovery_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['oidc_discovery_nonce'] ) ), 'oidc_discovery_import' )
+		) {
+			add_settings_error(
+				'openid-connect-generic',
+				'invalid-nonce',
+				__( 'Security check failed. Please try again.', 'daggerhart-openid-connect-generic' ),
+				'error'
+			);
+			return;
+		}
+
+		// Get discovery URL from form.
+		$discovery_url = isset( $_POST['oidc_discovery_url'] )
+			? esc_url_raw( wp_unslash( $_POST['oidc_discovery_url'] ) )
+			: '';
+
+		// Fetch discovery document.
+		$discovery = $this->fetch_discovery_document( $discovery_url );
+
+		if ( is_wp_error( $discovery ) ) {
+			add_settings_error(
+				'openid-connect-generic',
+				$discovery->get_error_code(),
+				$discovery->get_error_message(),
+				'error'
+			);
+			return;
+		}
+
+		// Populate settings from discovery document.
+		$populated_fields = $this->populate_settings_from_discovery( $discovery );
+
+		// Log the import.
+		$this->logger->log(
+			sprintf(
+				'Configuration loaded from discovery URL: %s. Populated fields: %s',
+				$discovery_url,
+				implode( ', ', $populated_fields )
+			),
+			'discovery-import'
+		);
+
+		// Show success message.
+		$field_count = count( $populated_fields );
+		add_settings_error(
+			'openid-connect-generic',
+			'discovery-success',
+			sprintf(
+				/* translators: %d: number of fields populated */
+				_n(
+					'Configuration loaded successfully! %d field was populated. Review the settings below and click "Save Changes" to apply.',
+					'Configuration loaded successfully! %d fields were populated. Review the settings below and click "Save Changes" to apply.',
+					$field_count,
+					'daggerhart-openid-connect-generic'
+				),
+				$field_count
+			),
+			'success'
+		);
+	}
+
+	/**
+	 * Render the discovery document import form.
+	 *
+	 * Outputs HTML form for importing configuration from discovery document.
+	 * Collapsed by default if endpoint_login is already configured.
+	 *
+	 * @return void
+	 */
+	private function render_discovery_form() {
+		// Auto-expand if plugin is not yet configured.
+		$is_configured = ! empty( $this->settings->endpoint_login );
+		$open_attribute = $is_configured ? '' : ' open';
+		?>
+		<details<?php echo esc_attr( $open_attribute ); ?> class="oidc-discovery-section">
+			<summary class="oidc-discovery-summary">
+				⚡ <?php esc_html_e( 'Quick Setup: Import from Discovery Document', 'daggerhart-openid-connect-generic' ); ?>
+			</summary>
+			<div class="notice notice-info inline oidc-discovery-content">
+				<p>
+					<?php esc_html_e( 'Auto-populate endpoint settings from your identity provider\'s OpenID Connect discovery document. After loading, review the populated fields below and click "Save Changes" to apply.', 'daggerhart-openid-connect-generic' ); ?>
+				</p>
+				<form method="post" action="">
+					<?php wp_nonce_field( 'oidc_discovery_import', 'oidc_discovery_nonce' ); ?>
+					<table class="form-table">
+						<tr>
+							<th scope="row">
+								<label for="oidc_discovery_url">
+									<?php esc_html_e( 'Discovery URL', 'daggerhart-openid-connect-generic' ); ?>
+								</label>
+							</th>
+							<td>
+								<input
+									type="url"
+									id="oidc_discovery_url"
+									name="oidc_discovery_url"
+									class="regular-text oidc-discovery-url-input"
+									placeholder="https://your-idp.com/.well-known/openid-configuration"
+								/>
+								<p class="description">
+									<?php esc_html_e( 'Enter your identity provider\'s OpenID Connect discovery endpoint URL.', 'daggerhart-openid-connect-generic' ); ?>
+									<br>
+									<strong><?php esc_html_e( 'Examples:', 'daggerhart-openid-connect-generic' ); ?></strong>
+									<br>
+									• Auth0: <code>https://{tenant}.{region}.auth0.com/.well-known/openid-configuration</code>
+									<br>
+									• Keycloak: <code>https://{domain}/realms/{realm}/.well-known/openid-configuration</code>
+									<br>
+									• Okta: <code>https://{domain}/.well-known/openid-configuration</code>
+								</p>
+							</td>
+						</tr>
+					</table>
+					<?php submit_button( __( 'Load Configuration', 'daggerhart-openid-connect-generic' ), 'secondary', 'oidc_discovery_submit', false ); ?>
+				</form>
+			</div>
+		</details>
+		<hr class="oidc-discovery-separator">
+		<?php
 	}
 }

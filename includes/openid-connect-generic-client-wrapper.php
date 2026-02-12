@@ -309,7 +309,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Capture the time so that access token expiration can be calculated later.
-		$token_response[] = time();
+		$token_response['time'] = time();
 
 		update_user_option( $user_id, 'openid-connect-generic-last-token-response', $token_response );
 		$this->save_refresh_token( $manager, $token, $token_response );
@@ -420,8 +420,20 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$request['timeout'] = intval( $this->settings->http_request_timeout );
 		}
 
-		if ( $this->settings->no_sslverify ) {
+		// Only allow SSL bypass in local development environments.
+		if (
+			$this->settings->no_sslverify &&
+			defined( 'WP_DEBUG' ) && WP_DEBUG === true &&
+			( ! defined( 'WP_ENVIRONMENT_TYPE' ) || WP_ENVIRONMENT_TYPE === 'local' )
+		) {
+
 			$request['sslverify'] = false;
+
+			// Log warning every time this is used.
+			$this->logger->log(
+				'SSL verification disabled - ONLY for development. NEVER use in production!',
+				'ssl-bypass-warning'
+			);
 		}
 
 		return $request;
@@ -598,7 +610,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Provide backwards compatibility for customization using the deprecated cookie method.
 		if ( ! empty( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) ) {
-			$redirect_url = esc_url_raw( wp_unslash( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) );
+			$redirect_url = wp_validate_redirect(
+				esc_url_raw( wp_unslash( $_COOKIE[ self::COOKIE_REDIRECT_KEY ] ) ),
+				home_url()
+			);
 		}
 
 		// Only do redirect-user-back action hook when the plugin is configured for it.
@@ -893,13 +908,43 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			return false;
 		}
 		/**
-		 * Extract claim from JWT.
-		 * FIXME: We probably want to verify the JWT signature/issuer here.
-		 * For example, using JWKS if applicable. For symmetrically signed
-		 * JWTs (HMAC), we need a way to specify the acceptable secrets
-		 * and each possible issuer in the config.
+		 * Extract claim from JWT with signature verification.
 		 */
 		$jwt = $src['JWT'];
+
+		// Check if JWKS endpoint is configured for JWT signature verification.
+		if ( ! empty( $this->settings->endpoint_jwks ) ) {
+			// Use JWT validator for secure signature verification.
+			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
+				$this->settings->endpoint_jwks,
+				$this->settings->client_id,
+				$this->client->get_issuer_from_endpoint( $this->settings->endpoint_login ),
+				$this->settings->jwks_cache_ttl,
+				$this->settings->allow_internal_idp,
+				$this->logger
+			);
+
+			// Validate JWT signature and claims.
+			$body_json = $jwt_validator->validate_id_token( $jwt );
+
+			if ( is_wp_error( $body_json ) ) {
+				$this->logger->log( $body_json, 'aggregated-claim-jwt-validation-failed' );
+				return false;
+			}
+
+			if ( ! array_key_exists( $claimname, $body_json ) ) {
+				return false;
+			}
+			$claimvalue = $body_json[ $claimname ];
+			return true;
+		}
+
+		$this->logger->log(
+			'SECURITY WARNING: JWKS endpoint not configured. Aggregated claim JWT signatures are NOT being verified. This is a security vulnerability. Configure the JWKS endpoint to secure aggregated claims.',
+			'aggregated-jwt-not-verified'
+		);
+
+		// Legacy JWT decoding without signature verification (INSECURE).
 		list ( $header, $body, $rest ) = explode( '.', $jwt, 3 );
 		$body_str = base64_decode( $body, false );
 		if ( ! $body_str ) {

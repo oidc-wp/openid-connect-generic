@@ -26,6 +26,7 @@
  * OAuth Client Settings:
  *
  * @property string $login_type           How the client (login form) should provide login options.
+ * @property string $login_button_text    Customizable text for the OpenID Connect login button.
  * @property string $client_id            The ID the client will be recognized as when connecting the to Identity provider server.
  * @property string $client_secret        The secret key the IDP server expects from the client.
  * @property string $scope                The list of scopes this client should access.
@@ -33,12 +34,15 @@
  * @property string $endpoint_userinfo    The IDP User information endpoint URL.
  * @property string $endpoint_token       The IDP token validation endpoint URL.
  * @property string $endpoint_end_session The IDP logout endpoint URL.
+ * @property string $endpoint_jwks        The IDP JWKS endpoint URL for JWT signature verification.
+ * @property int    $jwks_cache_ttl       The JWKS cache TTL in seconds.
  * @property string $acr_values           The Authentication contract as defined on the IDP.
  *
  * Non-standard Settings:
  *
  * @property bool   $no_sslverify           The flag to enable/disable SSL verification during authorization.
  * @property int    $http_request_timeout   The timeout for requests made to the IDP. Default value is 5.
+ * @property bool   $allow_internal_idp     The flag to allow HTTP requests to internal/private network endpoints. Default is false.
  * @property string $identity_key           The key in the user claim array to find the user's identification data.
  * @property string $nickname_key           The key in the user claim array to find the user's nickname.
  * @property string $email_format           The key(s) in the user claim array to formulate the user's email address.
@@ -93,6 +97,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'endpoint_login'            => 'OIDC_ENDPOINT_LOGIN_URL',
 		'endpoint_token'            => 'OIDC_ENDPOINT_TOKEN_URL',
 		'endpoint_userinfo'         => 'OIDC_ENDPOINT_USERINFO_URL',
+		'endpoint_jwks'             => 'OIDC_ENDPOINT_JWKS_URL',
 		'login_type'                => 'OIDC_LOGIN_TYPE',
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',

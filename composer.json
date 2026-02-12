@@ -45,7 +45,8 @@
   },
   "require": {
     "php": ">=7.4",
-    "composer/installers": "~1.0|~2.0"
+    "composer/installers": "~1.0|~2.0",
+    "firebase/php-jwt": "^6.10"
   },
   "require-dev": {
     "php": ">=8.1",
@@ -79,6 +80,7 @@
       "openid-connect-generic.php",
       "includes/openid-connect-generic-client.php",
       "includes/openid-connect-generic-client-wrapper.php",
+      "includes/openid-connect-generic-jwt-validator.php",
       "includes/openid-connect-generic-login-form.php",
       "includes/openid-connect-generic-option-logger.php",
       "includes/openid-connect-generic-option-settings.php",
