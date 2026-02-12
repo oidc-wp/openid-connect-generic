@@ -620,9 +620,6 @@ class OpenID_Connect_Generic_Client {
 			}
 		}
 
-		// Add trailing slash (common for issuers).
-		$issuer .= '/';
-
 		return $issuer;
 	}
 
@@ -683,7 +680,7 @@ class OpenID_Connect_Generic_Client {
 			// Extract expected issuer from endpoint_login (base URL).
 			$expected_issuer = $this->get_issuer_from_endpoint( $this->endpoint_login );
 
-			if ( $id_token_claim['iss'] !== $expected_issuer ) {
+			if ( rtrim( $id_token_claim['iss'], '/' ) !== rtrim( $expected_issuer, '/' ) ) {
 				return new WP_Error(
 					'invalid-iss',
 					sprintf(

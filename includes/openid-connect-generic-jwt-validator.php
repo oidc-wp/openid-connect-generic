@@ -227,7 +227,7 @@ class OpenID_Connect_Generic_JWT_Validator {
 				);
 			}
 
-			if ( $decoded_jwt->iss !== $this->issuer ) {
+			if ( rtrim( $decoded_jwt->iss, '/' ) !== rtrim( $this->issuer, '/' ) ) {
 				return new WP_Error(
 					'invalid-iss',
 					__( 'Token issuer does not match expected issuer.', 'daggerhart-openid-connect-generic' )
