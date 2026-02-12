@@ -68,39 +68,39 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 		return array(
 			'auth0_authorize'         => array(
 				'https://dev-test.us.auth0.com/authorize',
-				'https://dev-test.us.auth0.com/',
+				'https://dev-test.us.auth0.com',
 			),
 			'keycloak_with_path'      => array(
 				'https://auth.example.com/realms/myrealm/protocol/openid-connect/auth',
-				'https://auth.example.com/',
+				'https://auth.example.com',
 			),
 			'okta_with_path'          => array(
 				'https://dev-123456.okta.com/oauth2/default/v1/authorize',
-				'https://dev-123456.okta.com/',
+				'https://dev-123456.okta.com',
 			),
 			'with_non_standard_port'  => array(
 				'https://localhost:8443/oauth/authorize',
-				'https://localhost:8443/',
+				'https://localhost:8443',
 			),
 			'with_standard_https_port' => array(
 				'https://example.com:443/authorize',
-				'https://example.com/',
+				'https://example.com',
 			),
 			'with_standard_http_port' => array(
 				'http://example.com:80/authorize',
-				'http://example.com/',
+				'http://example.com',
 			),
 			'already_base_url'        => array(
 				'https://example.com/',
-				'https://example.com/',
+				'https://example.com',
 			),
 			'no_trailing_slash'       => array(
 				'https://example.com',
-				'https://example.com/',
+				'https://example.com',
 			),
 			'azure_ad'                => array(
 				'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-				'https://login.microsoftonline.com/',
+				'https://login.microsoftonline.com',
 			),
 		);
 	}
@@ -121,7 +121,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'user123',
-			'iss' => 'https://example.com/',  // Matches derived issuer.
+			'iss' => 'https://example.com',  // Matches derived issuer.
 			'aud' => 'test_client',
 			'exp' => time() + 3600,
 			'iat' => time(),
@@ -147,7 +147,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'user123',
-			'iss' => 'https://evil.com/',  // Wrong issuer.
+			'iss' => 'https://evil.com',  // Wrong issuer.
 			'aud' => 'test_client',
 			'exp' => time() + 3600,
 			'iat' => time(),
@@ -160,6 +160,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 	/**
 	 * Test validate_id_token_claim with Auth0 style issuer.
+	 * Note: Auth0 includes trailing slash in issuer, validation should handle both with/without.
 	 *
 	 * @group ClientTests
 	 * @group IssuerValidation
@@ -174,7 +175,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'auth0|123456',
-			'iss' => 'https://dev-emypzqmunz78not4.us.auth0.com/',  // Auth0 format with trailing slash.
+			'iss' => 'https://dev-emypzqmunz78not4.us.auth0.com/',  // Auth0 includes trailing slash in actual tokens.
 			'aud' => 'test_client',
 			'exp' => time() + 3600,
 			'iat' => time(),
@@ -200,7 +201,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'user123',
-			'iss' => 'https://example.com/',
+			'iss' => 'https://example.com',
 			'aud' => 'test_client',
 			'exp' => time() - 3600,  // Expired 1 hour ago.
 			'iat' => time() - 7200,
@@ -227,7 +228,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'user123',
-			'iss' => 'https://example.com/',
+			'iss' => 'https://example.com',
 			'aud' => 'wrong_client',  // Wrong audience.
 			'exp' => time() + 3600,
 			'iat' => time(),
@@ -254,7 +255,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$id_token_claim = array(
 			'sub' => 'user123',
-			'iss' => 'https://example.com/',
+			'iss' => 'https://example.com',
 			'aud' => array( 'test_client', 'other_client' ),  // Audience as array.
 			'exp' => time() + 3600,
 			'iat' => time(),
