@@ -239,6 +239,60 @@ class OpenID_Connect_Generic_JWT_Validator {
 	}
 
 	/**
+	 * Extract the algorithm from JWT header.
+	 *
+	 * @param string $id_token The JWT ID token.
+	 *
+	 * @return string|null The algorithm from JWT header or null if not found.
+	 */
+	private function get_jwt_header_alg( $id_token ) {
+		$token_parts = explode( '.', $id_token );
+		if ( count( $token_parts ) < 2 ) {
+			return null;
+		}
+
+		$header_base64 = $token_parts[0];
+		$header_json = JWT::urlsafeB64Decode( $header_base64 );
+		$header = json_decode( $header_json, true );
+
+		return isset( $header['alg'] ) ? $header['alg'] : null;
+	}
+
+	/**
+	 * Enrich JWKS with algorithm from JWT header if missing.
+	 *
+	 * Some identity providers (like Microsoft Entra ID) return JWKs without
+	 * the "alg" parameter. This method adds the algorithm from the JWT header
+	 * to each key that's missing it, ensuring compatibility with the Firebase
+	 * JWT library which requires "alg" to be present.
+	 *
+	 * @param array  $jwks      The JWKS array with keys.
+	 * @param string $id_token  The JWT ID token.
+	 *
+	 * @return array The enriched JWKS array.
+	 */
+	private function enrich_jwks_with_alg( $jwks, $id_token ) {
+		// Extract algorithm from JWT header.
+		$jwt_alg = $this->get_jwt_header_alg( $id_token );
+
+		// If we couldn't extract the algorithm, default to RS256 (most common for OIDC).
+		if ( empty( $jwt_alg ) ) {
+			$jwt_alg = 'RS256';
+		}
+
+		// Add algorithm to keys that are missing it.
+		if ( isset( $jwks['keys'] ) && is_array( $jwks['keys'] ) ) {
+			foreach ( $jwks['keys'] as &$key ) {
+				if ( ! isset( $key['alg'] ) ) {
+					$key['alg'] = $jwt_alg;
+				}
+			}
+		}
+
+		return $jwks;
+	}
+
+	/**
 	 * Validate and verify an ID token.
 	 *
 	 * @param string $id_token The JWT ID token to validate.
@@ -261,6 +315,11 @@ class OpenID_Connect_Generic_JWT_Validator {
 		if ( is_wp_error( $jwks ) ) {
 			return $jwks;
 		}
+
+		// Enrich JWKS with algorithm from JWT header if keys are missing "alg".
+		// This ensures compatibility with providers like Microsoft Entra ID that
+		// don't include "alg" in their JWKS.
+		$jwks = $this->enrich_jwks_with_alg( $jwks, $id_token );
 
 		// Verify JWT signature and decode.
 		try {
