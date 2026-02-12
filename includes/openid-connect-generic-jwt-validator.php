@@ -52,6 +52,13 @@ class OpenID_Connect_Generic_JWT_Validator {
 	private $cache_ttl;
 
 	/**
+	 * Allow HTTP requests to internal/private network endpoints.
+	 *
+	 * @var bool
+	 */
+	private $allow_internal_idp;
+
+	/**
 	 * Logger instance.
 	 *
 	 * @var OpenID_Connect_Generic_Option_Logger
@@ -61,18 +68,39 @@ class OpenID_Connect_Generic_JWT_Validator {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                               $jwks_uri  The JWKS endpoint URL.
-	 * @param string                               $client_id The client ID for audience validation.
-	 * @param string                               $issuer    The expected issuer.
-	 * @param int                                  $cache_ttl JWKS cache TTL in seconds.
-	 * @param OpenID_Connect_Generic_Option_Logger $logger    Logger instance.
+	 * @param string                               $jwks_uri           The JWKS endpoint URL.
+	 * @param string                               $client_id          The client ID for audience validation.
+	 * @param string                               $issuer             The expected issuer.
+	 * @param int                                  $cache_ttl          JWKS cache TTL in seconds.
+	 * @param bool                                 $allow_internal_idp Allow internal/private network endpoints.
+	 * @param OpenID_Connect_Generic_Option_Logger $logger             Logger instance.
 	 */
-	public function __construct( $jwks_uri, $client_id, $issuer, $cache_ttl, $logger ) {
-		$this->jwks_uri  = $jwks_uri;
-		$this->client_id = $client_id;
-		$this->issuer    = $issuer;
-		$this->cache_ttl = $cache_ttl;
-		$this->logger    = $logger;
+	public function __construct( $jwks_uri, $client_id, $issuer, $cache_ttl, $allow_internal_idp, $logger ) {
+		$this->jwks_uri           = $jwks_uri;
+		$this->client_id          = $client_id;
+		$this->issuer             = $issuer;
+		$this->cache_ttl          = $cache_ttl;
+		$this->allow_internal_idp = $allow_internal_idp;
+		$this->logger             = $logger;
+	}
+
+	/**
+	 * Make a safe HTTP GET request with optional internal endpoint support.
+	 *
+	 * By default, uses wp_safe_remote_get() which blocks requests to internal/private
+	 * networks (SSRF protection). If allow_internal_idp is enabled, uses wp_remote_get()
+	 * to allow connections to localhost and private network identity providers.
+	 *
+	 * @param string $url  The URL to request.
+	 * @param array  $args Optional. Request arguments.
+	 *
+	 * @return array|WP_Error Response array or WP_Error on failure.
+	 */
+	private function http_get( $url, $args = array() ) {
+		if ( $this->allow_internal_idp ) {
+			return wp_remote_get( $url, $args );
+		}
+		return wp_safe_remote_get( $url, $args );
 	}
 
 	/**
@@ -90,7 +118,7 @@ class OpenID_Connect_Generic_JWT_Validator {
 		}
 
 		// Fetch JWKS from IDP.
-		$response = wp_remote_get( $this->jwks_uri, array( 'timeout' => 10 ) );
+		$response = $this->http_get( $this->jwks_uri, array( 'timeout' => 10 ) );
 
 		if ( is_wp_error( $response ) ) {
 			$this->logger->log( $response, 'jwks-fetch-failed' );

@@ -65,6 +65,7 @@ SECURITY UPDATE: Fixes critical authentication vulnerabilities including JWT sig
 * Security: Fixed open redirect vulnerability in authentication flow
 * Security: Restricted SSL verification bypass to local development environments only
 * Security: Added nonce protection to debug mode to prevent information disclosure
+* Security: Added SSRF protection by default through use of wp_safe_remote_* functions
 * Feature: Added JWKS endpoint configuration setting
 * Feature: Added OpenID Connect discovery document support
 * Feature: Added customizable login button text setting

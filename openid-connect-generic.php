@@ -161,6 +161,7 @@ class OpenID_Connect_Generic {
 			$this->settings->endpoint_jwks,
 			$this->settings->jwks_cache_ttl,
 			$this->get_state_time_limit( $this->settings ),
+			$this->settings->allow_internal_idp,
 			$this->logger
 		);
 
@@ -438,6 +439,7 @@ class OpenID_Connect_Generic {
 				// Non-standard settings.
 				'no_sslverify'           => 0,
 				'http_request_timeout'   => 5,
+				'allow_internal_idp'     => 0,
 				'identity_key'           => 'preferred_username',
 				'nickname_key'           => 'preferred_username',
 				'email_format'           => '{email}',

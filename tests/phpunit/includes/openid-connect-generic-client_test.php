@@ -284,6 +284,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 			'endpoint_jwks'      => '',
 			'jwks_cache_ttl'     => 3600,
 			'state_time_limit'   => 180,
+			'allow_internal_idp' => false,
 		);
 
 		$merged = array_merge( $default_settings, $settings );
@@ -302,6 +303,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 			$merged['endpoint_jwks'],
 			$merged['jwks_cache_ttl'],
 			$merged['state_time_limit'],
+			$merged['allow_internal_idp'],
 			$logger
 		);
 	}

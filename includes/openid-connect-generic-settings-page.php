@@ -80,6 +80,25 @@ class OpenID_Connect_Generic_Settings_Page {
 	}
 
 	/**
+	 * Make a safe HTTP GET request with optional internal endpoint support.
+	 *
+	 * By default, uses wp_safe_remote_get() which blocks requests to internal/private
+	 * networks (SSRF protection). If allow_internal_idp is enabled, uses wp_remote_get()
+	 * to allow connections to localhost and private network identity providers.
+	 *
+	 * @param string $url  The URL to request.
+	 * @param array  $args Optional. Request arguments.
+	 *
+	 * @return array|WP_Error Response array or WP_Error on failure.
+	 */
+	private function http_get( $url, $args = array() ) {
+		if ( $this->settings->allow_internal_idp ) {
+			return wp_remote_get( $url, $args );
+		}
+		return wp_safe_remote_get( $url, $args );
+	}
+
+	/**
 	 * Hook the settings page into WordPress.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings A plugin settings object instance.
@@ -310,13 +329,6 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
-			'no_sslverify'      => array(
-				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
-				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
-				'description' => sprintf( __( 'Do not require SSL verification during authorization. %1$sDANGER: Only works in local development (WP_DEBUG=true, WP_ENVIRONMENT_TYPE=local).%2$s This setting is automatically disabled in production. If you need this in production, fix your SSL certificates instead.', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
-				'type'        => 'checkbox',
-				'section'     => 'client_settings',
-			),
 			'http_request_timeout'      => array(
 				'title'       => __( 'HTTP Request Timeout', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Set the timeout for requests made to the IDP. Default value is 5.', 'daggerhart-openid-connect-generic' ),
@@ -373,6 +385,20 @@ class OpenID_Connect_Generic_Settings_Page {
 			'token_refresh_enable'   => array(
 				'title'       => __( 'Enable Refresh Token', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
+			'no_sslverify'      => array(
+				'title'       => __( 'Disable SSL Verify', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Do not require SSL verification during authorization. %1$sOnly works in local development (WP_DEBUG=true, WP_ENVIRONMENT_TYPE=local).%2$s This setting is automatically disabled in production. If you need this in production, fix your SSL certificates instead.', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
+				'type'        => 'checkbox',
+				'section'     => 'client_settings',
+			),
+			'allow_internal_idp'      => array(
+				'title'       => __( 'Allow Internal IDP', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Allow HTTP requests to internal/private network endpoints (localhost, 127.0.0.1, 10.x.x.x, 192.168.x.x, 172.16-31.x.x). %1$sOnly enable this for local development or corporate internal identity providers. Disabling SSRF protection can expose your server to security risks.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
 				'type'        => 'checkbox',
 				'section'     => 'client_settings',
 			),
@@ -663,7 +689,7 @@ class OpenID_Connect_Generic_Settings_Page {
 		}
 
 		// Fetch discovery document.
-		$response = wp_remote_get(
+		$response = $this->http_get(
 			$discovery_url,
 			array(
 				'timeout' => 10,

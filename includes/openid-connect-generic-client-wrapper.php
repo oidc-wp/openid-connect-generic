@@ -920,6 +920,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$this->settings->client_id,
 				$this->client->get_issuer_from_endpoint( $this->settings->endpoint_login ),
 				$this->settings->jwks_cache_ttl,
+				$this->settings->allow_internal_idp,
 				$this->logger
 			);
 
