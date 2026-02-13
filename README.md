@@ -3,7 +3,7 @@
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 5.0  
 **Tested up to:** 6.9.0  
-**Stable tag:** 3.11.2  
+**Stable tag:** 3.11.3  
 **Requires PHP:** 7.4  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -49,11 +49,15 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 ## Upgrade Notice ##
 
-### 3.11.2 ###
+### 3.11.3 ###
 
-CRITICAL SECURITY UPDATE: 3.11.x Fixes authentication vulnerabilities including JWT signature bypass and SSRF protection. Update immediately and configure JWKS endpoint in settings.
+SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including JWT signature bypass and SSRF protection. Update immediately and configure JWKS endpoint in settings.
 
 ## Changelog ##
+
+### 3.11.3 ###
+
+* Feature/improvement: Added configurable issuer setting for JWT validation.
 
 ### 3.11.2 ###
 

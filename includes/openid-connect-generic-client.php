@@ -698,6 +698,14 @@ class OpenID_Connect_Generic_Client {
 			}
 
 			if ( rtrim( $id_token_claim['iss'], '/' ) !== rtrim( $expected_issuer, '/' ) ) {
+				$this->logger->log(
+					sprintf(
+						'Issuer mismatch - Expected: "%s", Received: "%s". Configure the correct issuer in Settings > OpenID Connect Client > Issuer field, or via the OIDC_ISSUER constant.',
+						$expected_issuer,
+						$id_token_claim['iss']
+					),
+					'issuer-mismatch'
+				);
 				return new WP_Error(
 					'invalid-iss',
 					sprintf(

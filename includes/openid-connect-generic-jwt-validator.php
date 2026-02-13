@@ -228,6 +228,14 @@ class OpenID_Connect_Generic_JWT_Validator {
 			}
 
 			if ( rtrim( $decoded_jwt->iss, '/' ) !== rtrim( $this->issuer, '/' ) ) {
+				$this->logger->log(
+					sprintf(
+						'Issuer mismatch - Expected: "%s", Received: "%s". Configure the correct issuer in Settings > OpenID Connect Client > Issuer field, or via the OIDC_ISSUER constant.',
+						$this->issuer,
+						$decoded_jwt->iss
+					),
+					'issuer-mismatch'
+				);
 				return new WP_Error(
 					'invalid-iss',
 					__( 'Token issuer does not match expected issuer.', 'daggerhart-openid-connect-generic' )
