@@ -35,6 +35,7 @@
  * @property string $endpoint_token       The IDP token validation endpoint URL.
  * @property string $endpoint_end_session The IDP logout endpoint URL.
  * @property string $endpoint_jwks        The IDP JWKS endpoint URL for JWT signature verification.
+ * @property string $issuer               The IDP issuer URL for JWT validation (optional - derived from endpoint_login if not set).
  * @property int    $jwks_cache_ttl       The JWKS cache TTL in seconds.
  * @property string $acr_values           The Authentication contract as defined on the IDP.
  *
@@ -98,6 +99,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'endpoint_token'            => 'OIDC_ENDPOINT_TOKEN_URL',
 		'endpoint_userinfo'         => 'OIDC_ENDPOINT_USERINFO_URL',
 		'endpoint_jwks'             => 'OIDC_ENDPOINT_JWKS_URL',
+		'issuer'                    => 'OIDC_ISSUER',
 		'login_type'                => 'OIDC_LOGIN_TYPE',
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',

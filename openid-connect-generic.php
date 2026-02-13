@@ -16,7 +16,7 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/oidc-wp/openid-connect-generic
  * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
- * Version:           3.11.2
+ * Version:           3.11.3
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            daggerhart
@@ -93,7 +93,7 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.11.2';
+	const VERSION = '3.11.3';
 
 	/**
 	 * Plugin settings.
@@ -159,6 +159,7 @@ class OpenID_Connect_Generic {
 			$this->get_redirect_uri( $this->settings ),
 			$this->settings->acr_values,
 			$this->settings->endpoint_jwks,
+			$this->settings->issuer ?? '',
 			$this->settings->jwks_cache_ttl,
 			$this->get_state_time_limit( $this->settings ),
 			$this->settings->allow_internal_idp,

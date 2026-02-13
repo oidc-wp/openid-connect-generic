@@ -914,11 +914,16 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Check if JWKS endpoint is configured for JWT signature verification.
 		if ( ! empty( $this->settings->endpoint_jwks ) ) {
+			// Use configured issuer if provided, otherwise derive from endpoint_login.
+			$issuer = ! empty( $this->settings->issuer ) ?
+				$this->settings->issuer :
+				( ! empty( $this->settings->endpoint_login ) ? $this->client->get_issuer_from_endpoint( $this->settings->endpoint_login ) : '' );
+
 			// Use JWT validator for secure signature verification.
 			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
 				$this->settings->endpoint_jwks,
 				$this->settings->client_id,
-				$this->client->get_issuer_from_endpoint( $this->settings->endpoint_login ),
+				$issuer,
 				$this->settings->jwks_cache_ttl,
 				$this->settings->allow_internal_idp,
 				$this->logger

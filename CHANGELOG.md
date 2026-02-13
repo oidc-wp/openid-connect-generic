@@ -1,5 +1,61 @@
 # OpenId Connect Generic Changelog
 
+**3.11.3**
+
+* Feature/improvement: Added configurable issuer setting for JWT validation.
+
+**3.11.2**
+
+* Improvement: Support identity providers that omit algorithm parameter in JWKS (Microsoft Entra ID).
+
+**3.11.1**
+
+* Fix bug created in 3.11.0 release when comparing issuer to derived expected value.
+
+**3.11.0**
+
+**SECURITY RELEASE**
+
+* Security: Added JWT signature verification using JWKS to prevent token forgery
+* Security: Enhanced token claim validation (exp, aud, iss, iat, nonce)
+* Security: Replaced weak state generation with cryptographically secure random_bytes()
+* Security: Fixed open redirect vulnerability in authentication flow
+* Security: Restricted SSL verification bypass to local development environments only
+* Security: Added nonce protection to debug mode to prevent information disclosure
+* Security: Added SSRF protection by default through use of wp_safe_remote_* functions
+* Feature: Added JWKS endpoint configuration setting
+* Feature: Added OpenID Connect discovery document support
+* Feature: Added customizable login button text setting
+* Improvement: Migrated to Composer-managed dependencies
+* Fix: Corrected issuer validation to properly extract base URL from endpoints
+* Fix: Identity token timestamp tracking
+
+**3.10.4**
+
+* Fix issue with finding users on multisite after switch to user options in place of user meta.
+* Improvement: Retry logins for some IDP errors to bypass issue with Safari ITP. Also improves display of error messages that come from the IDP.
+
+**3.10.3**
+
+* Fix issue with log corruption causing fatal error.
+* Fix: Fallback to a POST request for userinfo when GET fails.
+* Fix: Improves multisite compatibility by switching to *_user_options() functions.
+* Fix: Fix for WordPress user session length being very short when refresh tokens are enabled.
+
+**3.10.2**
+
+* Fix: @socialmedialabs - Regression affecting SSO Auto Login with url handling improvement changes.
+
+**3.10.1**
+
+* Chore: @daggerhart - Readme updates and clarifications.
+* Chore: @daggerhart - Release workflow updates.
+* Improved error handling for malformed urls.
+* Fix: @JUVOJustin - Change request for userinfo to GET.
+* Feature: @JUVOJustin - New filter for settings values `openid-connect-generic-settings`.
+* Feature: @JUVOJustin - New filter for state values `openid-connect-generic-new-state-value`.
+
+
 **3.10.0**
 
 - Chore: @timnolte - Dependency updates.

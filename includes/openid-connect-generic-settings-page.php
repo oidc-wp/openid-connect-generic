@@ -308,6 +308,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENDPOINT_JWKS_URL' ),
 				'section'     => 'client_settings',
 			),
+			'issuer' => array(
+				'title'       => __( 'Issuer', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identity provider issuer URL for JWT validation. If not set, the issuer will be automatically derived from the Login Endpoint URL. Only configure this if your IDP uses a different issuer than the base URL of the login endpoint.', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'https://example.com',
+				'type'        => 'text',
+				'disabled'    => defined( 'OIDC_ISSUER' ),
+				'section'     => 'client_settings',
+			),
 			'jwks_cache_ttl' => array(
 				'title'       => __( 'JWKS Cache TTL (seconds)', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Time in seconds to cache JWKS keys. Default: 3600 (1 hour)', 'daggerhart-openid-connect-generic' ),
@@ -776,6 +784,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			'token_endpoint'         => 'endpoint_token',
 			'userinfo_endpoint'      => 'endpoint_userinfo',
 			'jwks_uri'               => 'endpoint_jwks',
+			'issuer'                 => 'issuer',
 			'end_session_endpoint'   => 'endpoint_end_session',
 		);
 

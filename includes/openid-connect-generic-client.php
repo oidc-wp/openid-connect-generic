@@ -101,6 +101,15 @@ class OpenID_Connect_Generic_Client {
 	private $endpoint_jwks;
 
 	/**
+	 * The issuer URL for JWT validation.
+	 *
+	 * @see OpenID_Connect_Generic_Option_Settings::issuer
+	 *
+	 * @var string
+	 */
+	private $issuer;
+
+	/**
 	 * The JWKS cache TTL in seconds.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::jwks_cache_ttl
@@ -146,12 +155,13 @@ class OpenID_Connect_Generic_Client {
 	 * @param string                               $redirect_uri       @see OpenID_Connect_Generic_Option_Settings::redirect_uri for description.
 	 * @param string                               $acr_values         @see OpenID_Connect_Generic_Option_Settings::acr_values for description.
 	 * @param string                               $endpoint_jwks      @see OpenID_Connect_Generic_Option_Settings::endpoint_jwks for description.
+	 * @param string                               $issuer             @see OpenID_Connect_Generic_Option_Settings::issuer for description.
 	 * @param int                                  $jwks_cache_ttl     @see OpenID_Connect_Generic_Option_Settings::jwks_cache_ttl for description.
 	 * @param int                                  $state_time_limit   @see OpenID_Connect_Generic_Option_Settings::state_time_limit for description.
 	 * @param bool                                 $allow_internal_idp @see OpenID_Connect_Generic_Option_Settings::allow_internal_idp for description.
 	 * @param OpenID_Connect_Generic_Option_Logger $logger             The plugin logging object instance.
 	 */
-	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $endpoint_jwks, $jwks_cache_ttl, $state_time_limit, $allow_internal_idp, $logger ) {
+	public function __construct( $client_id, $client_secret, $scope, $endpoint_login, $endpoint_userinfo, $endpoint_token, $redirect_uri, $acr_values, $endpoint_jwks, $issuer, $jwks_cache_ttl, $state_time_limit, $allow_internal_idp, $logger ) {
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->scope = $scope;
@@ -161,6 +171,7 @@ class OpenID_Connect_Generic_Client {
 		$this->redirect_uri = $redirect_uri;
 		$this->acr_values = $acr_values;
 		$this->endpoint_jwks = $endpoint_jwks;
+		$this->issuer = $issuer;
 		$this->jwks_cache_ttl = $jwks_cache_ttl;
 		$this->state_time_limit = $state_time_limit;
 		$this->allow_internal_idp = $allow_internal_idp;
@@ -543,11 +554,16 @@ class OpenID_Connect_Generic_Client {
 
 		// Check if JWKS endpoint is configured for JWT signature verification.
 		if ( ! empty( $this->endpoint_jwks ) ) {
+			// Use configured issuer if provided, otherwise derive from endpoint_login.
+			$issuer = ! empty( $this->issuer )
+				? $this->issuer
+				: $this->get_issuer_from_endpoint( $this->endpoint_login );
+
 			// Use JWT validator for secure signature verification.
 			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
 				$this->endpoint_jwks,
 				$this->client_id,
-				$this->get_issuer_from_endpoint( $this->endpoint_login ),
+				$issuer,
 				$this->jwks_cache_ttl,
 				$this->allow_internal_idp,
 				$this->logger
@@ -671,16 +687,25 @@ class OpenID_Connect_Generic_Client {
 			return new WP_Error( 'invalid-aud', __( 'Token audience does not match client.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 		}
 
-		// Validate issuer claim if endpoint_login is configured.
-		if ( ! empty( $this->endpoint_login ) ) {
+		// Validate issuer claim if configured or endpoint_login is available.
+		$expected_issuer = ! empty( $this->issuer ) ?
+			$this->issuer :
+			( ! empty( $this->endpoint_login ) ? $this->get_issuer_from_endpoint( $this->endpoint_login ) : '' );
+
+		if ( ! empty( $expected_issuer ) ) {
 			if ( ! isset( $id_token_claim['iss'] ) ) {
 				return new WP_Error( 'missing-iss', __( 'Token missing issuer claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 			}
 
-			// Extract expected issuer from endpoint_login (base URL).
-			$expected_issuer = $this->get_issuer_from_endpoint( $this->endpoint_login );
-
 			if ( rtrim( $id_token_claim['iss'], '/' ) !== rtrim( $expected_issuer, '/' ) ) {
+				$this->logger->log(
+					sprintf(
+						'Issuer mismatch - Expected: "%s", Received: "%s". Configure the correct issuer in Settings > OpenID Connect Client > Issuer field, or via the OIDC_ISSUER constant.',
+						$expected_issuer,
+						$id_token_claim['iss']
+					),
+					'issuer-mismatch'
+				);
 				return new WP_Error(
 					'invalid-iss',
 					sprintf(

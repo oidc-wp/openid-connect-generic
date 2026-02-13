@@ -266,6 +266,33 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test validate_id_token_claim uses configured issuer over derived issuer.
+	 *
+	 * @group ClientTests
+	 * @group IssuerValidation
+	 */
+	public function test_validate_id_token_claim_with_explicit_issuer() {
+		$client = $this->create_client(
+			array(
+				'endpoint_login' => 'https://login.example.com/authorize',
+				'issuer'         => 'https://issuer.example.com', // Explicit issuer differs from login endpoint.
+				'client_id'      => 'test_client',
+			)
+		);
+
+		$id_token_claim = array(
+			'sub' => 'user123',
+			'iss' => 'https://issuer.example.com',  // Matches configured issuer, not derived from endpoint_login.
+			'aud' => 'test_client',
+			'exp' => time() + 3600,
+			'iat' => time(),
+		);
+
+		$result = $client->validate_id_token_claim( $id_token_claim );
+		$this->assertTrue( $result );
+	}
+
+	/**
 	 * Helper to create client instance for testing.
 	 *
 	 * @param array $settings Optional settings to override defaults.
@@ -283,6 +310,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 			'redirect_uri'       => 'https://example.com/callback',
 			'acr_values'         => '',
 			'endpoint_jwks'      => '',
+			'issuer'             => '',
 			'jwks_cache_ttl'     => 3600,
 			'state_time_limit'   => 180,
 			'allow_internal_idp' => false,
@@ -302,6 +330,7 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 			$merged['redirect_uri'],
 			$merged['acr_values'],
 			$merged['endpoint_jwks'],
+			$merged['issuer'],
 			$merged['jwks_cache_ttl'],
 			$merged['state_time_limit'],
 			$merged['allow_internal_idp'],
