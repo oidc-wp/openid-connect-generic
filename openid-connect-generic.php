@@ -159,6 +159,7 @@ class OpenID_Connect_Generic {
 			$this->get_redirect_uri( $this->settings ),
 			$this->settings->acr_values,
 			$this->settings->endpoint_jwks,
+			$this->settings->issuer ?? '',
 			$this->settings->jwks_cache_ttl,
 			$this->get_state_time_limit( $this->settings ),
 			$this->settings->allow_internal_idp,
