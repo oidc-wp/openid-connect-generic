@@ -122,7 +122,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		$this->default_settings = $default_settings;
 		$this->values = array();
 
-		$this->values = (array) get_option( self::OPTION_NAME, $this->default_settings );
+		$this->values = (array) get_option( $this->get_option_name(), $this->default_settings );
 
 		// For each defined environment variable/constant be sure the settings key is set.
 		foreach ( $this->environment_settings as $key => $constant ) {
@@ -215,6 +215,6 @@ class OpenID_Connect_Generic_Option_Settings {
 			}
 		}
 
-		update_option( self::OPTION_NAME, $this->values );
+		update_option( $this->get_option_name(), $this->values );
 	}
 }
