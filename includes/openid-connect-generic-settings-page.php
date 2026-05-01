@@ -490,11 +490,10 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __DIR__ ) . 'css/styles-admin.css', array(), OpenID_Connect_Generic::VERSION, 'all' );
 
-		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
+		$plugin = OpenID_Connect_Generic::instance();
 
-		if ( $this->settings->alternate_redirect_uri ) {
-			$redirect_uri = site_url( '/openid-connect-authorize' );
-		}
+		$redirect_uri = $plugin->get_redirect_uri( $this->settings );
+
 		?>
 		<div class="wrap">
 			<h2><?php print esc_html( get_admin_page_title() ); ?></h2>
