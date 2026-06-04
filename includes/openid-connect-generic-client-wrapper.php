@@ -100,6 +100,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		add_filter( 'openid-connect-generic-alter-request', array( $client_wrapper, 'alter_request' ), 10, 2 );
 
 		// Ensure tokens are refreshed before they expire.
+		// Priority 11 runs after the default priority-10 init callbacks, ensuring
+		// session and auth state are fully initialised before checking token freshness.
 		if ( $settings->token_refresh_enable ) {
 			add_action( 'init', array( $client_wrapper, 'ensure_tokens_still_fresh' ), 11 );
 		}
