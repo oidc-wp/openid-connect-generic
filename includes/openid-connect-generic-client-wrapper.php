@@ -101,7 +101,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Ensure tokens are refreshed before they expire.
 		if ( $settings->token_refresh_enable ) {
-			add_action( 'init', array( $client_wrapper, 'ensure_tokens_still_fresh' ) );
+			$client_wrapper->ensure_tokens_still_fresh();
 		}
 
 		if ( is_admin() ) {
