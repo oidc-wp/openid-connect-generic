@@ -162,7 +162,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Honor Core WordPress & other plugin redirects.
-		if ( isset( $_REQUEST['redirect_to'] ) ) {
+		if ( isset( $_REQUEST['redirect_to'] ) && is_string( $_REQUEST['redirect_to'] ) ) {
 			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		}
 

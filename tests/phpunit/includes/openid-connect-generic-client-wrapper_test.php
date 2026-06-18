@@ -62,6 +62,24 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that get_redirect_to() ignores a non-string redirect_to request value
+	 * instead of passing an array to esc_url_raw().
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_get_redirect_to_ignores_array_request_value() {
+
+		$_REQUEST['redirect_to'] = array( '' );
+
+		$redirect_url = $this->client_wrapper->get_redirect_to();
+
+		$this->assertIsString( $redirect_url, 'A non-string redirect_to should not produce a non-string result' );
+
+		unset( $_REQUEST['redirect_to'] );
+
+	}
+
+	/**
 	 * Test if by using the remember-me filter, the user session expiration
 	 * is set to 14 days, which is the default of WordPress
 	 *
