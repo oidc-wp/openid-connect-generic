@@ -30,6 +30,24 @@ jobs:
     - name: Start Docker Environment
       run: docker compose up -d
 
+    # `docker compose up -d` returns as soon as the containers are created, not
+    # when the database is able to answer. Without this the test suite races
+    # MariaDB's initialisation and fails with "Error establishing a database
+    # connection". Querying the test database as the test user also confirms
+    # that tests/db-wordpress_test.sql has been applied.
+    - name: Wait for Database
+      run: |
+        for i in $(seq 1 30); do
+          if docker compose exec -T db sh -c 'mariadb -uwordpress -pwordpress -e "SELECT 1" wordpress_test || mysql -uwordpress -pwordpress -e "SELECT 1" wordpress_test' >/dev/null 2>&1; then
+            echo "Database is ready."
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Database did not become available within 60 seconds."
+        docker compose logs db
+        exit 1
+
     - name: Run PHPUnit Tests
       run: docker compose exec app /bin/bash -c 'composer install && composer phpunit'
 
@@ -37,8 +55,12 @@ jobs:
       if: success() || failure()
       run: docker compose down
 
+    # No ${{ }} around the expression: an `if` is already an expression context,
+    # and the interpolated form is substituted as a string, which is always
+    # truthy. That made this step run on workflow_dispatch too, where there is
+    # no pull request to comment on, failing the whole job after a green suite.
     - name: Generate Coverage Report
-      if: success() && ${{ github.event_name == 'pull_request' }}
+      if: success() && github.event_name == 'pull_request'
       # https://github.com/marketplace/actions/coverage-report-as-comment-clover
       uses: lucassabreu/comment-coverage-clover@main
       with:
