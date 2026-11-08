@@ -317,4 +317,112 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		do_shortcode( '[openid_connect_generic_login_button]' );
 	}
 
+	/**
+	 * Test that the login button is added to the top of the WooCommerce login form.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_login_at_start() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'start',
+		) );
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'get_redirect_uri' )->willReturn( 'https://site.example.com/callback' );
+
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
+
+		ob_start();
+		do_action( 'woocommerce_login_form_start' );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'openid-connect-login-button', $output );
+		$this->assertMatchesRegularExpression( '/openid-connect-login-button.*openid-connect-login-divider/s', $output, 'Divider should be under the button' );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
+	/**
+	 * Test that the login button is added to the bottom of the WooCommerce login form.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_login_at_end() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'end',
+		) );
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'get_redirect_uri' )->willReturn( 'https://site.example.com/callback' );
+
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
+
+		ob_start();
+		do_action( 'woocommerce_login_form_end' );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'openid-connect-login-button', $output );
+		$this->assertMatchesRegularExpression( '/openid-connect-login-divider.*openid-connect-login-button/s', $output, 'Divider should be above the button' );
+
+		ob_start();
+		do_action( 'wp_footer' );
+		$this->assertStringContainsString( '.openid-connect-login-divider', ob_get_clean() );
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+	}
+
+	/**
+	 * Test that WooCommerce auto login redirects My Account instead of adding the button.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_auto_login_registers_redirect_instead_of_button() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'auto',
+		) );
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'get_redirect_uri' )->willReturn( 'https://site.example.com/callback' );
+
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
+
+		$this->assertNotFalse( has_action( 'template_redirect' ) );
+		$this->assertNotFalse( has_filter( 'woocommerce_logout_default_redirect_url' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
+	/**
+	 * Test that the login button is not added to the WooCommerce login form by default.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_no_woocommerce_login_by_default() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => '',
+		) );
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'get_redirect_uri' )->willReturn( 'https://site.example.com/callback' );
+
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
+
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
 }
