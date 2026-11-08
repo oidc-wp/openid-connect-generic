@@ -245,6 +245,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'login_button_icon' => array(
+				'title'       => __( 'Login Button Icon', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'URL of a PNG or SVG with a transparent background, shown before the text on the OpenID Connect login button. The icon is drawn in the button\'s text colour. Leave empty for no icon.', 'daggerhart-openid-connect-generic' ),
+				'example'     => 'https://example.com/wp-content/uploads/sso-icon.svg',
+				'type'        => 'text',
+				'section'     => 'client_settings',
+			),
 			'client_id'         => array(
 				'title'       => __( 'Client ID', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.', 'daggerhart-openid-connect-generic' ),

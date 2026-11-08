@@ -41,6 +41,13 @@ class OpenID_Connect_Generic_Login_Form {
 	private $client;
 
 	/**
+	 * Whether a login button with an icon has been made on this page.
+	 *
+	 * @var bool
+	 */
+	private $icon_used = false;
+
+	/**
 	 * The class constructor.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
@@ -70,6 +77,10 @@ class OpenID_Connect_Generic_Login_Form {
 
 		// Add a shortcode for the login button.
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
+
+		// Print the CSS for the login button icon.
+		add_action( 'wp_footer', array( $login_form, 'print_icon_styles' ) );
+		add_action( 'login_footer', array( $login_form, 'print_icon_styles' ) );
 
 		$login_form->handle_redirect_login_type_auto();
 	}
@@ -168,6 +179,14 @@ class OpenID_Connect_Generic_Login_Form {
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
 		$text = esc_html( $text );
 
+		// The icon is drawn by print_icon_styles() in the button's text colour.
+		$icon     = '';
+		$icon_url = $this->settings->login_button_icon;
+		if ( ! empty( $icon_url ) ) {
+			$this->icon_used = true;
+			$icon = '<span class="openid-connect-login-button-icon" aria-hidden="true"></span>';
+		}
+
 		$href = $this->client_wrapper->get_authentication_url(
 			array(
 				'endpoint_login' => $atts['endpoint_login'],
@@ -182,11 +201,26 @@ class OpenID_Connect_Generic_Login_Form {
 
 		$login_button = <<<HTML
 <div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
-	<a class="button button-large" href="{$href}">{$text}</a>
+	<a class="button button-large" href="{$href}">{$icon}{$text}</a>
 </div>
 HTML;
 
 		return $login_button;
+	}
+
+	/**
+	 * Print the CSS that draws the login button icon in the button's text colour.
+	 *
+	 * @return void
+	 */
+	public function print_icon_styles() {
+		// esc_url_raw() removes quotes and angle brackets, so the URL cannot break out of the CSS.
+		$icon_url = esc_url_raw( $this->settings->login_button_icon );
+		if ( ! $this->icon_used || empty( $icon_url ) ) {
+			return;
+		}
+		$mask = 'url("' . $icon_url . '") center/contain no-repeat';
+		echo '<style id="openid-connect-login-button-icon">.openid-connect-login-button-icon{display:inline-block;width:1.6em;height:1.6em;margin-right:0.5em;vertical-align:middle;background-color:currentColor;-webkit-mask:' . $mask . ';mask:' . $mask . '}</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
