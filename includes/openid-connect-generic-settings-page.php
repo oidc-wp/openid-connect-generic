@@ -245,6 +245,18 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'text',
 				'section'     => 'client_settings',
 			),
+			'woocommerce_login' => array(
+				'title'       => __( 'WooCommerce Login', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Add the OpenID Connect login button to the WooCommerce login forms, or with Auto Login skip the My Account login form.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'select',
+				'options'     => array(
+					''      => __( 'Do not add', 'daggerhart-openid-connect-generic' ),
+					'start' => __( 'Top of the login form', 'daggerhart-openid-connect-generic' ),
+					'end'   => __( 'Bottom of the login form', 'daggerhart-openid-connect-generic' ),
+					'auto'  => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
+				),
+				'section'     => 'client_settings',
+			),
 			'client_id'         => array(
 				'title'       => __( 'Client ID', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'The ID this client will be recognized as when connecting the to Identity provider server.', 'daggerhart-openid-connect-generic' ),
