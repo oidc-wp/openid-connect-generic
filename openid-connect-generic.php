@@ -17,8 +17,8 @@
  * Plugin URI:        https://github.com/oidc-wp/openid-connect-generic
  * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
  * Version:           3.11.3
- * Requires at least: 5.0
- * Requires PHP:      7.4
+ * Requires at least: 6.7
+ * Requires PHP:      8.2
  * Author:            daggerhart
  * Author URI:        https://www.daggerhartlab.com
  * Text Domain:       daggerhart-openid-connect-generic
