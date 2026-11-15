@@ -2,7 +2,7 @@
 Contributors: daggerhart, tnolte
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 5.0
-Tested up to: 6.9.0
+Tested up to: 7.1
 Stable tag: 3.11.4
 Requires PHP: 8.0
 License: GPLv2 or later
