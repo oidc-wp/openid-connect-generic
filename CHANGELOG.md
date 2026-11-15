@@ -1,5 +1,9 @@
 # OpenId Connect Generic Changelog
 
+**3.12.0**
+
+* Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
+
 **3.11.3**
 
 * Feature/improvement: Added configurable issuer setting for JWT validation.

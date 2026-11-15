@@ -17,6 +17,10 @@ jobs:
 
     name: 'Unit Test PR in Latest Stable Requirements'
 
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
@@ -38,7 +42,7 @@ jobs:
       run: docker compose down
 
     - name: Generate Coverage Report
-      if: success() && ${{ github.event_name == 'pull_request' }}
+      if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       # https://github.com/marketplace/actions/coverage-report-as-comment-clover
       uses: lucassabreu/comment-coverage-clover@main
       with:

@@ -19,20 +19,20 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['8.1', '8.2', '8.3', '8.4']
-        wordpress-version: ['6.7.*','6.8.*','6.9.*']
+        php-version: ['8.2', '8.3', '8.4', '8.5']
+        wordpress-version: ['6.7.*', '6.8.*', '6.9.*', '7.0.*', '7.1.*']
         wp-multisite-mode: [0]
         bleeding-edge: [false]
         include:
           - job-name: 'Unit Test Bleeding Edge Requirements'
             bleeding-edge: true
-            php-version: '8.3'
+            php-version: '8.4'
             wordpress-version: 'dev-master'
             wp-multisite-mode: 0
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
-            php-version: '8.3'
-            wordpress-version: '6.9.*'
+            php-version: '8.4'
+            wordpress-version: '7.1.*'
             wp-multisite-mode: 1
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
@@ -68,16 +68,12 @@ jobs:
     - name: Environment Check
       run: php -v && composer --version
 
-    - name: Require Specified WordPress Version (PHP <7.4)
-      if: matrix.php-version == '7.3' || matrix.php-version == '7.2'
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies --ignore-platform-req=php
-
     - name: Require Specified WordPress Version (Bleeding Edge)
       if: matrix.bleeding-edge
       run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} szepeviktor/phpstan-wordpress:* wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
 
     - name: Require Specified WordPress Version
-      if: matrix.php-version != '7.3' && matrix.php-version != '7.2' && ! matrix.bleeding-edge
+      if: ${{ ! matrix.bleeding-edge }}
       run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
 
     - name: PHPUnit Bleeding Edge Support
@@ -85,22 +81,7 @@ jobs:
       run: |
         composer require sebastian/code-unit:dev-main phpunit/phpunit:dev-master phpro/grumphp:dev-master --dev -W --ignore-platform-req=php --update-with-all-dependencies
 
-    - name: PHPUnit PHP 8.0 Support
-      if: matrix.php-version == '8.0'
-      run: |
-        composer require phpunit/phpunit:^8.0 phpro/grumphp:^1.10.0 --dev -W --ignore-platform-req=php
-
-    - name: PHPUnit PHP 8.1 Support
-      if: matrix.php-version == '8.1'
-      run: |
-        composer require phpunit/phpunit:^9.0 phpro/grumphp:^2.0 --dev -W --ignore-platform-req=php
-
-    - name: Install Composer Dependencies (PHP 8.x)
-      if: matrix.php-version == '8.0' || matrix.php-version == '8.1'
-      run: composer install --prefer-dist --ignore-platform-req=php
-
     - name: Install Composer Dependencies
-      if: matrix.php-version != '8.0' && matrix.php-version != '8.1'
       run: composer install --prefer-dist
 
     - name: Unit Tests
