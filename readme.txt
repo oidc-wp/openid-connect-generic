@@ -3,7 +3,7 @@ Contributors: daggerhart, tnolte
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 5.0
 Tested up to: 6.9.0
-Stable tag: 3.11.3
+Stable tag: 3.11.4
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -49,11 +49,25 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Upgrade Notice ==
 
+= 3.11.4 =
+
+SECURITY UPDATE: Hardens login and account linking. Requires PHP 8.0. If you use Link Existing Users, review the new Link Users Without Verified Email setting after updating.
+
 = 3.11.3 =
 
 SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including JWT signature bypass and SSRF protection. Update immediately and configure JWKS endpoint in settings.
 
 == Changelog ==
+
+= 3.11.4 =
+
+* Security: Login state is now tied to the browser that started the login and can only be used once.
+* Security: Authorization requests now include a nonce that is checked against the ID token.
+* Security: Added a "Use PKCE" setting. It is on for new installs and off for existing sites until enabled.
+* Security: Link Existing Users now requires the identity provider to confirm the email address is verified. Added a "Link Users Without Verified Email" setting for identity providers that don't send this (such as Microsoft Entra ID) and for linking by user name. Sites already linking users have it turned on during the update and see an admin notice asking them to review it.
+* Security: Updated firebase/php-jwt to 7.0.
+* Fix: Avoid a fatal error when the redirect_to request value is not a string.
+* Requirements: Corrected Requires PHP to 8.0. The plugin has required PHP 8.0 since 3.10.5.
 
 = 3.11.3 =
 
@@ -72,7 +86,7 @@ SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including 
 **SECURITY RELEASE**
 
 * Security: Added JWT signature verification using JWKS to prevent token forgery
-* Security: Enhanced token claim validation (exp, aud, iss, iat, nonce)
+* Security: Enhanced token claim validation (exp, aud, iss, iat)
 * Security: Replaced weak state generation with cryptographically secure random_bytes()
 * Security: Fixed open redirect vulnerability in authentication flow
 * Security: Restricted SSL verification bypass to local development environments only
