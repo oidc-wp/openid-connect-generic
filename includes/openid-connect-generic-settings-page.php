@@ -390,6 +390,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'number',
 				'section'     => 'client_settings',
 			),
+			'enable_pkce'   => array(
+				'title'       => __( 'Use PKCE', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Send a PKCE (S256) code challenge with each login, as recommended by OAuth 2.0 security guidance. Most IDPs support it. Turn it off only if your IDP rejects logins with it.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_ENABLE_PKCE' ),
+				'section'     => 'client_settings',
+			),
 			'token_refresh_enable'   => array(
 				'title'       => __( 'Enable Refresh Token', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.', 'daggerhart-openid-connect-generic' ),

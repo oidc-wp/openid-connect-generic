@@ -539,4 +539,51 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 		$this->assertTrue( $client->validate_id_token_nonce( array( 'sub' => 'user' ), $state ) );
 	}
 
+	/**
+	 * The code challenge is the S256 hash of the stored verifier, and the verifier is sent with the token request.
+	 *
+	 * @group ClientTests
+	 * @group StateTests
+	 */
+	public function test_pkce_code_challenge_and_token_request() {
+		$client = $this->create_browser_client();
+		$state = $client->new_state( home_url() );
+
+		$challenge = $client->new_code_challenge( $state );
+		$verifier = $client->get_code_verifier( $state );
+
+		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9._~-]{43,128}$/', $verifier, 'The verifier should meet the RFC 7636 format.' );
+		$this->assertSame( rtrim( strtr( base64_encode( hash( 'sha256', $verifier, true ) ), '+/', '-_' ), '=' ), $challenge );
+
+		$sent_body = null;
+		$capture = static function ( $request, $operation ) use ( &$sent_body ) {
+			if ( 'get-authentication-token' === $operation ) {
+				$sent_body = $request['body'];
+			}
+			return $request;
+		};
+		$respond = static function () {
+			return array(
+				'headers'  => array(),
+				'body'     => '{}',
+				'response' => array( 'code' => 200, 'message' => 'OK' ),
+				'cookies'  => array(),
+			);
+		};
+		add_filter( 'openid-connect-generic-alter-request', $capture, 10, 2 );
+		add_filter( 'pre_http_request', $respond );
+
+		$client->request_authentication_token( 'auth-code', $verifier );
+		$this->assertSame( $verifier, $sent_body['code_verifier'] );
+
+		$client->request_authentication_token( 'auth-code' );
+		$this->assertArrayNotHasKey( 'code_verifier', $sent_body, 'No verifier should be sent when PKCE was not used.' );
+
+		remove_filter( 'openid-connect-generic-alter-request', $capture, 10 );
+		remove_filter( 'pre_http_request', $respond );
+
+		$client->delete_state( $state );
+		$this->assertSame( '', $client->get_code_verifier( $state ) );
+	}
+
 }

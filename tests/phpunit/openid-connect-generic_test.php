@@ -166,6 +166,7 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 			array(
 				'link_existing_users'   => 0,
 				'link_unverified_users' => 0,
+				'enable_pkce'           => 1,
 			)
 		);
 
@@ -222,6 +223,22 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 
 		$this->assertEmpty( $saved->link_unverified_users );
 		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Existing sites keep PKCE off after upgrading; new installs get it on.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_leaves_pkce_off_for_existing_sites() {
+
+		$this->assertEmpty( $this->run_upgrade( array( 'client_id' => 'existing' ), '3.11.2' )->enable_pkce, 'An upgraded site should not start sending PKCE.' );
+
+		$this->run_upgrade( array(), null );
+		$settings = new OpenID_Connect_Generic_Option_Settings( array( 'enable_pkce' => 1 ) );
+		$this->assertNotEmpty( $settings->enable_pkce, 'A new install should use PKCE by default.' );
+		$this->assertArrayNotHasKey( 'enable_pkce', (array) get_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME ), 'A new install should not store an explicit PKCE value.' );
 
 	}
 

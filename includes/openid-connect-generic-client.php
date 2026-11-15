@@ -302,11 +302,12 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Using the authorization_code, request an authentication token from the IDP.
 	 *
-	 * @param string|WP_Error $code The authorization code.
+	 * @param string|WP_Error $code          The authorization code.
+	 * @param string          $code_verifier The PKCE code verifier, if PKCE was used.
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	public function request_authentication_token( $code ) {
+	public function request_authentication_token( $code, $code_verifier = '' ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
@@ -326,6 +327,10 @@ class OpenID_Connect_Generic_Client {
 
 		if ( ! empty( $this->acr_values ) ) {
 			$request['body'] += array( 'acr_values' => $this->acr_values );
+		}
+
+		if ( ! empty( $code_verifier ) ) {
+			$request['body']['code_verifier'] = $code_verifier;
 		}
 
 		// Allow modifications to the request.
@@ -580,6 +585,33 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Generate a PKCE code verifier for a state and store it for the token request.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string The S256 code challenge to send with the authorization request.
+	 */
+	public function new_code_challenge( $state ) {
+		$code_verifier = bin2hex( random_bytes( 32 ) );
+		set_transient( 'openid-connect-generic-state--' . $state . '--pkce', $code_verifier, $this->state_time_limit );
+
+		return rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' );
+	}
+
+	/**
+	 * Get the PKCE code verifier stored for a state.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string Empty when PKCE was not used.
+	 */
+	public function get_code_verifier( $state ) {
+		$code_verifier = get_transient( 'openid-connect-generic-state--' . $state . '--pkce' );
+
+		return is_string( $code_verifier ) ? $code_verifier : '';
+	}
+
+	/**
 	 * Store the authorization URL for a state that still needs linking to a browser.
 	 *
 	 * @param string $state The state hash.
@@ -641,6 +673,7 @@ class OpenID_Connect_Generic_Client {
 		delete_transient( 'openid-connect-generic-state--' . $state . '--browser' );
 		delete_transient( 'openid-connect-generic-state--' . $state . '--url' );
 		delete_transient( 'openid-connect-generic-state--' . $state . '--nonce' );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--pkce' );
 	}
 
 	/**

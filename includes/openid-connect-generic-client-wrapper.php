@@ -241,6 +241,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$url_format .= '&acr_values=%7$s';
 		}
 
+		if ( ! empty( $this->settings->enable_pkce ) ) {
+			$url_format .= '&code_challenge=%9$s&code_challenge_method=S256';
+		}
+
 		$url = sprintf(
 			$url_format,
 			$atts['endpoint_login'],
@@ -250,7 +254,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$state,
 			rawurlencode( $atts['redirect_uri'] ),
 			rawurlencode( $atts['acr_values'] ),
-			$nonce
+			$nonce,
+			! empty( $this->settings->enable_pkce ) ? $this->client->new_code_challenge( $state ) : ''
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
@@ -577,7 +582,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Attempting to exchange an authorization code for an authentication token.
-		$token_result = $client->request_authentication_token( $code );
+		$token_result = $client->request_authentication_token( $code, $client->get_code_verifier( $state ) );
 
 		if ( is_wp_error( $token_result ) ) {
 			$this->error_redirect( $token_result );

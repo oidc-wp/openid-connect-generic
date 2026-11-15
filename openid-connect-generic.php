@@ -401,11 +401,19 @@ class OpenID_Connect_Generic {
 				$settings->save();
 			}
 
-			// Keep existing sites that link users working, and ask the admin to review the new setting.
-			if ( ! empty( $last_version ) && version_compare( $last_version, '3.11.4', '<' ) && ! empty( $settings->link_existing_users ) ) {
-				$settings->link_unverified_users = true;
+			if ( ! empty( $last_version ) && version_compare( $last_version, '3.11.4', '<' ) ) {
+				// Existing sites keep their current authorization request; PKCE is opt-in for them.
+				if ( ! defined( 'OIDC_ENABLE_PKCE' ) ) {
+					$settings->enable_pkce = false;
+				}
+
+				// Keep existing sites that link users working, and ask the admin to review the new setting.
+				if ( ! empty( $settings->link_existing_users ) ) {
+					$settings->link_unverified_users = true;
+					update_option( self::NOTICE_LINK_UNVERIFIED_OPTION, 1 );
+				}
+
 				$settings->save();
-				update_option( self::NOTICE_LINK_UNVERIFIED_OPTION, 1 );
 			}
 
 			// Update the stored version number.
@@ -525,6 +533,7 @@ class OpenID_Connect_Generic {
 				'displayname_format'     => '',
 				'identify_with_username' => false,
 				'state_time_limit'       => 180,
+				'enable_pkce'            => defined( 'OIDC_ENABLE_PKCE' ) ? intval( OIDC_ENABLE_PKCE ) : 1,
 
 				// Plugin settings.
 				'enforce_privacy'          => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,

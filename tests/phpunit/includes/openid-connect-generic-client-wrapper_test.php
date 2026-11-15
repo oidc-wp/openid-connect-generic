@@ -543,7 +543,7 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	 *
 	 * @return array{0: OpenID_Connect_Generic_Client_Wrapper, 1: OpenID_Connect_Generic_Client}
 	 */
-	private function create_login_start_wrapper( bool $headers_sent ): array {
+	private function create_login_start_wrapper( bool $headers_sent, bool $enable_pkce = false ): array {
 		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
 		$client = new class( $headers_sent, $logger ) extends OpenID_Connect_Generic_Client {
 			/**
@@ -574,6 +574,7 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 				'client_id'        => 'test_client',
 				'acr_values'       => '',
 				'state_time_limit' => 180,
+				'enable_pkce'      => $enable_pkce ? 1 : 0,
 			)
 		);
 
@@ -633,6 +634,30 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
 		$this->assertTrue( $client->is_state_bound_to_browser( $state ) );
 		$this->assertTrue( $client->validate_id_token_nonce( array( 'nonce' => $this->get_query_arg( $url, 'nonce' ) ), $state ), 'The URL should carry the nonce stored for its state.' );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * With PKCE on, the URL carries the S256 challenge for the stored verifier; with it off, neither exists.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_pkce() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false, true );
+		$url = $wrapper->get_authentication_url();
+		$verifier = $client->get_code_verifier( $this->get_query_arg( $url, 'state' ) );
+		$this->assertNotSame( '', $verifier );
+		$this->assertSame( rtrim( strtr( base64_encode( hash( 'sha256', $verifier, true ) ), '+/', '-_' ), '=' ), $this->get_query_arg( $url, 'code_challenge' ) );
+		$this->assertSame( 'S256', $this->get_query_arg( $url, 'code_challenge_method' ) );
+
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false, false );
+		$url = $wrapper->get_authentication_url();
+		$this->assertSame( '', $this->get_query_arg( $url, 'code_challenge' ) );
+		$this->assertSame( '', $client->get_code_verifier( $this->get_query_arg( $url, 'state' ) ) );
 
 		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
 	}
