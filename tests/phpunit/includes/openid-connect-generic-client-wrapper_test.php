@@ -632,6 +632,7 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 
 		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
 		$this->assertTrue( $client->is_state_bound_to_browser( $state ) );
+		$this->assertTrue( $client->validate_id_token_nonce( array( 'nonce' => $this->get_query_arg( $url, 'nonce' ) ), $state ), 'The URL should carry the nonce stored for its state.' );
 
 		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
 	}

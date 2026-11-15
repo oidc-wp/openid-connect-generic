@@ -542,6 +542,44 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Generate a nonce for a state and store it for checking against the id_token.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string
+	 */
+	public function new_nonce( $state ) {
+		$nonce = bin2hex( random_bytes( 16 ) );
+		set_transient( 'openid-connect-generic-state--' . $state . '--nonce', $nonce, $this->state_time_limit );
+
+		return $nonce;
+	}
+
+	/**
+	 * Check the id_token nonce against the one sent for this state.
+	 *
+	 * A missing nonce claim is logged and allowed, for IDPs that do not return it.
+	 *
+	 * @param array<string, mixed> $id_token_claim The id_token claim.
+	 * @param string               $state          The state hash.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function validate_id_token_nonce( $id_token_claim, $state ) {
+		if ( ! isset( $id_token_claim['nonce'] ) ) {
+			$this->logger->log( 'The IDP did not return a nonce in the id_token.', 'missing-nonce' );
+			return true;
+		}
+
+		$expected = get_transient( 'openid-connect-generic-state--' . $state . '--nonce' );
+		if ( empty( $expected ) || ! is_string( $id_token_claim['nonce'] ) || ! hash_equals( $expected, $id_token_claim['nonce'] ) ) {
+			return new WP_Error( 'invalid-nonce', __( 'Invalid nonce.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Store the authorization URL for a state that still needs linking to a browser.
 	 *
 	 * @param string $state The state hash.
@@ -602,6 +640,7 @@ class OpenID_Connect_Generic_Client {
 		delete_transient( 'openid-connect-generic-state--' . $state );
 		delete_transient( 'openid-connect-generic-state--' . $state . '--browser' );
 		delete_transient( 'openid-connect-generic-state--' . $state . '--url' );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--nonce' );
 	}
 
 	/**

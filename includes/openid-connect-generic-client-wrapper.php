@@ -234,8 +234,9 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		$state = $this->client->new_state( $atts['redirect_to'] );
+		$nonce = $this->client->new_nonce( $state );
 
-		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s';
+		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s&nonce=%8$s';
 		if ( ! empty( $atts['acr_values'] ) ) {
 			$url_format .= '&acr_values=%7$s';
 		}
@@ -248,7 +249,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			rawurlencode( $atts['client_id'] ),
 			$state,
 			rawurlencode( $atts['redirect_uri'] ),
-			rawurlencode( $atts['acr_values'] )
+			rawurlencode( $atts['acr_values'] ),
+			$nonce
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
@@ -614,6 +616,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Validate our id_token has required values.
 		$valid = $client->validate_id_token_claim( $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			$this->error_redirect( $valid );
+		}
+
+		// Validate the id_token belongs to the login this browser started.
+		$valid = $client->validate_id_token_nonce( $id_token_claim, $state );
 
 		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );

@@ -499,4 +499,44 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 		$this->clear_browser_cookie();
 	}
 
+	/**
+	 * The id_token nonce must match the one sent for the state.
+	 *
+	 * @group ClientTests
+	 * @group StateTests
+	 */
+	public function test_validate_id_token_nonce() {
+		$client = $this->create_browser_client();
+		$state = $client->new_state( home_url() );
+		$nonce = $client->new_nonce( $state );
+
+		$this->assertTrue( $client->validate_id_token_nonce( array( 'nonce' => $nonce ), $state ), 'A matching nonce should be accepted.' );
+
+		$mismatch = $client->validate_id_token_nonce( array( 'nonce' => str_repeat( 'd', 32 ) ), $state );
+		$this->assertWPError( $mismatch, 'A different nonce should be refused.' );
+		$this->assertSame( 'invalid-nonce', $mismatch->get_error_code() );
+
+		$this->assertWPError( $client->validate_id_token_nonce( array( 'nonce' => array( $nonce ) ), $state ), 'A non-string nonce should be refused.' );
+
+		$other_state = $client->new_state( home_url() );
+		$this->assertWPError( $client->validate_id_token_nonce( array( 'nonce' => $nonce ), $other_state ), 'A nonce from another login should be refused.' );
+
+		$client->delete_state( $state );
+		$this->assertWPError( $client->validate_id_token_nonce( array( 'nonce' => $nonce ), $state ), 'A nonce should not outlive its state.' );
+	}
+
+	/**
+	 * An id_token without a nonce claim is allowed for IDPs that do not return it.
+	 *
+	 * @group ClientTests
+	 * @group StateTests
+	 */
+	public function test_validate_id_token_nonce_allows_missing_claim() {
+		$client = $this->create_browser_client();
+		$state = $client->new_state( home_url() );
+		$client->new_nonce( $state );
+
+		$this->assertTrue( $client->validate_id_token_nonce( array( 'sub' => 'user' ), $state ) );
+	}
+
 }
