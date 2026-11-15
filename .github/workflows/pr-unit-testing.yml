@@ -38,7 +38,7 @@ jobs:
       run: docker compose down
 
     - name: Generate Coverage Report
-      if: success() && ${{ github.event_name == 'pull_request' }}
+      if: success() && github.event_name == 'pull_request'
       # https://github.com/marketplace/actions/coverage-report-as-comment-clover
       uses: lucassabreu/comment-coverage-clover@main
       with:
