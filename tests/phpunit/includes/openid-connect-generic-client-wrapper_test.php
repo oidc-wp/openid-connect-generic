@@ -537,6 +537,204 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Build a client wrapper whose client can be told headers are already sent.
+	 *
+	 * @param bool $headers_sent Whether headers count as already sent.
+	 *
+	 * @return array{0: OpenID_Connect_Generic_Client_Wrapper, 1: OpenID_Connect_Generic_Client}
+	 */
+	private function create_login_start_wrapper( bool $headers_sent ): array {
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		$client = new class( $headers_sent, $logger ) extends OpenID_Connect_Generic_Client {
+			/**
+			 * @var bool
+			 */
+			public $sent;
+
+			/**
+			 * @param bool                                 $headers_sent Whether headers count as already sent.
+			 * @param OpenID_Connect_Generic_Option_Logger $logger       Logger.
+			 */
+			public function __construct( bool $headers_sent, $logger ) {
+				$this->sent = $headers_sent;
+				parent::__construct( 'test_client', 'test_secret', 'openid', 'https://idp.example.com/authorize', '', 'https://idp.example.com/token', 'https://example.com/callback', '', '', '', 3600, 180, false, $logger );
+			}
+
+			protected function headers_sent() {
+				return $this->sent;
+			}
+
+			protected function send_browser_cookie( $browser_id ) {
+			}
+		};
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'endpoint_login'   => 'https://idp.example.com/authorize',
+				'scope'            => 'openid',
+				'client_id'        => 'test_client',
+				'acr_values'       => '',
+				'state_time_limit' => 180,
+			)
+		);
+
+		return array( new OpenID_Connect_Generic_Client_Wrapper( $client, $settings, $logger ), $client );
+	}
+
+	/**
+	 * Run handle_login_init() and return where it redirected.
+	 *
+	 * @param OpenID_Connect_Generic_Client_Wrapper $wrapper The client wrapper.
+	 *
+	 * @return string
+	 */
+	private function capture_login_init_redirect( OpenID_Connect_Generic_Client_Wrapper $wrapper ): string {
+		$capture = static function ( $location ) {
+			throw new RuntimeException( $location );
+		};
+		add_filter( 'wp_redirect', $capture );
+
+		try {
+			$wrapper->handle_login_init();
+			return '';
+		} catch ( RuntimeException $redirect ) {
+			return $redirect->getMessage();
+		} finally {
+			remove_filter( 'wp_redirect', $capture );
+		}
+	}
+
+	/**
+	 * Get the state query argument from a URL.
+	 *
+	 * @param string $url The URL.
+	 * @param string $key The query argument.
+	 *
+	 * @return string
+	 */
+	private function get_query_arg( string $url, string $key ): string {
+		parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+
+		return isset( $query[ $key ] ) ? $query[ $key ] : '';
+	}
+
+	/**
+	 * When the cookie can be set, the IDP URL is returned and its state linked to the browser.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_links_state_to_browser() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false );
+
+		$url = $wrapper->get_authentication_url();
+		$state = $this->get_query_arg( $url, 'state' );
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
+		$this->assertTrue( $client->is_state_bound_to_browser( $state ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * An existing cookie links the state even after headers are sent.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_uses_existing_cookie_after_headers_sent() {
+		$_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] = str_repeat( 'b', 32 );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( true );
+
+		$url = $wrapper->get_authentication_url();
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
+		$this->assertTrue( $client->is_state_bound_to_browser( $this->get_query_arg( $url, 'state' ) ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * Without a cookie and with headers sent, the login starts through the login page,
+	 * which links the state and continues to the IDP URL built by the filters at render time.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_start_links_state_and_redirects_to_filtered_url() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $render_wrapper ) = $this->create_login_start_wrapper( true );
+
+		$add_hint = static function ( $url ) {
+			return add_query_arg( 'kc_idp_hint', 'render-time', $url );
+		};
+		add_filter( 'openid-connect-generic-auth-url', $add_hint );
+		$start_url = $render_wrapper->get_authentication_url();
+		remove_filter( 'openid-connect-generic-auth-url', $add_hint );
+
+		$this->assertStringStartsWith( wp_login_url(), $start_url );
+		$state = $this->get_query_arg( $start_url, OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR );
+
+		list( $login_wrapper, $login_client ) = $this->create_login_start_wrapper( false );
+		$_GET = array(
+			OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR => $state,
+			'login_hint' => 'user@example.com',
+			'state'      => 'attacker-state',
+			'client_id'  => 'attacker-client',
+		);
+		$redirect = $this->capture_login_init_redirect( $login_wrapper );
+		$_GET = array();
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $redirect );
+		$this->assertSame( $state, $this->get_query_arg( $redirect, 'state' ), 'The plugin state must not be overridden.' );
+		$this->assertSame( 'test_client', $this->get_query_arg( $redirect, 'client_id' ), 'The client ID must not be overridden.' );
+		$this->assertSame( 'render-time', $this->get_query_arg( $redirect, 'kc_idp_hint' ), 'Render-time filters should still apply.' );
+		$this->assertSame( 'user@example.com', $this->get_query_arg( $redirect, 'login_hint' ), 'Extra arguments should pass through.' );
+		$this->assertTrue( $login_client->is_state_bound_to_browser( $state ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * A login start link already used by another browser is refused.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_start_refuses_state_linked_to_other_browser() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $render_wrapper, $client ) = $this->create_login_start_wrapper( true );
+		$state = $this->get_query_arg( $render_wrapper->get_authentication_url(), OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR );
+		$client->bind_state( $state, str_repeat( 'c', 32 ) );
+
+		list( $login_wrapper ) = $this->create_login_start_wrapper( false );
+		$_GET = array( OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR => $state );
+		$redirect = $this->capture_login_init_redirect( $login_wrapper );
+		$_GET = array();
+
+		$this->assertStringContainsString( 'login-error=invalid-state', $redirect );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * The login page sets the browser cookie and does nothing else without a start argument.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_init_sets_browser_cookie() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false );
+		$_GET = array();
+
+		$this->assertSame( '', $this->capture_login_init_redirect( $wrapper ) );
+		$this->assertNotSame( '', $client->get_browser_id() );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
 	 * Build a client wrapper with existing-user linking enabled.
 	 *
 	 * @param bool $link_unverified_users  Whether linking without a verified email is allowed.

@@ -29,6 +29,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	const COOKIE_REDIRECT_KEY = 'openid-connect-generic-redirect';
 
 	/**
+	 * Login page query argument that starts a login for a stored state.
+	 *
+	 * @var string
+	 */
+	const LOGIN_START_QUERY_VAR = 'openid-connect-generic-start';
+
+	/**
 	 * The token refresh info cookie key.
 	 *
 	 * @var string
@@ -112,6 +119,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 		}
+
+		add_action( 'login_init', array( $client_wrapper, 'handle_login_init' ), 1 );
 
 		if ( $settings->alternate_redirect_uri ) {
 			// Provide an alternate route for authentication_request_callback.
@@ -224,6 +233,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$separator = '&';
 		}
 
+		$state = $this->client->new_state( $atts['redirect_to'] );
+
 		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s';
 		if ( ! empty( $atts['acr_values'] ) ) {
 			$url_format .= '&acr_values=%7$s';
@@ -235,7 +246,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$separator,
 			rawurlencode( $atts['scope'] ),
 			rawurlencode( $atts['client_id'] ),
-			$this->client->new_state( $atts['redirect_to'] ),
+			$state,
 			rawurlencode( $atts['redirect_uri'] ),
 			rawurlencode( $atts['acr_values'] )
 		);
@@ -243,7 +254,75 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
 		$url = esc_url_raw( $url );
 		$this->logger->log( $url, 'make_authentication_url' );
-		return $url;
+
+		$browser_id = $this->client->ensure_browser_id();
+		if ( ! empty( $browser_id ) ) {
+			$this->client->bind_state( $state, $browser_id );
+			return $url;
+		}
+
+		// Too late to set the browser cookie, so start the login through the login page.
+		$this->client->set_state_url( $state, $url );
+		return add_query_arg( self::LOGIN_START_QUERY_VAR, $state, wp_login_url() );
+	}
+
+	/**
+	 * Set the browser cookie on the login page, and start logins that could not set it earlier.
+	 *
+	 * @return void
+	 */
+	public function handle_login_init() {
+		$browser_id = $this->client->ensure_browser_id();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The state is the request token.
+		if ( empty( $_GET[ self::LOGIN_START_QUERY_VAR ] ) || ! is_string( $_GET[ self::LOGIN_START_QUERY_VAR ] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The state is the request token.
+		$state = sanitize_text_field( wp_unslash( $_GET[ self::LOGIN_START_QUERY_VAR ] ) );
+		$url = preg_match( '/^[a-f0-9]{32}$/', $state ) ? $this->client->get_state_url( $state ) : '';
+		$bound_elsewhere = $this->client->is_state_bound( $state ) && ! $this->client->is_state_bound_to_browser( $state );
+
+		if ( empty( $url ) || empty( $browser_id ) || $bound_elsewhere ) {
+			$this->error_redirect( new WP_Error( 'invalid-state', __( 'Invalid state.', 'daggerhart-openid-connect-generic' ) ) );
+		}
+
+		if ( ! $this->client->is_state_bound( $state ) ) {
+			$this->client->bind_state( $state, $browser_id );
+		}
+
+		wp_redirect( $this->add_passthrough_query_args( $url ) );
+		exit;
+	}
+
+	/**
+	 * Pass extra query arguments from the login start request on to the IDP.
+	 *
+	 * Arguments the plugin sets itself are never overridden.
+	 *
+	 * @param string $url The authorization URL.
+	 *
+	 * @return string
+	 */
+	private function add_passthrough_query_args( $url ) {
+		$protected = array( self::LOGIN_START_QUERY_VAR, 'redirect_to', 'state', 'nonce', 'redirect_uri', 'client_id', 'response_type', 'scope', 'code_challenge', 'code_challenge_method' );
+		$existing = array();
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( is_string( $query ) ) {
+			parse_str( $query, $existing );
+		}
+
+		$extra = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Values are only forwarded to the IDP.
+		foreach ( $_GET as $key => $value ) {
+			if ( ! is_string( $key ) || ! is_string( $value ) || in_array( $key, $protected, true ) || array_key_exists( $key, $existing ) ) {
+				continue;
+			}
+			$extra[ rawurlencode( $key ) ] = rawurlencode( wp_unslash( $value ) );
+		}
+
+		return empty( $extra ) ? $url : add_query_arg( $extra, $url );
 	}
 
 	/**
@@ -620,6 +699,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->redirect_user_back ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
 		}
+
+		$client->delete_state( $state );
 
 		wp_redirect( $redirect_url );
 
