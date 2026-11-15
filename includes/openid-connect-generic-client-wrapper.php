@@ -1143,6 +1143,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$uid = email_exists( $email );
 			}
 			if ( ! empty( $uid ) ) {
+				$can_link = $this->validate_existing_user_link( $uid, $subject_identity, $user_claim );
+				if ( is_wp_error( $can_link ) ) {
+					return $can_link;
+				}
+
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 				$end_time = microtime( true );
@@ -1223,5 +1228,65 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Return our updated user.
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * Check whether an existing WordPress user may be linked to the authenticated IDP identity.
+	 *
+	 * Matching by email requires the IDP to confirm the email is verified, unless the
+	 * site opts in to linking without verification. Matching by user name always
+	 * requires that opt-in. An existing link to a different IDP identity is only
+	 * replaced when the email is verified.
+	 *
+	 * @param int                  $uid              The matched WordPress user ID.
+	 * @param string               $subject_identity The authenticated user's identity with the IDP.
+	 * @param array<string, mixed> $user_claim       The authorized user claim.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function validate_existing_user_link( $uid, $subject_identity, $user_claim ) {
+		$email_verified = $this->get_email_verified_from_claim( $user_claim );
+		$by_username = ! empty( $this->settings->identify_with_username );
+		$error_message = __( 'Your login could not be linked to an existing account. Contact the site administrator.', 'daggerhart-openid-connect-generic' );
+
+		if ( ! $by_username && false === $email_verified ) {
+			return new WP_Error( 'link-email-not-verified', $error_message, $user_claim );
+		}
+
+		if ( ( $by_username || null === $email_verified ) && empty( $this->settings->link_unverified_users ) ) {
+			return new WP_Error( 'link-requires-verified-email', $error_message, $user_claim );
+		}
+
+		$existing_identity = get_user_option( 'openid-connect-generic-subject-identity', $uid );
+		$can_replace = ! $by_username && true === $email_verified;
+		if ( ! empty( $existing_identity ) && strval( $existing_identity ) !== strval( $subject_identity ) && ! $can_replace ) {
+			return new WP_Error( 'link-identity-mismatch', $error_message, $user_claim );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Read the email_verified claim.
+	 *
+	 * @param array<string, mixed> $user_claim The authorized user claim.
+	 *
+	 * @return bool|null True or false when the IDP states it, null when absent or unrecognized.
+	 */
+	private function get_email_verified_from_claim( $user_claim ) {
+		if ( ! isset( $user_claim['email_verified'] ) ) {
+			return null;
+		}
+
+		// Some IDPs (e.g. AWS Cognito) send the value as a string.
+		$value = $user_claim['email_verified'];
+		if ( true === $value || 'true' === $value ) {
+			return true;
+		}
+		if ( false === $value || 'false' === $value ) {
+			return false;
+		}
+
+		return null;
 	}
 }

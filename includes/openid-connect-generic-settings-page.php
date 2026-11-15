@@ -417,6 +417,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_LINK_EXISTING_USERS' ),
 				'section'     => 'user_settings',
 			),
+			'link_unverified_users'   => array(
+				'title'       => __( 'Link Users Without Verified Email', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Allow Link Existing Users to link an account when the IDP does not confirm the email address is verified (for example, Microsoft Entra ID), or when Identify with User Name is checked. Accounts are never linked when the IDP says the email is not verified. %1$sOnly enable this if your IDP prevents people from using an email address or user name that belongs to someone else. Otherwise anyone at the IDP could log in as an existing WordPress user, including administrators.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_LINK_UNVERIFIED_USERS' ),
+				'section'     => 'user_settings',
+			),
 			'create_if_does_not_exist'   => array(
 				'title'       => __( 'Create user if does not exist', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'If the user identity is not linked to an existing WordPress user, it is created. If this setting is not enabled, and if the user authenticates with an account which is not linked to an existing WordPress user, then the authentication will fail.', 'daggerhart-openid-connect-generic' ),

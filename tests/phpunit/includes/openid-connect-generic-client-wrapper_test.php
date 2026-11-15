@@ -537,6 +537,154 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Build a client wrapper with existing-user linking enabled.
+	 *
+	 * @param bool $link_unverified_users  Whether linking without a verified email is allowed.
+	 * @param bool $identify_with_username Whether users are matched by user name.
+	 *
+	 * @return OpenID_Connect_Generic_Client_Wrapper
+	 */
+	private function create_linking_client_wrapper( bool $link_unverified_users, bool $identify_with_username = false ): OpenID_Connect_Generic_Client_Wrapper {
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'link_existing_users'      => 1,
+				'link_unverified_users'    => $link_unverified_users ? 1 : 0,
+				'identify_with_username'   => $identify_with_username,
+				'create_if_does_not_exist' => 0,
+				'identity_key'             => 'preferred_username',
+				'nickname_key'             => 'preferred_username',
+				'email_format'             => '{email}',
+				'displayname_format'       => '',
+			)
+		);
+
+		return new OpenID_Connect_Generic_Client_Wrapper(
+			$this->createMock( OpenID_Connect_Generic_Client::class ),
+			$settings,
+			$this->createMock( OpenID_Connect_Generic_Option_Logger::class )
+		);
+	}
+
+	/**
+	 * Scenarios for linking an existing user by email.
+	 *
+	 * @return array<string, array{0: mixed, 1: bool, 2: string|null}>
+	 */
+	public function link_by_email_provider(): array {
+		return array(
+			'verified'                       => array( true, false, null ),
+			'verified as string'             => array( 'true', false, null ),
+			'not verified'                   => array( false, false, 'link-email-not-verified' ),
+			'not verified with opt-in'       => array( false, true, 'link-email-not-verified' ),
+			'not verified as string'         => array( 'false', true, 'link-email-not-verified' ),
+			'claim missing'                  => array( null, false, 'link-requires-verified-email' ),
+			'claim missing with opt-in'      => array( null, true, null ),
+			'claim unrecognized'             => array( 'yes', false, 'link-requires-verified-email' ),
+			'claim unrecognized with opt-in' => array( 'yes', true, null ),
+		);
+	}
+
+	/**
+	 * Linking by email follows the email_verified claim and the opt-in setting.
+	 *
+	 * @dataProvider link_by_email_provider
+	 * @group ClientWrapperTests
+	 *
+	 * @param mixed       $email_verified        The email_verified claim value, or null to omit it.
+	 * @param bool        $link_unverified_users Whether linking without a verified email is allowed.
+	 * @param string|null $expected_error        Expected WP_Error code, or null when the user should be linked.
+	 */
+	public function test_link_existing_user_by_email( $email_verified, bool $link_unverified_users, ?string $expected_error ) {
+		$user_id = self::factory()->user->create( array( 'user_email' => 'linked@example.com' ) );
+		$user_claim = array(
+			'email'              => 'linked@example.com',
+			'preferred_username' => 'idp-user',
+		);
+		if ( null !== $email_verified ) {
+			$user_claim['email_verified'] = $email_verified;
+		}
+
+		$result = $this->create_linking_client_wrapper( $link_unverified_users )->create_new_user( 'new-subject', $user_claim );
+
+		if ( null === $expected_error ) {
+			$this->assertInstanceOf( WP_User::class, $result );
+			$this->assertSame( $user_id, $result->ID );
+			$this->assertSame( 'new-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+		} else {
+			$this->assertWPError( $result );
+			$this->assertSame( $expected_error, $result->get_error_code() );
+			$this->assertFalse( get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+		}
+	}
+
+	/**
+	 * Linking by user name requires the opt-in setting, whatever the email claim says.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_by_username_requires_opt_in() {
+		$user_id = self::factory()->user->create( array( 'user_login' => 'idp-user' ) );
+		$user_claim = array(
+			'email'              => 'someone@example.com',
+			'email_verified'     => true,
+			'preferred_username' => 'idp-user',
+		);
+
+		$refused = $this->create_linking_client_wrapper( false, true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertWPError( $refused );
+		$this->assertSame( 'link-requires-verified-email', $refused->get_error_code() );
+
+		$linked = $this->create_linking_client_wrapper( true, true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertInstanceOf( WP_User::class, $linked );
+		$this->assertSame( $user_id, $linked->ID );
+	}
+
+	/**
+	 * An existing link to another identity is only replaced when the email is verified.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_replaces_identity_only_when_verified() {
+		$user_id = self::factory()->user->create( array( 'user_email' => 'linked@example.com' ) );
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', 'original-subject', true );
+		$user_claim = array(
+			'email'              => 'linked@example.com',
+			'preferred_username' => 'idp-user',
+		);
+
+		$refused = $this->create_linking_client_wrapper( true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertWPError( $refused );
+		$this->assertSame( 'link-identity-mismatch', $refused->get_error_code() );
+		$this->assertSame( 'original-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+
+		$user_claim['email_verified'] = true;
+		$linked = $this->create_linking_client_wrapper( false )->create_new_user( 'new-subject', $user_claim );
+		$this->assertInstanceOf( WP_User::class, $linked );
+		$this->assertSame( 'new-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+	}
+
+	/**
+	 * Linking by user name never replaces an existing link to another identity.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_by_username_never_replaces_identity() {
+		$user_id = self::factory()->user->create( array( 'user_login' => 'idp-user' ) );
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', 'original-subject', true );
+		$user_claim = array(
+			'email'              => 'someone@example.com',
+			'email_verified'     => true,
+			'preferred_username' => 'idp-user',
+		);
+
+		$result = $this->create_linking_client_wrapper( true, true )->create_new_user( 'new-subject', $user_claim );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'link-identity-mismatch', $result->get_error_code() );
+		$this->assertSame( 'original-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+	}
+
+	/**
 	 * Test that refresh_user_claim stores updated claims using user_option.
 	 *
 	 * @group ClientWrapperTests
