@@ -128,6 +128,13 @@ class OpenID_Connect_Generic_Client {
 	private $state_time_limit = 180;
 
 	/**
+	 * Cookie that identifies the browser that started a login.
+	 *
+	 * @var string
+	 */
+	const BROWSER_COOKIE = 'openid-connect-generic-browser';
+
+	/**
 	 * Allow HTTP requests to internal/private network endpoints.
 	 *
 	 * @see OpenID_Connect_Generic_Option_Settings::allow_internal_idp
@@ -295,11 +302,12 @@ class OpenID_Connect_Generic_Client {
 	/**
 	 * Using the authorization_code, request an authentication token from the IDP.
 	 *
-	 * @param string|WP_Error $code The authorization code.
+	 * @param string|WP_Error $code          The authorization code.
+	 * @param string          $code_verifier The PKCE code verifier, if PKCE was used.
 	 *
 	 * @return array<mixed>|WP_Error
 	 */
-	public function request_authentication_token( $code ) {
+	public function request_authentication_token( $code, $code_verifier = '' ) {
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
 		$parsed_url = parse_url( $this->endpoint_token );
@@ -319,6 +327,10 @@ class OpenID_Connect_Generic_Client {
 
 		if ( ! empty( $this->acr_values ) ) {
 			$request['body'] += array( 'acr_values' => $this->acr_values );
+		}
+
+		if ( ! empty( $code_verifier ) ) {
+			$request['body']['code_verifier'] = $code_verifier;
 		}
 
 		// Allow modifications to the request.
@@ -487,6 +499,11 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function check_state( $state ) {
 
+		if ( ! is_string( $state ) || ! preg_match( '/^[a-f0-9]{32}$/', $state ) ) {
+			do_action( 'openid-connect-generic-state-not-found', $state );
+			return false;
+		}
+
 		$state_found = true;
 
 		if ( ! get_option( '_transient_openid-connect-generic-state--' . $state ) ) {
@@ -500,7 +517,242 @@ class OpenID_Connect_Generic_Client {
 			do_action( 'openid-connect-generic-state-expired', $state );
 		}
 
-		return boolval( $valid );
+		if ( ! $valid ) {
+			return false;
+		}
+
+		// The state must come back to the browser that started the login, and only once.
+		$binding = get_transient( 'openid-connect-generic-state--' . $state . '--browser' );
+		$browser_id = $this->get_browser_id();
+		if ( empty( $binding ) || empty( $browser_id ) || ! hash_equals( $binding, $this->hash_browser_id( $browser_id ) ) ) {
+			do_action( 'openid-connect-generic-state-not-found', $state );
+			return false;
+		}
+
+		delete_transient( 'openid-connect-generic-state--' . $state . '--browser' );
+
+		return true;
+	}
+
+	/**
+	 * Link a state to the browser that started the login.
+	 *
+	 * @param string $state      The state hash.
+	 * @param string $browser_id The browser identifier from the browser cookie.
+	 *
+	 * @return void
+	 */
+	public function bind_state( $state, $browser_id ) {
+		set_transient( 'openid-connect-generic-state--' . $state . '--browser', $this->hash_browser_id( $browser_id ), $this->state_time_limit );
+	}
+
+	/**
+	 * Generate a nonce for a state and store it for checking against the id_token.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string
+	 */
+	public function new_nonce( $state ) {
+		$nonce = bin2hex( random_bytes( 16 ) );
+		set_transient( 'openid-connect-generic-state--' . $state . '--nonce', $nonce, $this->state_time_limit );
+
+		return $nonce;
+	}
+
+	/**
+	 * Check the id_token nonce against the one sent for this state.
+	 *
+	 * A missing nonce claim is logged and allowed, for IDPs that do not return it.
+	 *
+	 * @param array<string, mixed> $id_token_claim The id_token claim.
+	 * @param string               $state          The state hash.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function validate_id_token_nonce( $id_token_claim, $state ) {
+		if ( ! isset( $id_token_claim['nonce'] ) ) {
+			$this->logger->log( 'The IDP did not return a nonce in the id_token.', 'missing-nonce' );
+			return true;
+		}
+
+		$expected = get_transient( 'openid-connect-generic-state--' . $state . '--nonce' );
+		if ( empty( $expected ) || ! is_string( $id_token_claim['nonce'] ) || ! hash_equals( $expected, $id_token_claim['nonce'] ) ) {
+			return new WP_Error( 'invalid-nonce', __( 'Invalid nonce.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Generate a PKCE code verifier for a state and store it for the token request.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string The S256 code challenge to send with the authorization request.
+	 */
+	public function new_code_challenge( $state ) {
+		$code_verifier = bin2hex( random_bytes( 32 ) );
+		set_transient( 'openid-connect-generic-state--' . $state . '--pkce', $code_verifier, $this->state_time_limit );
+
+		return rtrim( strtr( base64_encode( hash( 'sha256', $code_verifier, true ) ), '+/', '-_' ), '=' );
+	}
+
+	/**
+	 * Get the PKCE code verifier stored for a state.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string Empty when PKCE was not used.
+	 */
+	public function get_code_verifier( $state ) {
+		$code_verifier = get_transient( 'openid-connect-generic-state--' . $state . '--pkce' );
+
+		return is_string( $code_verifier ) ? $code_verifier : '';
+	}
+
+	/**
+	 * Store the authorization URL for a state that still needs linking to a browser.
+	 *
+	 * @param string $state The state hash.
+	 * @param string $url   The authorization URL.
+	 *
+	 * @return void
+	 */
+	public function set_state_url( $state, $url ) {
+		set_transient( 'openid-connect-generic-state--' . $state . '--url', $url, $this->state_time_limit );
+	}
+
+	/**
+	 * Get the authorization URL stored for a state.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return string Empty when none is stored.
+	 */
+	public function get_state_url( $state ) {
+		$url = get_transient( 'openid-connect-generic-state--' . $state . '--url' );
+
+		return is_string( $url ) ? $url : '';
+	}
+
+	/**
+	 * Whether a state has already been linked to a browser.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return bool
+	 */
+	public function is_state_bound( $state ) {
+		return ! empty( get_transient( 'openid-connect-generic-state--' . $state . '--browser' ) );
+	}
+
+	/**
+	 * Whether a state is linked to the current browser.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return bool
+	 */
+	public function is_state_bound_to_browser( $state ) {
+		$binding = get_transient( 'openid-connect-generic-state--' . $state . '--browser' );
+		$browser_id = $this->get_browser_id();
+
+		return ! empty( $binding ) && ! empty( $browser_id ) && hash_equals( $binding, $this->hash_browser_id( $browser_id ) );
+	}
+
+	/**
+	 * Remove a state and everything stored with it.
+	 *
+	 * @param string $state The state hash.
+	 *
+	 * @return void
+	 */
+	public function delete_state( $state ) {
+		delete_transient( 'openid-connect-generic-state--' . $state );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--browser' );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--url' );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--nonce' );
+		delete_transient( 'openid-connect-generic-state--' . $state . '--pkce' );
+	}
+
+	/**
+	 * Get the browser identifier from the browser cookie.
+	 *
+	 * @return string Empty when the cookie is missing or malformed.
+	 */
+	public function get_browser_id() {
+		if ( empty( $_COOKIE[ self::BROWSER_COOKIE ] ) || ! is_string( $_COOKIE[ self::BROWSER_COOKIE ] ) ) {
+			return '';
+		}
+
+		$browser_id = sanitize_text_field( wp_unslash( $_COOKIE[ self::BROWSER_COOKIE ] ) );
+
+		return preg_match( '/^[a-f0-9]{32}$/', $browser_id ) ? $browser_id : '';
+	}
+
+	/**
+	 * Get the browser identifier, setting the browser cookie if it is missing and headers allow it.
+	 *
+	 * @return string Empty when there is no cookie and it can no longer be set.
+	 */
+	public function ensure_browser_id() {
+		$browser_id = $this->get_browser_id();
+		if ( ! empty( $browser_id ) ) {
+			return $browser_id;
+		}
+
+		if ( $this->headers_sent() ) {
+			return '';
+		}
+
+		$browser_id = bin2hex( random_bytes( 16 ) );
+		$this->send_browser_cookie( $browser_id );
+		$_COOKIE[ self::BROWSER_COOKIE ] = $browser_id;
+
+		return $browser_id;
+	}
+
+	/**
+	 * Whether response headers have already been sent.
+	 *
+	 * @return bool
+	 */
+	protected function headers_sent() {
+		return headers_sent();
+	}
+
+	/**
+	 * Send the browser cookie.
+	 *
+	 * @param string $browser_id The browser identifier.
+	 *
+	 * @return void
+	 */
+	protected function send_browser_cookie( $browser_id ) {
+		setcookie(
+			self::BROWSER_COOKIE,
+			$browser_id,
+			array(
+				'expires'  => 0,
+				'path'     => '/',
+				'domain'   => COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
+		);
+	}
+
+	/**
+	 * Hash a browser identifier for storage.
+	 *
+	 * @param string $browser_id The browser identifier.
+	 *
+	 * @return string
+	 */
+	private function hash_browser_id( $browser_id ) {
+		return wp_hash( $browser_id );
 	}
 
 	/**
