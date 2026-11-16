@@ -145,4 +145,129 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 
 	}
 
+	/**
+	 * Run upgrade() against the given stored settings and previous version.
+	 *
+	 * @param array<string, mixed> $stored_settings Settings saved in the database.
+	 * @param string|null          $last_version    Previously installed version, or null for a new install.
+	 *
+	 * @return OpenID_Connect_Generic_Option_Settings
+	 */
+	private function run_upgrade( array $stored_settings, ?string $last_version ): OpenID_Connect_Generic_Option_Settings {
+		update_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME, $stored_settings );
+		if ( null === $last_version ) {
+			delete_option( 'openid-connect-generic-plugin-version' );
+		} else {
+			update_option( 'openid-connect-generic-plugin-version', $last_version );
+		}
+		delete_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'link_existing_users'   => 0,
+				'link_unverified_users' => 0,
+				'enable_pkce'           => 1,
+			)
+		);
+
+		$property = new ReflectionProperty( OpenID_Connect_Generic::class, 'settings' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $this->oidc_plugin );
+		$property->setValue( $this->oidc_plugin, $settings );
+
+		try {
+			$this->oidc_plugin->upgrade();
+		} finally {
+			$property->setValue( $this->oidc_plugin, $original );
+		}
+
+		return new OpenID_Connect_Generic_Option_Settings();
+	}
+
+	/**
+	 * Upgrading a site that links existing users keeps linking working and flags the notice.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_enables_link_unverified_users_for_sites_linking_users() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 1 ), '3.11.2' );
+
+		$this->assertEquals( 1, $saved->link_unverified_users );
+		$this->assertEquals( 1, get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Upgrading a site that does not link existing users leaves the new setting off.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_leaves_link_unverified_users_off_when_not_linking() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 0 ), '3.11.2' );
+
+		$this->assertEmpty( $saved->link_unverified_users );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * A new install never enables linking without a verified email.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_new_install_leaves_link_unverified_users_off() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 1 ), null );
+
+		$this->assertEmpty( $saved->link_unverified_users );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Existing sites keep PKCE off after upgrading; new installs get it on.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_leaves_pkce_off_for_existing_sites() {
+
+		$this->assertEmpty( $this->run_upgrade( array( 'client_id' => 'existing' ), '3.11.2' )->enable_pkce, 'An upgraded site should not start sending PKCE.' );
+
+		$this->run_upgrade( array(), null );
+		$settings = new OpenID_Connect_Generic_Option_Settings( array( 'enable_pkce' => 1 ) );
+		$this->assertNotEmpty( $settings->enable_pkce, 'A new install should use PKCE by default.' );
+		$this->assertArrayNotHasKey( 'enable_pkce', (array) get_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME ), 'A new install should not store an explicit PKCE value.' );
+
+	}
+
+	/**
+	 * The notice clears itself once the setting is turned off.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_link_unverified_notice_clears_when_setting_off() {
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION, 1 );
+
+		$property = new ReflectionProperty( OpenID_Connect_Generic::class, 'settings' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $this->oidc_plugin );
+		$property->setValue( $this->oidc_plugin, new OpenID_Connect_Generic_Option_Settings( array( 'link_unverified_users' => 0 ) ) );
+
+		try {
+			ob_start();
+			$this->oidc_plugin->admin_notice_link_unverified_users();
+			$output = ob_get_clean();
+		} finally {
+			$property->setValue( $this->oidc_plugin, $original );
+		}
+
+		$this->assertSame( '', $output );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
 }

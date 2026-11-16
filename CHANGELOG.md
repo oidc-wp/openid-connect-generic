@@ -4,6 +4,16 @@
 
 * Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
 
+**3.11.4**
+
+* Security: Login state is now tied to the browser that started the login and can only be used once.
+* Security: Authorization requests now include a nonce that is checked against the ID token.
+* Security: Added a "Use PKCE" setting. It is on for new installs and off for existing sites until enabled.
+* Security: Link Existing Users now requires the identity provider to confirm the email address is verified. Added a "Link Users Without Verified Email" setting for identity providers that don't send this (such as Microsoft Entra ID) and for linking by user name. Sites already linking users have it turned on during the update and see an admin notice asking them to review it.
+* Security: Updated firebase/php-jwt to 7.0.
+* Fix: Avoid a fatal error when the redirect_to request value is not a string.
+* Requirements: Corrected Requires PHP to 8.0. The plugin has required PHP 8.0 since 3.10.5.
+
 **3.11.3**
 
 * Feature/improvement: Added configurable issuer setting for JWT validation.
@@ -21,7 +31,7 @@
 **SECURITY RELEASE**
 
 * Security: Added JWT signature verification using JWKS to prevent token forgery
-* Security: Enhanced token claim validation (exp, aud, iss, iat, nonce)
+* Security: Enhanced token claim validation (exp, aud, iss, iat)
 * Security: Replaced weak state generation with cryptographically secure random_bytes()
 * Security: Fixed open redirect vulnerability in authentication flow
 * Security: Restricted SSL verification bypass to local development environments only
