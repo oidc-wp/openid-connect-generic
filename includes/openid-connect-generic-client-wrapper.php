@@ -29,6 +29,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	const COOKIE_REDIRECT_KEY = 'openid-connect-generic-redirect';
 
 	/**
+	 * Login page query argument that starts a login for a stored state.
+	 *
+	 * @var string
+	 */
+	const LOGIN_START_QUERY_VAR = 'openid-connect-generic-start';
+
+	/**
 	 * The token refresh info cookie key.
 	 *
 	 * @var string
@@ -113,6 +120,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 		}
 
+		add_action( 'login_init', array( $client_wrapper, 'handle_login_init' ), 1 );
+
 		if ( $settings->alternate_redirect_uri ) {
 			// Provide an alternate route for authentication_request_callback.
 			add_rewrite_rule( '^openid-connect-authorize/?', 'index.php?openid-connect-authorize=1', 'top' );
@@ -162,7 +171,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Honor Core WordPress & other plugin redirects.
-		if ( isset( $_REQUEST['redirect_to'] ) ) {
+		if ( isset( $_REQUEST['redirect_to'] ) && is_string( $_REQUEST['redirect_to'] ) ) {
 			$redirect_url = esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) );
 		}
 
@@ -224,9 +233,16 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$separator = '&';
 		}
 
-		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s';
+		$state = $this->client->new_state( $atts['redirect_to'] );
+		$nonce = $this->client->new_nonce( $state );
+
+		$url_format = '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s&nonce=%8$s';
 		if ( ! empty( $atts['acr_values'] ) ) {
 			$url_format .= '&acr_values=%7$s';
+		}
+
+		if ( ! empty( $this->settings->enable_pkce ) ) {
+			$url_format .= '&code_challenge=%9$s&code_challenge_method=S256';
 		}
 
 		$url = sprintf(
@@ -235,15 +251,85 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			$separator,
 			rawurlencode( $atts['scope'] ),
 			rawurlencode( $atts['client_id'] ),
-			$this->client->new_state( $atts['redirect_to'] ),
+			$state,
 			rawurlencode( $atts['redirect_uri'] ),
-			rawurlencode( $atts['acr_values'] )
+			rawurlencode( $atts['acr_values'] ),
+			$nonce,
+			! empty( $this->settings->enable_pkce ) ? $this->client->new_code_challenge( $state ) : ''
 		);
 
 		$url = apply_filters( 'openid-connect-generic-auth-url', $url );
 		$url = esc_url_raw( $url );
 		$this->logger->log( $url, 'make_authentication_url' );
-		return $url;
+
+		$browser_id = $this->client->ensure_browser_id();
+		if ( ! empty( $browser_id ) ) {
+			$this->client->bind_state( $state, $browser_id );
+			return $url;
+		}
+
+		// Too late to set the browser cookie, so start the login through the login page.
+		$this->client->set_state_url( $state, $url );
+		return add_query_arg( self::LOGIN_START_QUERY_VAR, $state, wp_login_url() );
+	}
+
+	/**
+	 * Set the browser cookie on the login page, and start logins that could not set it earlier.
+	 *
+	 * @return void
+	 */
+	public function handle_login_init() {
+		$browser_id = $this->client->ensure_browser_id();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The state is the request token.
+		if ( empty( $_GET[ self::LOGIN_START_QUERY_VAR ] ) || ! is_string( $_GET[ self::LOGIN_START_QUERY_VAR ] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The state is the request token.
+		$state = sanitize_text_field( wp_unslash( $_GET[ self::LOGIN_START_QUERY_VAR ] ) );
+		$url = preg_match( '/^[a-f0-9]{32}$/', $state ) ? $this->client->get_state_url( $state ) : '';
+		$bound_elsewhere = $this->client->is_state_bound( $state ) && ! $this->client->is_state_bound_to_browser( $state );
+
+		if ( empty( $url ) || empty( $browser_id ) || $bound_elsewhere ) {
+			$this->error_redirect( new WP_Error( 'invalid-state', __( 'Invalid state.', 'daggerhart-openid-connect-generic' ) ) );
+		}
+
+		if ( ! $this->client->is_state_bound( $state ) ) {
+			$this->client->bind_state( $state, $browser_id );
+		}
+
+		wp_redirect( $this->add_passthrough_query_args( $url ) );
+		exit;
+	}
+
+	/**
+	 * Pass extra query arguments from the login start request on to the IDP.
+	 *
+	 * Arguments the plugin sets itself are never overridden.
+	 *
+	 * @param string $url The authorization URL.
+	 *
+	 * @return string
+	 */
+	private function add_passthrough_query_args( $url ) {
+		$protected = array( self::LOGIN_START_QUERY_VAR, 'redirect_to', 'state', 'nonce', 'redirect_uri', 'client_id', 'response_type', 'scope', 'code_challenge', 'code_challenge_method' );
+		$existing = array();
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( is_string( $query ) ) {
+			parse_str( $query, $existing );
+		}
+
+		$extra = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Values are only forwarded to the IDP.
+		foreach ( $_GET as $key => $value ) {
+			if ( ! is_string( $key ) || ! is_string( $value ) || in_array( $key, $protected, true ) || array_key_exists( $key, $existing ) ) {
+				continue;
+			}
+			$extra[ rawurlencode( $key ) ] = rawurlencode( wp_unslash( $value ) );
+		}
+
+		return empty( $extra ) ? $url : add_query_arg( $extra, $url );
 	}
 
 	/**
@@ -496,7 +582,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		}
 
 		// Attempting to exchange an authorization code for an authentication token.
-		$token_result = $client->request_authentication_token( $code );
+		$token_result = $client->request_authentication_token( $code, $client->get_code_verifier( $state ) );
 
 		if ( is_wp_error( $token_result ) ) {
 			$this->error_redirect( $token_result );
@@ -535,6 +621,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Validate our id_token has required values.
 		$valid = $client->validate_id_token_claim( $id_token_claim );
+
+		if ( is_wp_error( $valid ) ) {
+			$this->error_redirect( $valid );
+		}
+
+		// Validate the id_token belongs to the login this browser started.
+		$valid = $client->validate_id_token_nonce( $id_token_claim, $state );
 
 		if ( is_wp_error( $valid ) ) {
 			$this->error_redirect( $valid );
@@ -620,6 +713,8 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->redirect_user_back ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
 		}
+
+		$client->delete_state( $state );
 
 		wp_redirect( $redirect_url );
 
@@ -1143,6 +1238,11 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$uid = email_exists( $email );
 			}
 			if ( ! empty( $uid ) ) {
+				$can_link = $this->validate_existing_user_link( $uid, $subject_identity, $user_claim );
+				if ( is_wp_error( $can_link ) ) {
+					return $can_link;
+				}
+
 				$user = $this->update_existing_user( $uid, $subject_identity );
 				do_action( 'openid-connect-generic-update-user-using-current-claim', $user, $user_claim );
 				$end_time = microtime( true );
@@ -1223,5 +1323,65 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		// Return our updated user.
 		return get_user_by( 'id', $uid );
+	}
+
+	/**
+	 * Check whether an existing WordPress user may be linked to the authenticated IDP identity.
+	 *
+	 * Matching by email requires the IDP to confirm the email is verified, unless the
+	 * site opts in to linking without verification. Matching by user name always
+	 * requires that opt-in. An existing link to a different IDP identity is only
+	 * replaced when the email is verified.
+	 *
+	 * @param int                  $uid              The matched WordPress user ID.
+	 * @param string               $subject_identity The authenticated user's identity with the IDP.
+	 * @param array<string, mixed> $user_claim       The authorized user claim.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function validate_existing_user_link( $uid, $subject_identity, $user_claim ) {
+		$email_verified = $this->get_email_verified_from_claim( $user_claim );
+		$by_username = ! empty( $this->settings->identify_with_username );
+		$error_message = __( 'Your login could not be linked to an existing account. Contact the site administrator.', 'daggerhart-openid-connect-generic' );
+
+		if ( ! $by_username && false === $email_verified ) {
+			return new WP_Error( 'link-email-not-verified', $error_message, $user_claim );
+		}
+
+		if ( ( $by_username || null === $email_verified ) && empty( $this->settings->link_unverified_users ) ) {
+			return new WP_Error( 'link-requires-verified-email', $error_message, $user_claim );
+		}
+
+		$existing_identity = get_user_option( 'openid-connect-generic-subject-identity', $uid );
+		$can_replace = ! $by_username && true === $email_verified;
+		if ( ! empty( $existing_identity ) && strval( $existing_identity ) !== strval( $subject_identity ) && ! $can_replace ) {
+			return new WP_Error( 'link-identity-mismatch', $error_message, $user_claim );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Read the email_verified claim.
+	 *
+	 * @param array<string, mixed> $user_claim The authorized user claim.
+	 *
+	 * @return bool|null True or false when the IDP states it, null when absent or unrecognized.
+	 */
+	private function get_email_verified_from_claim( $user_claim ) {
+		if ( ! isset( $user_claim['email_verified'] ) ) {
+			return null;
+		}
+
+		// Some IDPs (e.g. AWS Cognito) send the value as a string.
+		$value = $user_claim['email_verified'];
+		if ( true === $value || 'true' === $value ) {
+			return true;
+		}
+		if ( false === $value || 'false' === $value ) {
+			return false;
+		}
+
+		return null;
 	}
 }
