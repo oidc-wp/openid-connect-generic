@@ -9,6 +9,9 @@ on:
       - 'feature/**'
       - 'fix/**'
 
+permissions:
+  contents: read
+
 env:
   PHP_VERSION: '8.2'
   WP_MULTISITE: 0
@@ -29,7 +32,7 @@ jobs:
     - name: Get Composer Cache Directory
       id: composer-cache
       if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}

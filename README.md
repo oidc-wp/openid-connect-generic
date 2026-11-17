@@ -23,9 +23,13 @@ Please submit issues to the Github repo: https://github.com/oidc-wp/openid-conne
 
 ## Installation ##
 
-1. Upload to the `/wp-content/plugins/` directory
+1. Install the plugin from Plugins > Add New, or upload it to the `/wp-content/plugins/` directory
 1. Activate the plugin
 1. Visit Settings > OpenID Connect and configure to meet your needs
+
+### Installing from source ###
+
+The source code on GitHub, including its "Download ZIP" button, doesn't include the `vendor/` folder. Run `composer install --no-dev` in the plugin folder before activating it.
 
 ## Frequently Asked Questions ##
 

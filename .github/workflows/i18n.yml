@@ -9,6 +9,9 @@ on:
       - 'feature/**'
       - 'fix/**'
 
+permissions:
+  contents: read
+
 env:
   WP_MULTISITE: 0
   ACTION_VERSION: 3
