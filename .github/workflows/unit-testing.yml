@@ -85,11 +85,6 @@ jobs:
     - name: Require Specified WordPress Version
       run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-dist --update-with-all-dependencies
 
-    - name: PHPUnit Bleeding Edge Support
-      if: matrix.bleeding-edge
-      run: |
-        composer require sebastian/code-unit:dev-main phpunit/phpunit:dev-master phpro/grumphp:dev-master --dev -W --ignore-platform-req=php --update-with-all-dependencies
-
     - name: Install Composer Dependencies
       run: composer install --prefer-dist
 
