@@ -1,13 +1,26 @@
+name: Unit Testing
+
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  # Triggers the workflow on push events only for the matching branches
+  # Full matrix on release branches
   push:
     branches:
       - 'release/**'
+  # Lowest and highest supported versions on pull requests
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
-  COMPOSER_VERSION: '2.6'
+  COMPOSER_VERSION: '2'
   ACTION_VERSION: 3
 
 jobs:
@@ -19,48 +32,62 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['8.1', '8.2', '8.3', '8.4']
-        wordpress-version: ['6.7.*','6.8.*','6.9.*']
+        php-version: ${{ fromJSON(github.event_name == 'pull_request' && '["8.2", "8.5"]' || '["8.2", "8.3", "8.4", "8.5"]') }}
+        wordpress-version: ${{ fromJSON(github.event_name == 'pull_request' && '["6.7.*", "7.1.*"]' || '["6.7.*", "6.8.*", "6.9.*", "7.0.*", "7.1.*"]') }}
         wp-multisite-mode: [0]
         bleeding-edge: [false]
         include:
           - job-name: 'Unit Test Bleeding Edge Requirements'
             bleeding-edge: true
-            php-version: '8.3'
+            php-version: '8.4'
             wordpress-version: 'dev-master'
             wp-multisite-mode: 0
           - job-name: 'Unit Test Multisite Compatibility Requirements'
             bleeding-edge: false
-            php-version: '8.3'
-            wordpress-version: '6.9.*'
+            php-version: '8.4'
+            wordpress-version: '7.1.*'
             wp-multisite-mode: 1
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ppassword"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Get Composer Cache Directory
       id: composer-cache
       if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       env:
         composer-cache-name: cache-composer
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
-        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-php-${{ matrix.php-version }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-php-${{ matrix.php-version }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
 
     - name: Setup PHP & Composer Environment
       # https://github.com/marketplace/actions/setup-php-action
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
         php-version: "${{ matrix.php-version }}"
         tools: "composer:${{ env.COMPOSER_VERSION }}"
@@ -68,42 +95,18 @@ jobs:
     - name: Environment Check
       run: php -v && composer --version
 
-    - name: Require Specified WordPress Version (PHP <7.4)
-      if: matrix.php-version == '7.3' || matrix.php-version == '7.2'
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies --ignore-platform-req=php
-
-    - name: Require Specified WordPress Version (Bleeding Edge)
-      if: matrix.bleeding-edge
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} szepeviktor/phpstan-wordpress:* wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
-
     - name: Require Specified WordPress Version
-      if: matrix.php-version != '7.3' && matrix.php-version != '7.2' && ! matrix.bleeding-edge
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
-
-    - name: PHPUnit Bleeding Edge Support
-      if: matrix.bleeding-edge
-      run: |
-        composer require sebastian/code-unit:dev-main phpunit/phpunit:dev-master phpro/grumphp:dev-master --dev -W --ignore-platform-req=php --update-with-all-dependencies
-
-    - name: PHPUnit PHP 8.0 Support
-      if: matrix.php-version == '8.0'
-      run: |
-        composer require phpunit/phpunit:^8.0 phpro/grumphp:^1.10.0 --dev -W --ignore-platform-req=php
-
-    - name: PHPUnit PHP 8.1 Support
-      if: matrix.php-version == '8.1'
-      run: |
-        composer require phpunit/phpunit:^9.0 phpro/grumphp:^2.0 --dev -W --ignore-platform-req=php
-
-    - name: Install Composer Dependencies (PHP 8.x)
-      if: matrix.php-version == '8.0' || matrix.php-version == '8.1'
-      run: composer install --prefer-dist --ignore-platform-req=php
+      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-dist --update-with-all-dependencies
 
     - name: Install Composer Dependencies
-      if: matrix.php-version != '8.0' && matrix.php-version != '8.1'
       run: composer install --prefer-dist
 
     - name: Unit Tests
       env:
         WP_MULTISITE: ${{ matrix.wp-multisite-mode }}
+        WORDPRESS_ABSPATH: ${{ github.workspace }}/tools/local-env/wp/
+        WORDPRESS_DB_HOST: 127.0.0.1
+        WORDPRESS_DB_USER: root
+        WORDPRESS_DB_PASSWORD: password
+        WORDPRESS_TEST_DB_NAME: wordpress_test
       run: composer phpunit
