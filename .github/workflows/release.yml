@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 env:
   WP_MULTISITE: 0
   ACTION_VERSION: 3
