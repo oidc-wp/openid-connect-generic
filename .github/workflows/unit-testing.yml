@@ -7,7 +7,7 @@ on:
       - 'release/**'
 
 env:
-  COMPOSER_VERSION: '2.6'
+  COMPOSER_VERSION: '2'
   ACTION_VERSION: 3
 
 jobs:
@@ -37,6 +37,20 @@ jobs:
 
     name: '${{ matrix.job-name }} (PHP:${{ matrix.php-version }}/WP:${{ matrix.wordpress-version }})'
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ppassword"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
@@ -45,7 +59,7 @@ jobs:
     - name: Get Composer Cache Directory
       id: composer-cache
       if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}
@@ -54,9 +68,9 @@ jobs:
         composer-cache-name: cache-composer
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
-        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
+        key: ${{ runner.os }}-build-${{ env.composer-cache-name }}-php-${{ matrix.php-version }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.composer-cache-name }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
+          ${{ runner.os }}-build-${{ env.composer-cache-name }}-php-${{ matrix.php-version }}-wp-${{ matrix.wordpress-version }}-v${{ env.ACTION_VERSION }}-
 
     - name: Setup PHP & Composer Environment
       # https://github.com/marketplace/actions/setup-php-action
@@ -68,18 +82,8 @@ jobs:
     - name: Environment Check
       run: php -v && composer --version
 
-    - name: Require Specified WordPress Version (Bleeding Edge)
-      if: matrix.bleeding-edge
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} szepeviktor/phpstan-wordpress:* wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
-
     - name: Require Specified WordPress Version
-      if: ${{ ! matrix.bleeding-edge }}
-      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} php-stubs/wordpress-stubs:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-source --update-with-all-dependencies
-
-    - name: PHPUnit Bleeding Edge Support
-      if: matrix.bleeding-edge
-      run: |
-        composer require sebastian/code-unit:dev-main phpunit/phpunit:dev-master phpro/grumphp:dev-master --dev -W --ignore-platform-req=php --update-with-all-dependencies
+      run: composer require johnpbloch/wordpress-core:${{ matrix.wordpress-version }} wp-phpunit/wp-phpunit:${{ matrix.wordpress-version }} --dev --prefer-dist --update-with-all-dependencies
 
     - name: Install Composer Dependencies
       run: composer install --prefer-dist
@@ -87,4 +91,9 @@ jobs:
     - name: Unit Tests
       env:
         WP_MULTISITE: ${{ matrix.wp-multisite-mode }}
+        WORDPRESS_ABSPATH: ${{ github.workspace }}/tools/local-env/wp/
+        WORDPRESS_DB_HOST: 127.0.0.1
+        WORDPRESS_DB_USER: root
+        WORDPRESS_DB_PASSWORD: password
+        WORDPRESS_TEST_DB_NAME: wordpress_test
       run: composer phpunit
