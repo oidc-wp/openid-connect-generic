@@ -390,6 +390,13 @@ class OpenID_Connect_Generic_Settings_Page {
 				'type'        => 'number',
 				'section'     => 'client_settings',
 			),
+			'enable_pkce'   => array(
+				'title'       => __( 'Use PKCE', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Send a PKCE (S256) code challenge with each login, as recommended by OAuth 2.0 security guidance. Most IDPs support it. Turn it off only if your IDP rejects logins with it.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_ENABLE_PKCE' ),
+				'section'     => 'client_settings',
+			),
 			'token_refresh_enable'   => array(
 				'title'       => __( 'Enable Refresh Token', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'If checked, support refresh tokens used to obtain access tokens from supported IDPs.', 'daggerhart-openid-connect-generic' ),
@@ -415,6 +422,14 @@ class OpenID_Connect_Generic_Settings_Page {
 				'description' => __( 'If a WordPress account already exists with the same identity as a newly-authenticated user over OpenID Connect, login as that user instead of generating an error.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'checkbox',
 				'disabled'    => defined( 'OIDC_LINK_EXISTING_USERS' ),
+				'section'     => 'user_settings',
+			),
+			'link_unverified_users'   => array(
+				'title'       => __( 'Link Users Without Verified Email', 'daggerhart-openid-connect-generic' ),
+				// translators: %1$s HTML tags for layout/styles (strong tag start with warning class), %2$s closing HTML tag for styles.
+				'description' => sprintf( __( 'Allow Link Existing Users to link an account when the IDP does not confirm the email address is verified (for example, Microsoft Entra ID), or when Identify with User Name is checked. Accounts are never linked when the IDP says the email is not verified. %1$sOnly enable this if your IDP prevents people from using an email address or user name that belongs to someone else. Otherwise anyone at the IDP could log in as an existing WordPress user, including administrators.%2$s', 'daggerhart-openid-connect-generic' ), '<br><strong class="oidc-warning">', '</strong>' ),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_LINK_UNVERIFIED_USERS' ),
 				'section'     => 'user_settings',
 			),
 			'create_if_does_not_exist'   => array(

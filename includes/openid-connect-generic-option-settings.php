@@ -57,6 +57,8 @@
  * @property bool $alternate_redirect_uri   The flag to indicate whether to use the alternative redirect URI.
  * @property bool $token_refresh_enable     The flag whether to support refresh tokens by IDPs.
  * @property bool $link_existing_users      The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
+ * @property bool $link_unverified_users    The flag to allow linking existing accounts without a verified email, or by user name.
+ * @property bool $enable_pkce              The flag to use PKCE (S256) in the authorization code flow.
  * @property bool $create_if_does_not_exist The flag to indicate whether to create new users or not.
  * @property bool $redirect_user_back       The flag to indicate whether to redirect the user back to the page on which they started.
  * @property bool $redirect_on_logout       The flag to indicate whether to redirect to the login screen on session expiration.
@@ -105,6 +107,8 @@ class OpenID_Connect_Generic_Option_Settings {
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
 		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',
 		'link_existing_users'       => 'OIDC_LINK_EXISTING_USERS',
+		'link_unverified_users'     => 'OIDC_LINK_UNVERIFIED_USERS',
+		'enable_pkce'               => 'OIDC_ENABLE_PKCE',
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
 		'acr_values'                => 'OIDC_ACR_VALUES',
