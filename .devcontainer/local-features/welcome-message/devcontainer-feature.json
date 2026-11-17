@@ -1,8 +1,0 @@
-{
-    "id": "welcome-message",
-    "name": "Install the First Start Welcome Message",
-    "install": {
-        "app": "",
-        "file": "install.sh"
-    }
-}

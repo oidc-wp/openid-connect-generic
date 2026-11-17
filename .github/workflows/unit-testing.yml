@@ -1,10 +1,23 @@
+name: Unit Testing
+
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  # Triggers the workflow on push events only for the matching branches
+  # Full matrix on release branches
   push:
     branches:
       - 'release/**'
+  # Lowest and highest supported versions on pull requests
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   COMPOSER_VERSION: '2'
@@ -19,8 +32,8 @@ jobs:
       fail-fast: false
       matrix:
         job-name: ['Unit Test']
-        php-version: ['8.2', '8.3', '8.4', '8.5']
-        wordpress-version: ['6.7.*', '6.8.*', '6.9.*', '7.0.*', '7.1.*']
+        php-version: ${{ fromJSON(github.event_name == 'pull_request' && '["8.2", "8.5"]' || '["8.2", "8.3", "8.4", "8.5"]') }}
+        wordpress-version: ${{ fromJSON(github.event_name == 'pull_request' && '["6.7.*", "7.1.*"]' || '["6.7.*", "6.8.*", "6.9.*", "7.0.*", "7.1.*"]') }}
         wp-multisite-mode: [0]
         bleeding-edge: [false]
         include:
