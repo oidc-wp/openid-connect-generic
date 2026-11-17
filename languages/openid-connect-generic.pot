@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: OpenID Connect Generic 3.11.3\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/oidc-wp/openid-connect-generic/issues\n"
-"POT-Creation-Date: 2026-06-19 14:29:22+00:00\n"
+"POT-Creation-Date: 2026-11-11 11:52:12+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -25,151 +25,151 @@ msgstr ""
 "X-Textdomain-Support: yes\n"
 "X-Generator: grunt-wp-i18n 1.0.3\n"
 
-#: includes/openid-connect-generic-client-wrapper.php:578
+#: includes/openid-connect-generic-client-wrapper.php:581
 msgid "User identity is not linked to an existing WordPress user."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:639
+#: includes/openid-connect-generic-client-wrapper.php:642
 msgid "Invalid user."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:828
+#: includes/openid-connect-generic-client-wrapper.php:831
 msgid "No appropriate username found."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:838
+#: includes/openid-connect-generic-client-wrapper.php:841
 #. translators: %1$s is the santitized version of the username from the IDP.
 msgid "Username %1$s could not be sanitized."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:860
+#: includes/openid-connect-generic-client-wrapper.php:863
 #. translators: %1$s is the configured User Claim nickname key.
 msgid "No nickname found in user claim using key: %1$s."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:992
+#: includes/openid-connect-generic-client-wrapper.php:996
 msgid "User claim incomplete."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1095
+#: includes/openid-connect-generic-client-wrapper.php:1099
 msgid "Bad user claim result."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1161
+#: includes/openid-connect-generic-client-wrapper.php:1165
 msgid "Can not authorize."
 msgstr ""
 
-#: includes/openid-connect-generic-client-wrapper.php:1190
+#: includes/openid-connect-generic-client-wrapper.php:1194
 msgid "Failed user creation."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:270
+#: includes/openid-connect-generic-client.php:271
 msgid "Missing state."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:274
+#: includes/openid-connect-generic-client.php:275
 msgid "Invalid state."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:289
+#: includes/openid-connect-generic-client.php:290
 msgid "Missing authentication code."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:334
+#: includes/openid-connect-generic-client.php:335
 msgid "Request for authentication token failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:367
+#: includes/openid-connect-generic-client.php:368
 msgid "Refresh token failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:382
+#: includes/openid-connect-generic-client.php:383
 msgid "Missing token body."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:390
+#: includes/openid-connect-generic-client.php:391
 msgid "Invalid token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:451
+#: includes/openid-connect-generic-client.php:452
 msgid "Request for userinfo failed."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:515
+#: includes/openid-connect-generic-client.php:516
 msgid "Missing authentication state."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:552
+#: includes/openid-connect-generic-client.php:554
 msgid "No identity token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:592
+#: includes/openid-connect-generic-client.php:594
 msgid "Missing identity token."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:651
+#: includes/openid-connect-generic-client.php:653
 msgid "Bad ID token claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:656
+#: includes/openid-connect-generic-client.php:658
 msgid "No subject identity."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:661
+#: includes/openid-connect-generic-client.php:663
 #: includes/openid-connect-generic-jwt-validator.php:184
 msgid "Token missing expiration claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:664
+#: includes/openid-connect-generic-client.php:666
 msgid "Token has expired."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:669
+#: includes/openid-connect-generic-client.php:671
 #: includes/openid-connect-generic-jwt-validator.php:192
 msgid "Token missing issued at claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:674
+#: includes/openid-connect-generic-client.php:676
 #: includes/openid-connect-generic-jwt-validator.php:200
 msgid "Token missing audience claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:687
+#: includes/openid-connect-generic-client.php:689
 #: includes/openid-connect-generic-jwt-validator.php:217
 msgid "Token audience does not match client."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:697
+#: includes/openid-connect-generic-client.php:698
 #: includes/openid-connect-generic-jwt-validator.php:226
 msgid "Token missing issuer claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:712
+#: includes/openid-connect-generic-client.php:713
 #: includes/openid-connect-generic-jwt-validator.php:241
 msgid "Token issuer does not match expected issuer."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:722
+#: includes/openid-connect-generic-client.php:723
 msgid "No matching acr values."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:742
+#: includes/openid-connect-generic-client.php:743
 msgid "Bad user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:762
+#: includes/openid-connect-generic-client.php:763
 msgid "Invalid user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:767
+#: includes/openid-connect-generic-client.php:768
 msgid "Error from the IDP."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:776
+#: includes/openid-connect-generic-client.php:777
 msgid "Incorrect user claim."
 msgstr ""
 
-#: includes/openid-connect-generic-client.php:783
+#: includes/openid-connect-generic-client.php:784
 msgid "Unauthorized access."
 msgstr ""
 
@@ -236,131 +236,121 @@ msgstr ""
 msgid "Response&nbsp;Time&nbsp;(sec)"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:133
+#: includes/openid-connect-generic-settings-page.php:128
 msgid "OpenID Connect - Generic Client"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:134
+#: includes/openid-connect-generic-settings-page.php:129
 msgid "OpenID Connect Client"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:159
+#: includes/openid-connect-generic-settings-page.php:153
 msgid "Client Settings"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:166
+#: includes/openid-connect-generic-settings-page.php:160
 msgid "WordPress User Settings"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:173
+#: includes/openid-connect-generic-settings-page.php:167
 msgid "Authorization Settings"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:180
+#: includes/openid-connect-generic-settings-page.php:174
 msgid "Log Settings"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:239
+#: includes/openid-connect-generic-settings-page.php:232
 msgid "Login Type"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:240
+#: includes/openid-connect-generic-settings-page.php:233
 msgid "Select how the client (login form) should provide login options."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:243
+#: includes/openid-connect-generic-settings-page.php:236
 msgid "OpenID Connect button on login form"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:244
+#: includes/openid-connect-generic-settings-page.php:237
 msgid "Auto Login - SSO"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:250
+#: includes/openid-connect-generic-settings-page.php:243
 msgid "Login Button Text"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:251
+#: includes/openid-connect-generic-settings-page.php:244
 msgid ""
 "Customize the text shown on the OpenID Connect login button. Leave empty to "
 "use the default text."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:257
+#: includes/openid-connect-generic-settings-page.php:251
 msgid "Client ID"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:258
+#: includes/openid-connect-generic-settings-page.php:252
 msgid ""
 "The ID this client will be recognized as when connecting the to Identity "
 "provider server."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:265
-msgid "Client Secret Key"
-msgstr ""
-
 #: includes/openid-connect-generic-settings-page.php:266
-msgid ""
-"Arbitrary secret key the server expects from this client. Can be anything, "
-"but should be very unique."
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:272
 msgid "OpenID Scope"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:273
+#: includes/openid-connect-generic-settings-page.php:267
 msgid "Space separated list of scopes this client should access."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:280
+#: includes/openid-connect-generic-settings-page.php:274
 msgid "Login Endpoint URL"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:281
+#: includes/openid-connect-generic-settings-page.php:275
 msgid "Identify provider authorization endpoint."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:288
+#: includes/openid-connect-generic-settings-page.php:282
 msgid "Userinfo Endpoint URL"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:289
+#: includes/openid-connect-generic-settings-page.php:283
 msgid "Identify provider User information endpoint."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:296
+#: includes/openid-connect-generic-settings-page.php:290
 msgid "Token Validation Endpoint URL"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:297
+#: includes/openid-connect-generic-settings-page.php:291
 msgid "Identify provider token endpoint."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:304
+#: includes/openid-connect-generic-settings-page.php:298
 msgid "End Session Endpoint URL"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:305
+#: includes/openid-connect-generic-settings-page.php:299
 msgid "Identify provider logout endpoint."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:312
+#: includes/openid-connect-generic-settings-page.php:306
 msgid "JWKS URI"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:313
+#: includes/openid-connect-generic-settings-page.php:307
 msgid ""
 "Identity provider JWKS (JSON Web Key Set) endpoint for JWT signature "
 "verification. Usually found at /.well-known/jwks.json"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:320
+#: includes/openid-connect-generic-settings-page.php:314
 msgid "Issuer"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:321
+#: includes/openid-connect-generic-settings-page.php:315
 msgid ""
 "Identity provider issuer URL for JWT validation. If not set, the issuer "
 "will be automatically derived from the Login Endpoint URL. Only configure "
@@ -368,54 +358,54 @@ msgid ""
 "endpoint."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:328
+#: includes/openid-connect-generic-settings-page.php:322
 msgid "JWKS Cache TTL (seconds)"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:329
+#: includes/openid-connect-generic-settings-page.php:323
 msgid "Time in seconds to cache JWKS keys. Default: 3600 (1 hour)"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:335
+#: includes/openid-connect-generic-settings-page.php:329
 msgid "ACR values"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:336
+#: includes/openid-connect-generic-settings-page.php:330
 msgid "Use a specific defined authentication contract from the IDP - optional."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:342
+#: includes/openid-connect-generic-settings-page.php:336
 msgid "Identity Key"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:343
+#: includes/openid-connect-generic-settings-page.php:337
 msgid ""
 "Where in the user claim array to find the user's identification data. "
 "Possible standard values: preferred_username, name, or sub. If you're "
 "having trouble, use \"sub\"."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:349
+#: includes/openid-connect-generic-settings-page.php:344
 msgid "HTTP Request Timeout"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:350
+#: includes/openid-connect-generic-settings-page.php:345
 msgid "Set the timeout for requests made to the IDP. Default value is 5."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:356
+#: includes/openid-connect-generic-settings-page.php:351
 msgid "Enforce Privacy"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:357
+#: includes/openid-connect-generic-settings-page.php:352
 msgid "Require users be logged in to see the site."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:363
+#: includes/openid-connect-generic-settings-page.php:358
 msgid "Alternate Redirect URI"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:364
+#: includes/openid-connect-generic-settings-page.php:359
 msgid ""
 "Provide an alternative redirect route. Useful if your server is causing "
 "issues with the default admin-ajax method. You must flush rewrite rules "
@@ -423,67 +413,67 @@ msgid ""
 "settings page."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:369
+#: includes/openid-connect-generic-settings-page.php:365
 msgid "Nickname Key"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:370
+#: includes/openid-connect-generic-settings-page.php:366
 msgid ""
 "Where in the user claim array to find the user's nickname. Possible "
 "standard values: preferred_username, name, or sub."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:376
+#: includes/openid-connect-generic-settings-page.php:372
 msgid "Email Formatting"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:377
+#: includes/openid-connect-generic-settings-page.php:373
 msgid ""
 "String from which the user's email address is built. Specify \"{email}\" as "
 "long as the user claim contains an email claim."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:384
+#: includes/openid-connect-generic-settings-page.php:380
 msgid "Display Name Formatting"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:385
+#: includes/openid-connect-generic-settings-page.php:381
 msgid "String from which the user's display name is built."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:391
+#: includes/openid-connect-generic-settings-page.php:387
 msgid "Identify with User Name"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:392
+#: includes/openid-connect-generic-settings-page.php:388
 msgid ""
 "If checked, the user's identity will be determined by the user name instead "
 "of the email address."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:397
+#: includes/openid-connect-generic-settings-page.php:394
 msgid "State time limit"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:398
+#: includes/openid-connect-generic-settings-page.php:395
 msgid "State valid time in seconds. Defaults to 180"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:403
+#: includes/openid-connect-generic-settings-page.php:400
 msgid "Enable Refresh Token"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:404
+#: includes/openid-connect-generic-settings-page.php:401
 msgid ""
 "If checked, support refresh tokens used to obtain access tokens from "
 "supported IDPs."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:409
+#: includes/openid-connect-generic-settings-page.php:406
 msgid "Disable SSL Verify"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:411
+#: includes/openid-connect-generic-settings-page.php:408
 #. translators: %1$s HTML tags for layout/styles (strong tag start with warning
 #. class), %2$s closing HTML tag for styles.
 msgid ""
@@ -493,11 +483,11 @@ msgid ""
 "production, fix your SSL certificates instead."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:416
+#: includes/openid-connect-generic-settings-page.php:413
 msgid "Allow Internal IDP"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:418
+#: includes/openid-connect-generic-settings-page.php:415
 #. translators: %1$s HTML tags for layout/styles (strong tag start with warning
 #. class), %2$s closing HTML tag for styles.
 msgid ""
@@ -507,22 +497,22 @@ msgid ""
 "protection can expose your server to security risks.%2$s"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:423
+#: includes/openid-connect-generic-settings-page.php:420
 msgid "Link Existing Users"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:424
+#: includes/openid-connect-generic-settings-page.php:421
 msgid ""
 "If a WordPress account already exists with the same identity as a "
 "newly-authenticated user over OpenID Connect, login as that user instead of "
 "generating an error."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:430
+#: includes/openid-connect-generic-settings-page.php:427
 msgid "Create user if does not exist"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:431
+#: includes/openid-connect-generic-settings-page.php:428
 msgid ""
 "If the user identity is not linked to an existing WordPress user, it is "
 "created. If this setting is not enabled, and if the user authenticates with "
@@ -530,11 +520,11 @@ msgid ""
 "authentication will fail."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:437
+#: includes/openid-connect-generic-settings-page.php:434
 msgid "Redirect Back to Origin Page"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:438
+#: includes/openid-connect-generic-settings-page.php:435
 msgid ""
 "After a successful OpenID Connect authentication, this will redirect the "
 "user back to the page on which they clicked the OpenID Connect login "
@@ -545,110 +535,113 @@ msgid ""
 "account page."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:444
+#: includes/openid-connect-generic-settings-page.php:441
 msgid "Redirect to the login screen when session is expired"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:445
+#: includes/openid-connect-generic-settings-page.php:442
 msgid ""
 "When enabled, this will automatically redirect the user back to the "
 "WordPress login page if their access token has expired."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:451
+#: includes/openid-connect-generic-settings-page.php:448
 msgid "Enable Logging"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:452
+#: includes/openid-connect-generic-settings-page.php:449
 msgid "Very simple log messages for debugging purposes."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:458
+#: includes/openid-connect-generic-settings-page.php:455
 msgid "Log Limit"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:459
+#: includes/openid-connect-generic-settings-page.php:456
 msgid ""
 "Number of items to keep in the log. These logs are stored as an option in "
 "the database, so space is limited."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:526
+#: includes/openid-connect-generic-settings-page.php:516
 msgid "Notes"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:529
+#: includes/openid-connect-generic-settings-page.php:519
 msgid "Redirect URI"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:533
+#: includes/openid-connect-generic-settings-page.php:523
 msgid "Login Button Shortcode"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:537
+#: includes/openid-connect-generic-settings-page.php:527
 msgid "Authentication URL Shortcode"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:542
+#: includes/openid-connect-generic-settings-page.php:532
 msgid "Logs"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:634
+#: includes/openid-connect-generic-settings-page.php:620
 msgid "Example"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:648
-msgid "Enter your OpenID Connect identity provider settings."
+#: includes/openid-connect-generic-settings-page.php:633
+msgid ""
+"Enter your OpenID Connect identity provider settings as the enviromental "
+"variables. Only some settings can be changed here. Client Secret Key is not "
+"displayed for the security purposes."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:658
+#: includes/openid-connect-generic-settings-page.php:642
 msgid "Modify the interaction between OpenID Connect and WordPress users."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:668
+#: includes/openid-connect-generic-settings-page.php:651
 msgid "Control the authorization mechanics of the site."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:678
+#: includes/openid-connect-generic-settings-page.php:660
 msgid "Log information about login attempts through OpenID Connect Generic."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:694
+#: includes/openid-connect-generic-settings-page.php:675
 msgid "Please enter a discovery URL."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:703
+#: includes/openid-connect-generic-settings-page.php:684
 msgid "Invalid discovery URL format."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:714
+#: includes/openid-connect-generic-settings-page.php:695
 msgid "Discovery URL must use HTTPS in production environments."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:734
+#: includes/openid-connect-generic-settings-page.php:715
 #. translators: %s: error message
 msgid "Failed to fetch discovery document: %s"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:746
+#: includes/openid-connect-generic-settings-page.php:727
 #. translators: %d: HTTP status code
 msgid "Discovery document request returned HTTP %d."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:759
+#: includes/openid-connect-generic-settings-page.php:740
 msgid "Discovery document is not valid JSON."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:778
+#: includes/openid-connect-generic-settings-page.php:759
 #. translators: %s: comma-separated list of missing fields
 msgid "Discovery document is missing required fields: %s"
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:845
+#: includes/openid-connect-generic-settings-page.php:824
 msgid "Security check failed. Please try again."
 msgstr ""
 
-#: includes/openid-connect-generic-settings-page.php:889
+#: includes/openid-connect-generic-settings-page.php:868
 #. translators: %d: number of fields populated
 msgid ""
 "Configuration loaded successfully! %d field was populated. Review the "
@@ -659,42 +652,15 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/openid-connect-generic-settings-page.php:917
-msgid "Quick Setup: Import from Discovery Document"
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:921
-msgid ""
-"Auto-populate endpoint settings from your identity provider's OpenID "
-"Connect discovery document. After loading, review the populated fields "
-"below and click \"Save Changes\" to apply."
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:929
-msgid "Discovery URL"
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:940
-msgid "Enter your identity provider's OpenID Connect discovery endpoint URL."
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:942
-msgid "Examples:"
-msgstr ""
-
-#: includes/openid-connect-generic-settings-page.php:953
-msgid "Load Configuration"
-msgstr ""
-
-#: openid-connect-generic.php:261
+#: openid-connect-generic.php:255
 msgid "Private site"
 msgstr ""
 
-#: openid-connect-generic.php:292
+#: openid-connect-generic.php:285
 msgid "OpenID Connect Generic - Security Configuration Required"
 msgstr ""
 
-#: openid-connect-generic.php:299
+#: openid-connect-generic.php:292
 #. translators: %s is a link to the settings page
 msgid ""
 "Your OpenID Connect authentication is using an insecure fallback method. "
@@ -702,13 +668,13 @@ msgid ""
 "href=\"%s\">plugin settings</a> as soon as possible."
 msgstr ""
 
-#: openid-connect-generic.php:306
+#: openid-connect-generic.php:299
 msgid ""
 "The current insecure fallback will be removed in version 3.12.0. After that "
 "update, authentication will fail until the JWKS endpoint is configured."
 msgstr ""
 
-#: openid-connect-generic.php:309
+#: openid-connect-generic.php:302
 msgid "Common JWKS endpoints:"
 msgstr ""
 
