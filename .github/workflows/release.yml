@@ -27,12 +27,12 @@ jobs:
       uses: actions/setup-node@v7
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 16.x
+        node-version-file: '.nvmrc'
 
     - name: Get NPM Cache Directory
       id: npm-cache
       if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(npm config get cache)"
+      run: echo "dir=$(npm config get cache)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Node Modules
       if: ${{ !env.ACT }}
