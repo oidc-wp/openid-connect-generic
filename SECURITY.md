@@ -8,10 +8,8 @@ The latest version released is the only version that will receive security updat
 
 ## Reporting a Vulnerability
 
-For security reasons, the following are acceptable options for reporting all security issues.
+Report security issues privately through GitHub: [report a vulnerability](https://github.com/oidc-wp/openid-connect-generic/security/advisories/new). Only the maintainers can see the report.
 
-1. Via Keybase secure message to [timnolte](https://keybase.io/timnolte/chat) or [daggerhart](https://keybase.io/daggerhart/chat).
-2. Send a DM via the [WordPress Slack](https://make.wordpress.org/chat/) to `tnolte`.
-3. Via a private [security advisory](https://github.com/oidc-wp/openid-connect-generic/security/advisories) notice.
+Include the affected plugin version, the steps to reproduce the issue, and its impact.
 
-Please disclose responsibly and not via public GitHub Issues (which allows for exploiting issues in the wild before the patch is released).
+Please don't report security issues in public GitHub issues, pull requests or discussions, or in the WordPress.org support forum. A public report can be exploited before a fix is released.
