@@ -27,7 +27,7 @@ jobs:
       uses: actions/checkout@v7
 
     - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
+      uses: pierotofy/set-swap-space@fc79b3f67fa8a838184ce84a674ca12238d2c761 # master, 2025-05-08
       with:
         swap-size-gb: 10
 
@@ -44,7 +44,7 @@ jobs:
     - name: Generate Coverage Report
       if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       # https://github.com/marketplace/actions/coverage-report-as-comment-clover
-      uses: lucassabreu/comment-coverage-clover@main
+      uses: lucassabreu/comment-coverage-clover@92c9c9f0d9640bce558851c62295d99b13deacb3 # v0.17.5
       with:
         file: clover.xml
 

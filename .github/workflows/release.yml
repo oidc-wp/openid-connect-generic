@@ -53,7 +53,7 @@ jobs:
       run: npm run release
 
     - name: WordPress.org Plugin Deploy
-      uses: nk-o/action-wordpress-plugin-deploy@master
+      uses: nk-o/action-wordpress-plugin-deploy@99c3fd60a0d5346875049f7da4c107f8bb5a4e1f # master, 2021-10-03
       # https://github.com/marketplace/actions/wordpress-plugin-deploy
       env:
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
