@@ -10,7 +10,7 @@ on:
       - 'fix/**'
 
 env:
-  PHP_VERSION: '8.1'
+  PHP_VERSION: '8.2'
   WP_MULTISITE: 0
   COMPOSER_VERSION: '2.6'
   ACTION_VERSION: 3
@@ -24,7 +24,7 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Get Composer Cache Directory
       id: composer-cache
@@ -34,7 +34,7 @@ jobs:
     - name: Cache Composer dependencies
       if: ${{ !env.ACT }}
       # https://github.com/marketplace/actions/cache
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       env:
         composer-cache-name: cache-composer
       with:
@@ -45,7 +45,7 @@ jobs:
 
     - name: Setup PHP & Composer Environment
       # https://github.com/marketplace/actions/setup-php-action
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
         php-version: ${{ env.PHP_VERSION }}
         tools: "composer:${{ env.COMPOSER_VERSION }}"
