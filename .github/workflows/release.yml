@@ -53,10 +53,10 @@ jobs:
       run: npm run release
 
     - name: WordPress.org Plugin Deploy
-      uses: nk-o/action-wordpress-plugin-deploy@99c3fd60a0d5346875049f7da4c107f8bb5a4e1f # master, 2021-10-03
-      # https://github.com/marketplace/actions/wordpress-plugin-deploy
+      uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
+      # https://github.com/10up/action-wordpress-plugin-deploy
       env:
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-        SOURCE_DIR: dist/
+        BUILD_DIR: dist/
         SLUG: daggerhart-openid-connect-generic
