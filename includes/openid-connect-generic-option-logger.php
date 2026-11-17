@@ -103,7 +103,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	 */
 	public function get_logs() {
 		if ( empty( $this->logs ) ) {
-			$this->logs = get_option( self::OPTION_NAME, array() );
+			$this->logs = get_option( $this->get_option_name(), array() );
 		}
 
 		// Call the upkeep_logs function to give the appearance that logs have been reduced to the $this->log_limit.
@@ -196,7 +196,7 @@ class OpenID_Connect_Generic_Option_Logger {
 	private function save_logs( $logs ) {
 		// Save the logs.
 		$this->logs = $logs;
-		return update_option( self::OPTION_NAME, $logs, false );
+		return update_option( $this->get_option_name(), $logs, false );
 	}
 
 	/**
