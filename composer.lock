@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e319fd35172046e7af3ef077b15dd1b9",
+    "content-hash": "bb41ae567275150644796d719971c911",
     "packages": [
         {
             "name": "composer/installers",
@@ -1612,24 +1612,24 @@
         },
         {
             "name": "johnpbloch/wordpress-core",
-            "version": "6.2.8",
+            "version": "6.7.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/johnpbloch/wordpress-core.git",
-                "reference": "e4e069d84e20045a22fa3c1342b30f33bafaa3ba"
+                "reference": "c34d3ccb9f6660a154bd7706e7dad31bb04a15df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/johnpbloch/wordpress-core/zipball/e4e069d84e20045a22fa3c1342b30f33bafaa3ba",
-                "reference": "e4e069d84e20045a22fa3c1342b30f33bafaa3ba",
+                "url": "https://api.github.com/repos/johnpbloch/wordpress-core/zipball/c34d3ccb9f6660a154bd7706e7dad31bb04a15df",
+                "reference": "c34d3ccb9f6660a154bd7706e7dad31bb04a15df",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "php": ">=5.6.20"
+                "php": ">=7.2.24"
             },
             "provide": {
-                "wordpress/core-implementation": "6.2.8"
+                "wordpress/core-implementation": "6.7.11"
             },
             "type": "wordpress-core",
             "notification-url": "https://packagist.org/downloads/",
@@ -1656,7 +1656,8 @@
                 "source": "https://core.trac.wordpress.org/browser",
                 "wiki": "https://codex.wordpress.org/"
             },
-            "time": "2025-09-30T18:38:13+00:00"
+            "time": "2026-10-28T19:45:59+00:00",
+            "published-time": "2026-10-28T19:47:10+00:00"
         },
         {
             "name": "johnpbloch/wordpress-core-installer",
@@ -2515,16 +2516,16 @@
         },
         {
             "name": "php-stubs/wordpress-stubs",
-            "version": "v6.2.7",
+            "version": "v6.7.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-stubs/wordpress-stubs.git",
-                "reference": "009d043da155e1aadf9473509ff9781eacea10a8"
+                "reference": "9317edf49ed6b8b35480ed1edffefa26d60aa704"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-stubs/wordpress-stubs/zipball/009d043da155e1aadf9473509ff9781eacea10a8",
-                "reference": "009d043da155e1aadf9473509ff9781eacea10a8",
+                "url": "https://api.github.com/repos/php-stubs/wordpress-stubs/zipball/9317edf49ed6b8b35480ed1edffefa26d60aa704",
+                "reference": "9317edf49ed6b8b35480ed1edffefa26d60aa704",
                 "shasum": ""
             },
             "conflict": {
@@ -2560,9 +2561,10 @@
             ],
             "support": {
                 "issues": "https://github.com/php-stubs/wordpress-stubs/issues",
-                "source": "https://github.com/php-stubs/wordpress-stubs/tree/v6.2.7"
+                "source": "https://github.com/php-stubs/wordpress-stubs/tree/v6.7.4"
             },
-            "time": "2025-09-30T20:52:41+00:00"
+            "time": "2025-09-30T20:58:01+00:00",
+            "published-time": "2025-10-28T21:56:58+00:00"
         },
         {
             "name": "phpcsstandards/phpcsextra",
@@ -2958,7 +2960,8 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-30T10:16:31+00:00"
+            "time": "2025-09-30T10:16:31+00:00",
+            "published-time": "2025-09-30T10:16:41+00:00"
         },
         {
             "name": "phpstan/phpstan-deprecation-rules",
@@ -8292,16 +8295,16 @@
         },
         {
             "name": "wp-phpunit/wp-phpunit",
-            "version": "6.2.8",
+            "version": "6.7.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/wp-phpunit/wp-phpunit.git",
-                "reference": "3b7ab767dde017dec9327cc024e9f26fd776a57b"
+                "reference": "e2bb06bacc92a8e9e405e83f56989e8ed9359db1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wp-phpunit/wp-phpunit/zipball/3b7ab767dde017dec9327cc024e9f26fd776a57b",
-                "reference": "3b7ab767dde017dec9327cc024e9f26fd776a57b",
+                "url": "https://api.github.com/repos/wp-phpunit/wp-phpunit/zipball/e2bb06bacc92a8e9e405e83f56989e8ed9359db1",
+                "reference": "e2bb06bacc92a8e9e405e83f56989e8ed9359db1",
                 "shasum": ""
             },
             "type": "library",
@@ -8336,133 +8339,8 @@
                 "issues": "https://github.com/wp-phpunit/issues",
                 "source": "https://github.com/wp-phpunit/wp-phpunit"
             },
-            "time": "2023-03-30T01:15:51+00:00"
-        },
-        {
-            "name": "wpackagist-plugin/debug-bar",
-            "version": "1.1.8",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/debug-bar/",
-                "reference": "tags/1.1.8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/debug-bar.1.1.8.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/debug-bar/"
-        },
-        {
-            "name": "wpackagist-plugin/debug-bar-actions-and-filters-addon",
-            "version": "1.5.5",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/debug-bar-actions-and-filters-addon/",
-                "reference": "tags/1.5.5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/debug-bar-actions-and-filters-addon.1.5.5.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/debug-bar-actions-and-filters-addon/"
-        },
-        {
-            "name": "wpackagist-plugin/display-environment-type",
-            "version": "1.6.0",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/display-environment-type/",
-                "reference": "tags/1.6.0"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/display-environment-type.1.6.0.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/display-environment-type/"
-        },
-        {
-            "name": "wpackagist-plugin/health-check",
-            "version": "1.7.1",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/health-check/",
-                "reference": "tags/1.7.1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/health-check.1.7.1.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/health-check/"
-        },
-        {
-            "name": "wpackagist-plugin/query-monitor",
-            "version": "3.20.4",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/query-monitor/",
-                "reference": "tags/3.20.4"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/query-monitor.3.20.4.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/query-monitor/"
-        },
-        {
-            "name": "wpackagist-plugin/transients-manager",
-            "version": "2.0.7",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/transients-manager/",
-                "reference": "tags/2.0.7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/transients-manager.2.0.7.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-plugin",
-            "homepage": "https://wordpress.org/plugins/transients-manager/"
-        },
-        {
-            "name": "wpackagist-theme/twentytwentythree",
-            "version": "1.6",
-            "source": {
-                "type": "svn",
-                "url": "https://themes.svn.wordpress.org/twentytwentythree/",
-                "reference": "1.6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/theme/twentytwentythree.1.6.zip"
-            },
-            "require": {
-                "composer/installers": "^1.0 || ^2.0"
-            },
-            "type": "wordpress-theme",
-            "homepage": "https://wordpress.org/themes/twentytwentythree/"
+            "time": "2025-02-12T01:22:52+00:00",
+            "published-time": "2026-10-27T06:11:55+00:00"
         },
         {
             "name": "yoast/phpunit-polyfills",
