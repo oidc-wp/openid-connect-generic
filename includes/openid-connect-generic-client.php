@@ -1024,7 +1024,7 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// Make sure the id_token sub equals the user_claim sub, according to spec.
-		if ( $id_token_claim['sub'] !== $user_claim['sub'] ) {
+		if ( strval( $id_token_claim['sub'] ) !== strval( $user_claim['sub'] ) ) {
 			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim.', 'daggerhart-openid-connect-generic' ), func_get_args() );
 		}
 
