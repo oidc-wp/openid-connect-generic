@@ -3,7 +3,7 @@ Contributors: daggerhart, tnolte
 Tags: security, login, oauth2, openidconnect, apps, authentication, autologin, sso
 Requires at least: 5.0
 Tested up to: 7.1
-Stable tag: 3.11.4
+Stable tag: 3.11.5
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -49,6 +49,10 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 == Upgrade Notice ==
 
+= 3.11.5 =
+
+Fixes logins failing with "Invalid state" on Pantheon and some other managed hosts after updating to 3.11.4.
+
 = 3.11.4 =
 
 SECURITY UPDATE: Hardens login and account linking. Requires PHP 8.0. If you use Link Existing Users, review the new Link Users Without Verified Email setting after updating.
@@ -58,6 +62,11 @@ SECURITY UPDATE: Hardens login and account linking. Requires PHP 8.0. If you use
 SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including JWT signature bypass and SSRF protection. Update immediately and configure JWKS endpoint in settings.
 
 == Changelog ==
+
+= 3.11.5 =
+
+* Fix: Logins failed with "Invalid state" on hosts that only pass WordPress-style cookie names to PHP, such as Pantheon. The login cookie is now named `wp-openid_connect_generic_browser`, and the new `openid-connect-generic-browser-cookie-name` filter can change it.
+* Improvement: When logging is enabled, a failed state check logs which part of the check failed.
 
 = 3.11.4 =
 
