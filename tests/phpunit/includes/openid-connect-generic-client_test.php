@@ -356,12 +356,15 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	/**
 	 * Create a client whose header and cookie output can be controlled.
 	 *
-	 * @param bool $headers_sent Whether headers count as already sent.
+	 * @param bool                                      $headers_sent Whether headers count as already sent.
+	 * @param OpenID_Connect_Generic_Option_Logger|null $logger       Logger, or null for a mock.
 	 *
 	 * @return OpenID_Connect_Generic_Client
 	 */
-	private function create_browser_client( bool $headers_sent = false ): OpenID_Connect_Generic_Client {
-		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+	private function create_browser_client( bool $headers_sent = false, $logger = null ): OpenID_Connect_Generic_Client {
+		if ( null === $logger ) {
+			$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		}
 
 		return new class( $headers_sent, $logger ) extends OpenID_Connect_Generic_Client {
 			/**
@@ -473,6 +476,128 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 
 		$this->assertFalse( $client->check_state( '../etc' ) );
 		$this->assertFalse( $client->check_state( array( 'a' ) ) );
+	}
+
+	/**
+	 * The default browser cookie name uses a WordPress prefix that managed hosts pass to PHP.
+	 *
+	 * @group ClientTests
+	 * @group StateTests
+	 */
+	public function test_browser_cookie_name_default() {
+		$client = $this->create_browser_client();
+
+		$this->assertSame( 'wp-openid_connect_generic_browser', $client->get_browser_cookie_name() );
+		$this->assertMatchesRegularExpression( '/^wp-[A-Za-z0-9_]+$/', $client->get_browser_cookie_name() );
+	}
+
+	/**
+	 * The browser cookie name can be changed with a filter, and the login uses the new name.
+	 *
+	 * @group ClientTests
+	 * @group StateTests
+	 */
+	public function test_browser_cookie_name_filter() {
+		$filter = function () {
+			return 'custom_oidc_browser';
+		};
+		add_filter( 'openid-connect-generic-browser-cookie-name', $filter );
+
+		$client = $this->create_browser_client();
+		$state = $this->start_bound_state( $client );
+
+		$this->assertSame( 'custom_oidc_browser', $client->get_browser_cookie_name() );
+		$this->assertArrayHasKey( 'custom_oidc_browser', $_COOKIE );
+		$this->assertArrayNotHasKey( OpenID_Connect_Generic_Client::BROWSER_COOKIE, $_COOKIE );
+		$this->assertTrue( $client->check_state( $state ) );
+
+		unset( $_COOKIE['custom_oidc_browser'] );
+		remove_filter( 'openid-connect-generic-browser-cookie-name', $filter );
+	}
+
+	/**
+	 * Invalid filtered cookie names fall back to the default.
+	 *
+	 * @dataProvider invalid_browser_cookie_name_provider
+	 * @group ClientTests
+	 * @group StateTests
+	 *
+	 * @param mixed $name The filtered name.
+	 */
+	public function test_browser_cookie_name_invalid_filter( $name ) {
+		$filter = function () use ( $name ) {
+			return $name;
+		};
+		add_filter( 'openid-connect-generic-browser-cookie-name', $filter );
+
+		$client = $this->create_browser_client();
+		$this->assertSame( OpenID_Connect_Generic_Client::BROWSER_COOKIE, $client->get_browser_cookie_name() );
+
+		remove_filter( 'openid-connect-generic-browser-cookie-name', $filter );
+	}
+
+	/**
+	 * Invalid cookie names.
+	 *
+	 * @return array
+	 */
+	public function invalid_browser_cookie_name_provider() {
+		return array(
+			'empty'     => array( '' ),
+			'space'     => array( 'has space' ),
+			'dot'       => array( 'has.dot' ),
+			'semicolon' => array( 'a;b' ),
+			'array'     => array( array( 'a' ) ),
+		);
+	}
+
+	/**
+	 * A failed state check logs which part of the check failed.
+	 *
+	 * @dataProvider failed_state_reason_provider
+	 * @group ClientTests
+	 * @group StateTests
+	 *
+	 * @param string $scenario The failure to set up.
+	 * @param string $reason   The expected log message.
+	 */
+	public function test_check_state_logs_failure_reason( $scenario, $reason ) {
+		$this->clear_browser_cookie();
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		$logger->expects( $this->once() )
+			->method( 'log' )
+			->with( $reason, 'invalid-state' );
+
+		$client = $this->create_browser_client( false, $logger );
+		$state = $client->new_state( home_url() );
+
+		if ( 'missing-state' === $scenario ) {
+			$state = str_repeat( 'c', 32 );
+		} elseif ( 'missing-cookie' === $scenario ) {
+			$client->bind_state( $state, $client->ensure_browser_id() );
+			$this->clear_browser_cookie();
+		} elseif ( 'other-browser' === $scenario ) {
+			$client->bind_state( $state, $client->ensure_browser_id() );
+			$_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] = str_repeat( 'a', 32 );
+		}
+
+		$this->assertFalse( $client->check_state( $state ) );
+
+		$this->clear_browser_cookie();
+	}
+
+	/**
+	 * State check failures and their log messages.
+	 *
+	 * @return array
+	 */
+	public function failed_state_reason_provider() {
+		return array(
+			'state not found'      => array( 'missing-state', 'State not found or expired.' ),
+			'state not bound'      => array( 'unbound', 'State is not linked to a browser.' ),
+			'browser cookie lost'  => array( 'missing-cookie', 'Browser cookie missing from the request.' ),
+			'other browser cookie' => array( 'other-browser', 'Browser cookie does not match the state.' ),
+		);
 	}
 
 	/**

@@ -128,11 +128,13 @@ class OpenID_Connect_Generic_Client {
 	private $state_time_limit = 180;
 
 	/**
-	 * Cookie that identifies the browser that started a login.
+	 * Default name of the cookie that identifies the browser that started a login.
+	 *
+	 * Managed hosts such as Pantheon only pass cookies with WordPress-style names to PHP.
 	 *
 	 * @var string
 	 */
-	const BROWSER_COOKIE = 'openid-connect-generic-browser';
+	const BROWSER_COOKIE = 'wp-openid_connect_generic_browser';
 
 	/**
 	 * Allow HTTP requests to internal/private network endpoints.
@@ -501,6 +503,7 @@ class OpenID_Connect_Generic_Client {
 
 		if ( ! is_string( $state ) || ! preg_match( '/^[a-f0-9]{32}$/', $state ) ) {
 			do_action( 'openid-connect-generic-state-not-found', $state );
+			$this->logger->log( 'State is malformed.', 'invalid-state' );
 			return false;
 		}
 
@@ -518,14 +521,25 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		if ( ! $valid ) {
+			$this->logger->log( 'State not found or expired.', 'invalid-state' );
 			return false;
 		}
 
 		// The state must come back to the browser that started the login, and only once.
 		$binding = get_transient( 'openid-connect-generic-state--' . $state . '--browser' );
 		$browser_id = $this->get_browser_id();
-		if ( empty( $binding ) || empty( $browser_id ) || ! hash_equals( $binding, $this->hash_browser_id( $browser_id ) ) ) {
+		$reason = '';
+		if ( empty( $binding ) ) {
+			$reason = 'State is not linked to a browser.';
+		} elseif ( empty( $browser_id ) ) {
+			$reason = 'Browser cookie missing from the request.';
+		} elseif ( ! hash_equals( $binding, $this->hash_browser_id( $browser_id ) ) ) {
+			$reason = 'Browser cookie does not match the state.';
+		}
+
+		if ( ! empty( $reason ) ) {
 			do_action( 'openid-connect-generic-state-not-found', $state );
+			$this->logger->log( $reason, 'invalid-state' );
 			return false;
 		}
 
@@ -677,16 +691,33 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Get the name of the browser cookie.
+	 *
+	 * @return string
+	 */
+	public function get_browser_cookie_name() {
+		/**
+		 * Filters the name of the cookie that identifies the browser that started a login.
+		 *
+		 * @param string $name The cookie name.
+		 */
+		$name = apply_filters( 'openid-connect-generic-browser-cookie-name', self::BROWSER_COOKIE );
+
+		return is_string( $name ) && preg_match( '/^[A-Za-z0-9_-]+$/', $name ) ? $name : self::BROWSER_COOKIE;
+	}
+
+	/**
 	 * Get the browser identifier from the browser cookie.
 	 *
 	 * @return string Empty when the cookie is missing or malformed.
 	 */
 	public function get_browser_id() {
-		if ( empty( $_COOKIE[ self::BROWSER_COOKIE ] ) || ! is_string( $_COOKIE[ self::BROWSER_COOKIE ] ) ) {
+		$name = $this->get_browser_cookie_name();
+		if ( empty( $_COOKIE[ $name ] ) || ! is_string( $_COOKIE[ $name ] ) ) {
 			return '';
 		}
 
-		$browser_id = sanitize_text_field( wp_unslash( $_COOKIE[ self::BROWSER_COOKIE ] ) );
+		$browser_id = sanitize_text_field( wp_unslash( $_COOKIE[ $name ] ) );
 
 		return preg_match( '/^[a-f0-9]{32}$/', $browser_id ) ? $browser_id : '';
 	}
@@ -708,7 +739,7 @@ class OpenID_Connect_Generic_Client {
 
 		$browser_id = bin2hex( random_bytes( 16 ) );
 		$this->send_browser_cookie( $browser_id );
-		$_COOKIE[ self::BROWSER_COOKIE ] = $browser_id;
+		$_COOKIE[ $this->get_browser_cookie_name() ] = $browser_id;
 
 		return $browser_id;
 	}
@@ -731,7 +762,7 @@ class OpenID_Connect_Generic_Client {
 	 */
 	protected function send_browser_cookie( $browser_id ) {
 		setcookie(
-			self::BROWSER_COOKIE,
+			$this->get_browser_cookie_name(),
 			$browser_id,
 			array(
 				'expires'  => 0,
