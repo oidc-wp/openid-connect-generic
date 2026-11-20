@@ -293,6 +293,21 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test validate_user_claim accepts an integer userinfo sub equal to the id_token sub.
+	 *
+	 * @group ClientTests
+	 */
+	public function test_validate_user_claim_with_integer_sub() {
+		$client = $this->create_client();
+
+		$this->assertTrue( $client->validate_user_claim( array( 'sub' => 35 ), array( 'sub' => '35' ) ) );
+
+		$result = $client->validate_user_claim( array( 'sub' => 36 ), array( 'sub' => '35' ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'incorrect-user-claim', $result->get_error_code() );
+	}
+
+	/**
 	 * Helper to create client instance for testing.
 	 *
 	 * @param array $settings Optional settings to override defaults.
