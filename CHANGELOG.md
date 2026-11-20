@@ -4,6 +4,11 @@
 
 * Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
 
+**3.11.5**
+
+* Fix: Logins failed with "Invalid state" on hosts that only pass WordPress-style cookie names to PHP, such as Pantheon. The login cookie is now named `wp-openid_connect_generic_browser`, and the new `openid-connect-generic-browser-cookie-name` filter can change it.
+* Improvement: When logging is enabled, a failed state check logs which part of the check failed.
+
 **3.11.4**
 
 * Security: Login state is now tied to the browser that started the login and can only be used once.
