@@ -103,6 +103,13 @@ class OpenID_Connect_Generic {
 	const NOTICE_LINK_UNVERIFIED_OPTION = 'openid-connect-generic-notice-link-unverified';
 
 	/**
+	 * Option holding the redirect URI used before 3.12.0, for the admin notice about its change.
+	 *
+	 * @var string
+	 */
+	const NOTICE_REDIRECT_URI_OPTION = 'openid-connect-generic-notice-redirect-uri';
+
+	/**
 	 * Plugin settings.
 	 *
 	 * @var OpenID_Connect_Generic_Option_Settings
@@ -193,6 +200,8 @@ class OpenID_Connect_Generic {
 			add_action( 'admin_notices', array( $this, 'admin_notice_jwks_required' ) );
 			add_action( 'admin_notices', array( $this, 'admin_notice_link_unverified_users' ) );
 			add_action( 'admin_init', array( $this, 'dismiss_admin_notice_link_unverified_users' ) );
+			add_action( 'admin_notices', array( $this, 'admin_notice_redirect_uri_changed' ) );
+			add_action( 'admin_init', array( $this, 'dismiss_admin_notice_redirect_uri_changed' ) );
 		}
 	}
 
@@ -210,7 +219,15 @@ class OpenID_Connect_Generic {
 			$redirect_uri = home_url( '/openid-connect-authorize' );
 		}
 
-		return $redirect_uri;
+		/**
+		 * Filters the redirect URI sent to the identity provider.
+		 *
+		 * This changes only the URI that is sent; requests to it must still reach the plugin's callback.
+		 *
+		 * @param string                                 $redirect_uri The redirect URI.
+		 * @param OpenID_Connect_Generic_Option_Settings $settings     The plugin settings.
+		 */
+		return apply_filters( 'openid-connect-generic-redirect-uri', $redirect_uri, $settings );
 	}
 
 	/**
@@ -403,6 +420,77 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
+	 * Display admin notice after an upgrade changed the alternate redirect URI.
+	 *
+	 * @return void
+	 */
+	public function admin_notice_redirect_uri_changed() {
+		$old_redirect_uri = get_option( self::NOTICE_REDIRECT_URI_OPTION );
+		if ( ! current_user_can( 'manage_options' ) || empty( $old_redirect_uri ) ) {
+			return;
+		}
+
+		$new_redirect_uri = $this->get_redirect_uri( $this->settings );
+
+		// Nothing to update at the identity provider once the URIs match again.
+		if ( $old_redirect_uri === $new_redirect_uri ) {
+			delete_option( self::NOTICE_REDIRECT_URI_OPTION );
+			return;
+		}
+
+		$dismiss_url = wp_nonce_url( add_query_arg( 'openid-connect-generic-dismiss', 'redirect-uri' ), 'openid-connect-generic-dismiss-redirect-uri' );
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong><?php esc_html_e( 'OpenID Connect Generic - Your redirect URI has changed', 'daggerhart-openid-connect-generic' ); ?></strong>
+			</p>
+			<p>
+				<?php esc_html_e( 'With Alternate Redirect URI enabled and WordPress installed in a subdirectory, the redirect URI is now based on your site address instead of the WordPress address. If your identity provider doesn\'t allow the new redirect URI yet, logins with it will fail until you add it. You can keep the old one allowed as well.', 'daggerhart-openid-connect-generic' ); ?>
+			</p>
+			<p>
+				<?php esc_html_e( 'Old:', 'daggerhart-openid-connect-generic' ); ?> <code><?php echo esc_html( $old_redirect_uri ); ?></code><br>
+				<?php esc_html_e( 'New:', 'daggerhart-openid-connect-generic' ); ?> <code><?php echo esc_html( $new_redirect_uri ); ?></code>
+			</p>
+			<p>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: %s is the filter name */
+						__( 'If your server already routes the old URI to the plugin, you can keep sending it with the %s filter.', 'daggerhart-openid-connect-generic' ),
+						'<code>openid-connect-generic-redirect-uri</code>'
+					)
+				);
+				?>
+			</p>
+			<p>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'I have updated my identity provider', 'daggerhart-openid-connect-generic' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Dismiss the notice about the changed redirect URI.
+	 *
+	 * @return void
+	 */
+	public function dismiss_admin_notice_redirect_uri_changed() {
+		if ( ! isset( $_GET['openid-connect-generic-dismiss'] ) || 'redirect-uri' !== sanitize_key( wp_unslash( $_GET['openid-connect-generic-dismiss'] ) ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'openid-connect-generic-dismiss-redirect-uri' );
+		delete_option( self::NOTICE_REDIRECT_URI_OPTION );
+
+		wp_safe_redirect( remove_query_arg( array( 'openid-connect-generic-dismiss', '_wpnonce' ) ) );
+		exit;
+	}
+
+	/**
 	 * Handle plugin upgrades
 	 *
 	 * @return void
@@ -438,6 +526,14 @@ class OpenID_Connect_Generic {
 				}
 
 				$settings->save();
+			}
+
+			// Before 3.12.0 the alternate redirect URI used the WordPress address; tell affected sites it changed.
+			if ( ! empty( $last_version ) && version_compare( $last_version, '3.12.0', '<' ) && ! empty( $settings->alternate_redirect_uri ) ) {
+				$old_redirect_uri = site_url( '/openid-connect-authorize' );
+				if ( home_url( '/openid-connect-authorize' ) !== $old_redirect_uri ) {
+					update_option( self::NOTICE_REDIRECT_URI_OPTION, $old_redirect_uri );
+				}
 			}
 
 			// Update the stored version number.
