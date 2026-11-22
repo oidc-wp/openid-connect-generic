@@ -334,6 +334,8 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
 		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
 
+		// Only the plugin's footer output is under test; core's wp_footer callbacks emit deprecation notices.
+		remove_all_actions( 'wp_footer' );
 		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
 
 		$output = do_shortcode( '[openid_connect_generic_login_button button_text="Sign In"]' );
@@ -363,6 +365,8 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
 		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
 
+		// Only the plugin's footer output is under test; core's wp_footer callbacks emit deprecation notices.
+		remove_all_actions( 'wp_footer' );
 		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
 
 		$output = do_shortcode( '[openid_connect_generic_login_button]' );
@@ -391,6 +395,8 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
 		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
 
+		// Only the plugin's footer output is under test; core's wp_footer callbacks emit deprecation notices.
+		remove_all_actions( 'wp_footer' );
 		OpenID_Connect_Generic_Login_Form::register( $settings, $client_wrapper, $client );
 
 		do_shortcode( '[openid_connect_generic_login_button]' );
