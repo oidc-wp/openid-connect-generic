@@ -980,7 +980,8 @@ class OpenID_Connect_Generic_Client {
 				return new WP_Error( 'missing-iss', __( 'Token missing issuer claim.', 'daggerhart-openid-connect-generic' ), $id_token_claim );
 			}
 
-			if ( rtrim( $id_token_claim['iss'], '/' ) !== rtrim( $expected_issuer, '/' ) ) {
+			$tid = isset( $id_token_claim['tid'] ) ? $id_token_claim['tid'] : null;
+			if ( ! OpenID_Connect_Generic_JWT_Validator::issuer_matches( $id_token_claim['iss'], $expected_issuer, $tid ) ) {
 				$this->logger->log(
 					sprintf(
 						'Issuer mismatch - Expected: "%s", Received: "%s". Configure the correct issuer in Settings > OpenID Connect Client > Issuer field, or via the OIDC_ISSUER constant.',
