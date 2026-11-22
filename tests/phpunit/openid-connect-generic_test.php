@@ -281,7 +281,12 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 		OpenID_Connect_Generic::admin_notice_missing_dependencies();
 		$this->assertSame( '', ob_get_clean() );
 
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		// On multisite, only super admins can activate plugins.
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
+		wp_set_current_user( $admin_id );
 		ob_start();
 		OpenID_Connect_Generic::admin_notice_missing_dependencies();
 		$output = ob_get_clean();
