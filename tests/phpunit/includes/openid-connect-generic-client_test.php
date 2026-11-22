@@ -293,6 +293,43 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test validate_id_token_claim with the Entra multitenant {tenantid} issuer.
+	 *
+	 * @group ClientTests
+	 * @group IssuerValidation
+	 */
+	public function test_validate_id_token_claim_with_tenantid_issuer() {
+		$client = $this->create_client(
+			array(
+				'endpoint_login' => 'https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize',
+				'issuer'         => 'https://login.microsoftonline.com/{tenantid}/v2.0',
+			)
+		);
+
+		$tid = '72f988bf-86f1-41af-91ab-2d7cd011db47';
+		$id_token_claim = array(
+			'sub' => 'user123',
+			'iss' => "https://login.microsoftonline.com/$tid/v2.0",
+			'tid' => $tid,
+			'aud' => 'test_client',
+			'exp' => time() + 3600,
+			'iat' => time(),
+		);
+
+		$this->assertTrue( $client->validate_id_token_claim( $id_token_claim ) );
+
+		$id_token_claim['tid'] = '9188040d-6c67-4c5b-b112-36a304b66dad';
+		$result = $client->validate_id_token_claim( $id_token_claim );
+		$this->assertWPError( $result );
+		$this->assertSame( 'invalid-iss', $result->get_error_code() );
+
+		unset( $id_token_claim['tid'] );
+		$result = $client->validate_id_token_claim( $id_token_claim );
+		$this->assertWPError( $result );
+		$this->assertSame( 'invalid-iss', $result->get_error_code() );
+	}
+
+	/**
 	 * Test validate_user_claim accepts an integer userinfo sub equal to the id_token sub.
 	 *
 	 * @group ClientTests

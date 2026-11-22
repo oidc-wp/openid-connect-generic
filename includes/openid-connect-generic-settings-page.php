@@ -310,7 +310,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'issuer' => array(
 				'title'       => __( 'Issuer', 'daggerhart-openid-connect-generic' ),
-				'description' => __( 'Identity provider issuer URL for JWT validation. If not set, the issuer will be automatically derived from the Login Endpoint URL. Only configure this if your IDP uses a different issuer than the base URL of the login endpoint.', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Identity provider issuer URL for JWT validation. If not set, the issuer will be automatically derived from the Login Endpoint URL. Only configure this if your IDP uses a different issuer than the base URL of the login endpoint. For Microsoft Entra ID multitenant apps, use https://login.microsoftonline.com/{tenantid}/v2.0: {tenantid} is replaced with the tenant ID from each token.', 'daggerhart-openid-connect-generic' ),
 				'example'     => 'https://example.com',
 				'type'        => 'text',
 				'disabled'    => defined( 'OIDC_ISSUER' ),
