@@ -162,6 +162,34 @@ class OpenID_Connect_Generic_JWT_Validator {
 	}
 
 	/**
+	 * Check a token's issuer against the expected issuer.
+	 *
+	 * An expected issuer containing `{tenantid}` (Microsoft Entra multitenant
+	 * discovery documents) matches when the placeholder is replaced with the
+	 * token's `tid` claim, which must be a GUID.
+	 *
+	 * @param mixed  $iss             The token's iss claim.
+	 * @param string $expected_issuer The expected issuer.
+	 * @param mixed  $tid             The token's tid claim, if any.
+	 *
+	 * @return bool
+	 */
+	public static function issuer_matches( $iss, $expected_issuer, $tid = null ) {
+		if ( ! is_string( $iss ) || ! is_string( $expected_issuer ) ) {
+			return false;
+		}
+
+		if ( false !== strpos( $expected_issuer, '{tenantid}' ) ) {
+			if ( ! is_string( $tid ) || ! preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $tid ) ) {
+				return false;
+			}
+			$expected_issuer = str_replace( '{tenantid}', $tid, $expected_issuer );
+		}
+
+		return rtrim( $iss, '/' ) === rtrim( $expected_issuer, '/' );
+	}
+
+	/**
 	 * Validate JWT claims.
 	 *
 	 * @param object $decoded_jwt The decoded JWT payload.
@@ -227,7 +255,8 @@ class OpenID_Connect_Generic_JWT_Validator {
 				);
 			}
 
-			if ( rtrim( $decoded_jwt->iss, '/' ) !== rtrim( $this->issuer, '/' ) ) {
+			$tid = isset( $decoded_jwt->tid ) ? $decoded_jwt->tid : null;
+			if ( ! self::issuer_matches( $decoded_jwt->iss, $this->issuer, $tid ) ) {
 				$this->logger->log(
 					sprintf(
 						'Issuer mismatch - Expected: "%s", Received: "%s". Configure the correct issuer in Settings > OpenID Connect Client > Issuer field, or via the OIDC_ISSUER constant.',
