@@ -264,6 +264,30 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
+	 * Display admin notice when the plugin's dependencies are missing.
+	 *
+	 * @return void
+	 */
+	public static function admin_notice_missing_dependencies() {
+		if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+		?>
+		<div class="notice notice-error">
+			<p>
+				<?php
+				printf(
+					/* translators: %s: the composer install command */
+					esc_html__( 'OpenID Connect Generic is not running because its dependencies are missing. Install the plugin from WordPress.org, or run %s in the plugin folder.', 'daggerhart-openid-connect-generic' ),
+					'<code>composer install --no-dev</code>'
+				);
+				?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Display admin notice when JWKS endpoint is not configured.
 	 *
 	 * @return void
@@ -504,7 +528,15 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function bootstrap() {
-		require_once __DIR__ . '/vendor/autoload.php';
+		// Composer installs load dependencies through the project's autoloader instead.
+		if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+			require_once __DIR__ . '/vendor/autoload.php';
+		}
+
+		if ( ! class_exists( \Firebase\JWT\JWT::class ) ) {
+			add_action( 'admin_notices', array( __CLASS__, 'admin_notice_missing_dependencies' ) );
+			return;
+		}
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			// Default settings values.
@@ -566,7 +598,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Create (if needed) and return a singleton of self.
 	 *
-	 * @return OpenID_Connect_Generic
+	 * @return OpenID_Connect_Generic|null Null if the plugin's dependencies are missing.
 	 */
 	public static function instance() {
 		if ( null === self::$_instance ) {

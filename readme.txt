@@ -23,13 +23,19 @@ Please submit issues to the Github repo: https://github.com/oidc-wp/openid-conne
 
 == Installation ==
 
-1. Install the plugin from Plugins > Add New, or upload it to the `/wp-content/plugins/` directory
-1. Activate the plugin
-1. Visit Settings > OpenID Connect and configure to meet your needs
+1. In WordPress, go to Plugins > Add New, search for "OpenID Connect Generic", then install and activate it.
+1. Go to Settings > OpenID Connect Client and configure it for your identity provider.
+
+To install manually, download the zip from https://wordpress.org/plugins/daggerhart-openid-connect-generic/ and upload it under Plugins > Add New > Upload Plugin. Don't use GitHub's "Download ZIP": it doesn't include the plugin's dependencies.
+
+= Installing with Composer =
+
+* WPackagist: `composer require wpackagist-plugin/daggerhart-openid-connect-generic` installs the WordPress.org package.
+* Packagist: `composer require daggerhart/openid-connect-generic` installs the dependencies in your project's `vendor/` folder, so your site must load the project's `vendor/autoload.php` (Bedrock does). Supported from 3.12.0.
 
 = Installing from source =
 
-The source code on GitHub, including its "Download ZIP" button, doesn't include the `vendor/` folder. Run `composer install --no-dev` in the plugin folder before activating it.
+Clone the repository and run `composer install --no-dev` in the plugin folder before activating it.
 
 == Frequently Asked Questions ==
 
@@ -76,6 +82,7 @@ SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including 
 * Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
 * Fix: Microsoft Entra ID multitenant apps failed issuer validation. Set the Issuer to `https://login.microsoftonline.com/{tenantid}/v2.0`, and `{tenantid}` is replaced with each token's tenant ID (#682).
 * Fix: Logins failed with "Incorrect user claim" when the IDP sent the userinfo `sub` as a number and the ID token `sub` as a string. A missing or empty `sub` is now rejected (#673).
+* Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found.
 
 = 3.11.5 =
 
