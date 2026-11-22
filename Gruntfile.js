@@ -8,36 +8,6 @@ module.exports = function (grunt) {
 
 		composerBin: 'vendor/bin',
 
-		shell: {
-			phpcs: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcs'
-			},
-
-			phpcbf: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpcbf'
-			},
-
-			phpstan: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpstan analyze .'
-			},
-
-			phpunit: {
-				options: {
-					stdout: true
-				},
-				command: '<%= composerBin %>/phpunit'
-			},
-		},
-
 		gitinfo: {
 			commands: {
 				'local.tag.current.name': ['name-rev', '--tags', '--name-only', 'HEAD'],
@@ -47,6 +17,17 @@ module.exports = function (grunt) {
 
 		clean: {
 			main: ['dist'] //Clean up build folder
+		},
+
+		shell: {
+			composer: {
+				command: 'composer install --no-dev --optimize-autoloader',
+				options: {
+					stdout: true,
+					stderr: true,
+					failOnError: true
+				}
+			}
 		},
 
 		copy: {
@@ -60,17 +41,24 @@ module.exports = function (grunt) {
 					'!dist/**', //build directory
 					'!.git/**', //version control
 					'!.github/**', //GitHub platform files
+					'!.devcontainer/**', //devcontainer config
+					'!.vscode/**', //VSCode config
 					'!tests/**', '!scripts/**', '!phpunit.xml', '!phpunit.xml.dist', //unit testing
-					'!vendor/**', '!composer.lock', '!composer.phar', '!composer.json', //composer
+					'!composer.lock', '!composer.phar', '!composer.json', //composer config files (vendor/ is included)
+					'!vendor/bin/**', //composer bin directory
 					'!wordpress/**',
 					'!.*', '!**/*~', //hidden files
+					'!CHANGELOG.md',
 					'!CONTRIBUTING.md',
 					'!README.md',
 					'!HOWTO.md',
+					'!SECURITY.md',
 					'!phpcs.xml', '!phpcs.xml.dist', '!phpstan.neon.dist', '!grumphp.yml.dist', // CodeSniffer Configuration.
 					'!docker-compose.override.yml', // Local Docker Development configuration.
 					'!codecov.yml', // Code coverage configuration.
 					'!tools/**', // Local Development/Build tools configuration.
+					'!wp-cli.yml',
+					'!docker-compose.yml',
 				],
 				dest: 'dist/',
 				options: {
@@ -117,7 +105,7 @@ module.exports = function (grunt) {
 					potFilename: 'openid-connect-generic.pot',                  // Name of the POT file.
 					potHeaders: {
 						poedit: true,                   // Includes common Poedit headers.
-						'report-msgid-bugs-to': 'https://github.com/daggerhart/openid-connect-generic/issues',
+						'report-msgid-bugs-to': 'https://github.com/oidc-wp/openid-connect-generic/issues',
 						'x-poedit-keywordslist': true   // Include a list of all possible gettext functions.
 					},                                // Headers to add to the generated POT file.
 					type: 'wp-plugin',                // Type of project (wp-plugin or wp-theme).
@@ -202,15 +190,9 @@ module.exports = function (grunt) {
 
 	});
 
-	grunt.registerTask('phpcs', ['shell:phpcs']);
-	grunt.registerTask('phpcbf', ['shell:phpcbf']);
-	grunt.registerTask('phpstan', ['shell:phpstan']);
-	grunt.registerTask('phpunit', ['shell:phpunit']);
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
-	grunt.registerTask('test', ['checktextdomain', 'phpunit']);
 	grunt.registerTask('build', ['gitinfo', 'i18n', 'readme']);
-	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
+	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'shell:composer', 'copy']);
 
 };
-

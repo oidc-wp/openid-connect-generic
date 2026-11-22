@@ -16,6 +16,7 @@
 phpcs.xml
 phpstan.neon
 phpunit.xml
+grumphp.yml
 .phpunit.result.cache
 clover.xml
 
@@ -52,21 +53,6 @@ node_modules
 vendor
 dist
 
-# WordPress Development environment directories to ignore.
+# WordPress installed by Composer for the test suite.
 tools/local-env/wp
-tools/local-env/wp-content/db.php
-tools/local-env/wp-content/.litespeed_conf.dat
-tools/local-env/wp-content/cache/*
-tools/local-env/wp-content/ewww/*
-tools/local-env/wp-content/litespeed/*
-!tools/local-env/wp-content/plugins/
-tools/local-env/wp-content/plugins/*
-tools/local-env/wp-content/themes/*
-tools/local-env/wp-content/uploads/*
-tools/local-env/wp-content/upgrade/*
-
-# Local Development Exceptions.
-!tools/local-env/wp-content/mu-plugins/*
-!tools/local-env/wp-content/plugins/.gitkeep
-!tools/local-env/wp-content/plugins/daggerhart-openid-connect-generic/.gitkeep
 

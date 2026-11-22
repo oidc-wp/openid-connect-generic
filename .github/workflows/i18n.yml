@@ -4,14 +4,17 @@ on:
   pull_request:
   push:
     branches:
-      - dev
+      - 'develop'
       - 'release/**'
       - 'feature/**'
       - 'fix/**'
 
+permissions:
+  contents: read
+
 env:
   WP_MULTISITE: 0
-  ACTION_VERSION: 2
+  ACTION_VERSION: 3
 
 jobs:
   check_i18n:
@@ -22,14 +25,14 @@ jobs:
     steps:
     - name: Checkout Code
       # https://github.com/marketplace/actions/checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v7
 
     - name: Setup Node Environment
       # https://github.com/marketplace/actions/setup-node-js-environment
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v7
       with:
         node-version-file: '.nvmrc'
-        cache: ${{ !env.ACT && 'npm' || '' }}
+        cache: 'npm'
 
     - name: NPM Install
       run: npm ci

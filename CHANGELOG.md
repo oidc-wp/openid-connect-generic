@@ -1,5 +1,97 @@
 # OpenId Connect Generic Changelog
 
+**3.12.0**
+
+* Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
+* Fix: Microsoft Entra ID multitenant apps failed issuer validation. Set the Issuer to `https://login.microsoftonline.com/{tenantid}/v2.0`, and `{tenantid}` is replaced with each token's tenant ID (#682).
+* Fix: Logins failed with "Incorrect user claim" when the IDP sent the userinfo `sub` as a number and the ID token `sub` as a string. A missing or empty `sub` is now rejected (#673).
+* Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found.
+* Fix: With Alternate Redirect URI enabled, sites with WordPress in a subdirectory (such as Bedrock) sent a callback URL under the WordPress directory, which returned a 404. The callback URL is now relative to the site's home URL (#666). Affected sites see an admin notice with the old and new redirect URIs after updating.
+* Feature: New `openid-connect-generic-redirect-uri` filter to change the redirect URI sent to the identity provider.
+* Feature: New Shortcode Only login type, which leaves the login button off the login page while the `[openid_connect_generic_login_button]` shortcode still works (#621).
+
+**3.11.5**
+
+* Fix: Logins failed with "Invalid state" on hosts that only pass WordPress-style cookie names to PHP, such as Pantheon. The login cookie is now named `wp-openid_connect_generic_browser`, and the new `openid-connect-generic-browser-cookie-name` filter can change it.
+* Improvement: When logging is enabled, a failed state check logs which part of the check failed.
+
+**3.11.4**
+
+* Security: Login state is now tied to the browser that started the login and can only be used once.
+* Security: Authorization requests now include a nonce that is checked against the ID token.
+* Security: Added a "Use PKCE" setting. It is on for new installs and off for existing sites until enabled.
+* Security: Link Existing Users now requires the identity provider to confirm the email address is verified. Added a "Link Users Without Verified Email" setting for identity providers that don't send this (such as Microsoft Entra ID) and for linking by user name. Sites already linking users have it turned on during the update and see an admin notice asking them to review it.
+* Security: Updated firebase/php-jwt to 7.0.
+* Fix: Avoid a fatal error when the redirect_to request value is not a string.
+* Requirements: Corrected Requires PHP to 8.0. The plugin has required PHP 8.0 since 3.10.5.
+
+**3.11.3**
+
+* Feature/improvement: Added configurable issuer setting for JWT validation.
+
+**3.11.2**
+
+* Improvement: Support identity providers that omit algorithm parameter in JWKS (Microsoft Entra ID).
+
+**3.11.1**
+
+* Fix bug created in 3.11.0 release when comparing issuer to derived expected value.
+
+**3.11.0**
+
+**SECURITY RELEASE**
+
+* Security: Added JWT signature verification using JWKS to prevent token forgery
+* Security: Enhanced token claim validation (exp, aud, iss, iat)
+* Security: Replaced weak state generation with cryptographically secure random_bytes()
+* Security: Fixed open redirect vulnerability in authentication flow
+* Security: Restricted SSL verification bypass to local development environments only
+* Security: Added nonce protection to debug mode to prevent information disclosure
+* Security: Added SSRF protection by default through use of wp_safe_remote_* functions
+* Feature: Added JWKS endpoint configuration setting
+* Feature: Added OpenID Connect discovery document support
+* Feature: Added customizable login button text setting
+* Improvement: Migrated to Composer-managed dependencies
+* Fix: Corrected issuer validation to properly extract base URL from endpoints
+* Fix: Identity token timestamp tracking
+
+**3.10.4**
+
+* Fix issue with finding users on multisite after switch to user options in place of user meta.
+* Improvement: Retry logins for some IDP errors to bypass issue with Safari ITP. Also improves display of error messages that come from the IDP.
+
+**3.10.3**
+
+* Fix issue with log corruption causing fatal error.
+* Fix: Fallback to a POST request for userinfo when GET fails.
+* Fix: Improves multisite compatibility by switching to *_user_options() functions.
+* Fix: Fix for WordPress user session length being very short when refresh tokens are enabled.
+
+**3.10.2**
+
+* Fix: @socialmedialabs - Regression affecting SSO Auto Login with url handling improvement changes.
+
+**3.10.1**
+
+* Chore: @daggerhart - Readme updates and clarifications.
+* Chore: @daggerhart - Release workflow updates.
+* Improved error handling for malformed urls.
+* Fix: @JUVOJustin - Change request for userinfo to GET.
+* Feature: @JUVOJustin - New filter for settings values `openid-connect-generic-settings`.
+* Feature: @JUVOJustin - New filter for state values `openid-connect-generic-new-state-value`.
+
+
+**3.10.0**
+
+- Chore: @timnolte - Dependency updates.
+- Fix: @drzraf - Prevents running the auth url filter twice.
+- Fix: @timnolte - Updates the log cleanup handling to properly retain the configured number of log entries.
+- Fix: @timnolte - Updates the log display output to reflect the log retention policy.
+- Chore: @timnolte - Adds Unit Testing & New Local Development Environment.
+- Feature: @timnolte - Updates logging to allow for tracking processing time.
+- Feature: @menno-ll - Adds a remember me feature via a new filter.
+- Improvement: @menno-ll - Updates WP Cookie Expiration to Same as Session Length.
+
 **3.9.1**
 
 - Improvement: @timnolte - Refactors Composer setup and GitHub Actions.

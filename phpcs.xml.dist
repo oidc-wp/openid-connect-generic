@@ -71,7 +71,9 @@
 		 Multiple valid text domains can be provided as a comma-delimited list. -->
   <rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="daggerhart-openid-connect-generic"/>
+			<property name="text_domain" type="array">
+				<element value="daggerhart-openid-connect-generic"/>
+			</property>
 		</properties>
   </rule>
 
@@ -80,7 +82,6 @@
 	<rule ref="WordPress.Files.FileName">
 		<properties>
 			<property name="strict_class_file_names" value="false" />
-			<property name="is_plugin" value="true"/>
 		</properties>
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />

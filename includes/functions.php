@@ -14,7 +14,11 @@
  * @return string
  */
 function oidcg_get_authentication_url() {
-	return \OpenID_Connect_Generic::instance()->client_wrapper->get_authentication_url();
+	$plugin = \OpenID_Connect_Generic::instance();
+	if ( ! $plugin ) {
+		return '';
+	}
+	return $plugin->client_wrapper->get_authentication_url();
 }
 
 /**
@@ -26,5 +30,9 @@ function oidcg_get_authentication_url() {
  * @return WP_Error|array
  */
 function oidcg_refresh_user_claim( $user, $token_response ) {
-	return \OpenID_Connect_Generic::instance()->client_wrapper->refresh_user_claim( $user, $token_response );
+	$plugin = \OpenID_Connect_Generic::instance();
+	if ( ! $plugin ) {
+		return new WP_Error( 'missing-dependencies', __( 'OpenID Connect Generic is not running because its dependencies are missing.', 'daggerhart-openid-connect-generic' ) );
+	}
+	return $plugin->client_wrapper->refresh_user_claim( $user, $token_response );
 }

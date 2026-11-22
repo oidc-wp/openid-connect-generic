@@ -26,6 +26,8 @@
  * OAuth Client Settings:
  *
  * @property string $login_type           How the client (login form) should provide login options.
+ * @property string $login_button_text    Customizable text for the OpenID Connect login button.
+ * @property string $login_button_icon    URL of an image shown on the OpenID Connect login button.
  * @property string $client_id            The ID the client will be recognized as when connecting the to Identity provider server.
  * @property string $client_secret        The secret key the IDP server expects from the client.
  * @property string $scope                The list of scopes this client should access.
@@ -33,12 +35,16 @@
  * @property string $endpoint_userinfo    The IDP User information endpoint URL.
  * @property string $endpoint_token       The IDP token validation endpoint URL.
  * @property string $endpoint_end_session The IDP logout endpoint URL.
+ * @property string $endpoint_jwks        The IDP JWKS endpoint URL for JWT signature verification.
+ * @property string $issuer               The IDP issuer URL for JWT validation (optional - derived from endpoint_login if not set).
+ * @property int    $jwks_cache_ttl       The JWKS cache TTL in seconds.
  * @property string $acr_values           The Authentication contract as defined on the IDP.
  *
  * Non-standard Settings:
  *
  * @property bool   $no_sslverify           The flag to enable/disable SSL verification during authorization.
  * @property int    $http_request_timeout   The timeout for requests made to the IDP. Default value is 5.
+ * @property bool   $allow_internal_idp     The flag to allow HTTP requests to internal/private network endpoints. Default is false.
  * @property string $identity_key           The key in the user claim array to find the user's identification data.
  * @property string $nickname_key           The key in the user claim array to find the user's nickname.
  * @property string $email_format           The key(s) in the user claim array to formulate the user's email address.
@@ -52,6 +58,8 @@
  * @property bool $alternate_redirect_uri   The flag to indicate whether to use the alternative redirect URI.
  * @property bool $token_refresh_enable     The flag whether to support refresh tokens by IDPs.
  * @property bool $link_existing_users      The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
+ * @property bool $link_unverified_users    The flag to allow linking existing accounts without a verified email, or by user name.
+ * @property bool $enable_pkce              The flag to use PKCE (S256) in the authorization code flow.
  * @property bool $create_if_does_not_exist The flag to indicate whether to create new users or not.
  * @property bool $redirect_user_back       The flag to indicate whether to redirect the user back to the page on which they started.
  * @property bool $redirect_on_logout       The flag to indicate whether to redirect to the login screen on session expiration.
@@ -93,11 +101,15 @@ class OpenID_Connect_Generic_Option_Settings {
 		'endpoint_login'            => 'OIDC_ENDPOINT_LOGIN_URL',
 		'endpoint_token'            => 'OIDC_ENDPOINT_TOKEN_URL',
 		'endpoint_userinfo'         => 'OIDC_ENDPOINT_USERINFO_URL',
+		'endpoint_jwks'             => 'OIDC_ENDPOINT_JWKS_URL',
+		'issuer'                    => 'OIDC_ISSUER',
 		'login_type'                => 'OIDC_LOGIN_TYPE',
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
 		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',
 		'link_existing_users'       => 'OIDC_LINK_EXISTING_USERS',
+		'link_unverified_users'     => 'OIDC_LINK_UNVERIFIED_USERS',
+		'enable_pkce'               => 'OIDC_ENABLE_PKCE',
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
 		'acr_values'                => 'OIDC_ACR_VALUES',
@@ -115,7 +127,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		$this->default_settings = $default_settings;
 		$this->values = array();
 
-		$this->values = (array) get_option( self::OPTION_NAME, $this->default_settings );
+		$this->values = (array) get_option( $this->get_option_name(), $this->default_settings );
 
 		// For each defined environment variable/constant be sure the settings key is set.
 		foreach ( $this->environment_settings as $key => $constant ) {
@@ -208,6 +220,6 @@ class OpenID_Connect_Generic_Option_Settings {
 			}
 		}
 
-		update_option( self::OPTION_NAME, $this->values );
+		update_option( $this->get_option_name(), $this->values );
 	}
 }
