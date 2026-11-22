@@ -409,4 +409,49 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '");}', $styles );
 	}
 
+	/**
+	 * Test where the login button appears for each login type.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @dataProvider login_type_provider
+	 *
+	 * @param string $login_type        The login type setting.
+	 * @param bool   $button_on_login   Whether wp-login.php shows the button.
+	 */
+	public function test_login_type_controls_login_page_button( $login_type, $button_on_login ) {
+		$settings = $this->create_settings_stub( array( 'login_type' => $login_type ) );
+
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'get_redirect_uri' )->willReturn( 'https://site.example.com/callback' );
+
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturn( 'https://idp.example.com/authorize' );
+
+		$login_form = new OpenID_Connect_Generic_Login_Form( $settings, $client_wrapper, $client );
+
+		$login_page = $login_form->handle_login_page( '' );
+		if ( $button_on_login ) {
+			$this->assertStringContainsString( 'openid-connect-login-button', $login_page );
+		} else {
+			$this->assertStringNotContainsString( 'openid-connect-login-button', $login_page );
+		}
+
+		// The shortcode button works for every login type.
+		$this->assertStringContainsString( 'openid-connect-login-button', $login_form->make_login_button() );
+	}
+
+	/**
+	 * Data provider for test_login_type_controls_login_page_button.
+	 *
+	 * @return array
+	 */
+	public function login_type_provider() {
+		return array(
+			'button'    => array( 'button', true ),
+			'shortcode' => array( 'shortcode', false ),
+		);
+	}
+
 }
