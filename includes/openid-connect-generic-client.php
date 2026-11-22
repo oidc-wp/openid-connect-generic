@@ -244,6 +244,15 @@ class OpenID_Connect_Generic_Client {
 	}
 
 	/**
+	 * Provide the configured scope requested from the IDP.
+	 *
+	 * @return string
+	 */
+	public function get_scope() {
+		return $this->scope;
+	}
+
+	/**
 	 * Validate the request for login authentication
 	 *
 	 * @param array<string> $request The authentication request results.
@@ -322,7 +331,6 @@ class OpenID_Connect_Generic_Client {
 				'client_secret' => $this->client_secret,
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
-				'scope'         => $this->scope,
 			),
 			'headers' => array( 'Host' => $host ),
 		);

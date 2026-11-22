@@ -752,6 +752,53 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * The token request doesn't send scope, and a filter can add it back for providers that need it.
+	 *
+	 * @group ClientTests
+	 */
+	public function test_token_request_omits_scope() {
+		$client = $this->create_client( array( 'scope' => 'openid email profile' ) );
+
+		$sent_body = null;
+		$capture = static function ( $request, $operation ) use ( &$sent_body ) {
+			if ( 'get-authentication-token' === $operation ) {
+				$sent_body = $request['body'];
+			}
+			return $request;
+		};
+		$respond = static function () {
+			return array(
+				'headers'  => array(),
+				'body'     => '{}',
+				'response' => array( 'code' => 200, 'message' => 'OK' ),
+				'cookies'  => array(),
+			);
+		};
+		add_filter( 'openid-connect-generic-alter-request', $capture, 10, 2 );
+		add_filter( 'pre_http_request', $respond );
+
+		$this->assertSame( 'openid email profile', $client->get_scope() );
+
+		$client->request_authentication_token( 'auth-code' );
+		$this->assertArrayNotHasKey( 'scope', $sent_body );
+		$this->assertSame( 'authorization_code', $sent_body['grant_type'] );
+
+		$add_scope = static function ( $request, $operation ) {
+			if ( 'get-authentication-token' === $operation ) {
+				$request['body']['scope'] = 'openid email profile';
+			}
+			return $request;
+		};
+		add_filter( 'openid-connect-generic-alter-request', $add_scope, 5, 2 );
+		$client->request_authentication_token( 'auth-code' );
+		$this->assertSame( 'openid email profile', $sent_body['scope'] );
+
+		remove_filter( 'openid-connect-generic-alter-request', $add_scope, 5 );
+		remove_filter( 'openid-connect-generic-alter-request', $capture, 10 );
+		remove_filter( 'pre_http_request', $respond );
+	}
+
+	/**
 	 * The code challenge is the S256 hash of the stored verifier, and the verifier is sent with the token request.
 	 *
 	 * @group ClientTests
