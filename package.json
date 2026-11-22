@@ -1,6 +1,6 @@
 {
   "name": "openid-connect-generic",
-  "version": "3.10.3",
+  "version": "3.11.5",
   "description": "OpenID Connect generic WordPress plugin.",
   "main": "Gruntfile.js",
   "repository": {
@@ -23,9 +23,8 @@
   "devDependencies": {
     "@floatwork/grunt-po2mo": "^0.4.1",
     "@ndigitals/grunt-checkrepo": "^0.2.5",
-    "@wordpress/scripts": "^26.19.0",
     "check-node-version": "^4.2.1",
-    "grunt": "~1.5.3",
+    "grunt": "~1.6.1",
     "grunt-checkbranch": "^1.0.4",
     "grunt-checktextdomain": "^1.0.1",
     "grunt-cli": "^1.4.3",
@@ -43,7 +42,6 @@
     "version": "npm run grunt version",
     "build": "npm run grunt build",
     "release": "npm run grunt release",
-    "check:licenses": "wp-scripts check-licenses",
     "i18n:check": "npm run grunt checktextdomain",
     "i18n:make": "npm run grunt i18n",
     "readme": "npm run grunt readme"

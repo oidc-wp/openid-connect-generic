@@ -41,6 +41,13 @@ class OpenID_Connect_Generic_Login_Form {
 	private $client;
 
 	/**
+	 * Whether a login button with an icon has been made on this page.
+	 *
+	 * @var bool
+	 */
+	private $icon_used = false;
+
+	/**
 	 * The class constructor.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
@@ -71,6 +78,10 @@ class OpenID_Connect_Generic_Login_Form {
 		// Add a shortcode for the login button.
 		add_shortcode( 'openid_connect_generic_login_button', array( $login_form, 'make_login_button' ) );
 
+		// Print the CSS for the login button icon.
+		add_action( 'wp_footer', array( $login_form, 'print_icon_styles' ) );
+		add_action( 'login_footer', array( $login_form, 'print_icon_styles' ) );
+
 		$login_form->handle_redirect_login_type_auto();
 	}
 
@@ -85,6 +96,8 @@ class OpenID_Connect_Generic_Login_Form {
 			&& ( 'auto' == $this->settings->login_type || ! empty( $_GET['force_redirect'] ) )
 			// Don't send users to the IDP on logout or post password protected authentication.
 			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
+			// Let a login started from a stored state continue to the IDP.
+			&& ! isset( $_GET[ OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR ] )
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WP Login Form doesn't have a nonce.
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {
@@ -148,9 +161,14 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	public function make_login_button( $atts = array() ) {
 
+		// Use admin-configured button text, or fall back to default.
+		$default_button_text = ! empty( trim( $this->settings->login_button_text ?? '' ) )
+			? $this->settings->login_button_text
+			: __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
+
 		$atts = shortcode_atts(
 			array(
-				'button_text' => __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' ),
+				'button_text' => $default_button_text,
 				'endpoint_login' => $this->settings->endpoint_login,
 				'scope' => $this->settings->scope,
 				'client_id' => $this->settings->client_id,
@@ -164,6 +182,14 @@ class OpenID_Connect_Generic_Login_Form {
 
 		$text = apply_filters( 'openid-connect-generic-login-button-text', $atts['button_text'] );
 		$text = esc_html( $text );
+
+		// The icon is drawn by print_icon_styles() in the button's text colour.
+		$icon     = '';
+		$icon_url = $this->settings->login_button_icon;
+		if ( ! empty( $icon_url ) ) {
+			$this->icon_used = true;
+			$icon = '<span class="openid-connect-login-button-icon" aria-hidden="true"></span>';
+		}
 
 		$href = $this->client_wrapper->get_authentication_url(
 			array(
@@ -179,11 +205,26 @@ class OpenID_Connect_Generic_Login_Form {
 
 		$login_button = <<<HTML
 <div class="openid-connect-login-button" style="margin: 1em 0; text-align: center;">
-	<a class="button button-large" href="{$href}">{$text}</a>
+	<a class="button button-large" href="{$href}">{$icon}{$text}</a>
 </div>
 HTML;
 
 		return $login_button;
+	}
+
+	/**
+	 * Print the CSS that draws the login button icon in the button's text colour.
+	 *
+	 * @return void
+	 */
+	public function print_icon_styles() {
+		// esc_url_raw() removes quotes and angle brackets, so the URL cannot break out of the CSS.
+		$icon_url = esc_url_raw( $this->settings->login_button_icon );
+		if ( ! $this->icon_used || empty( $icon_url ) ) {
+			return;
+		}
+		$mask = 'url("' . $icon_url . '") center/contain no-repeat';
+		echo '<style id="openid-connect-login-button-icon">.openid-connect-login-button-icon{display:inline-block;width:1.6em;height:1.6em;margin-right:0.5em;vertical-align:middle;background-color:currentColor;-webkit-mask:' . $mask . ';mask:' . $mask . '}</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**

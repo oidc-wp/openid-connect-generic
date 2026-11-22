@@ -19,6 +19,17 @@ module.exports = function (grunt) {
 			main: ['dist'] //Clean up build folder
 		},
 
+		shell: {
+			composer: {
+				command: 'composer install --no-dev --optimize-autoloader',
+				options: {
+					stdout: true,
+					stderr: true,
+					failOnError: true
+				}
+			}
+		},
+
 		copy: {
 			// Copy the plugin to a versioned release directory
 			main: {
@@ -30,17 +41,24 @@ module.exports = function (grunt) {
 					'!dist/**', //build directory
 					'!.git/**', //version control
 					'!.github/**', //GitHub platform files
+					'!.devcontainer/**', //devcontainer config
+					'!.vscode/**', //VSCode config
 					'!tests/**', '!scripts/**', '!phpunit.xml', '!phpunit.xml.dist', //unit testing
-					'!vendor/**', '!composer.lock', '!composer.phar', '!composer.json', //composer
+					'!composer.lock', '!composer.phar', '!composer.json', //composer config files (vendor/ is included)
+					'!vendor/bin/**', //composer bin directory
 					'!wordpress/**',
 					'!.*', '!**/*~', //hidden files
+					'!CHANGELOG.md',
 					'!CONTRIBUTING.md',
 					'!README.md',
 					'!HOWTO.md',
+					'!SECURITY.md',
 					'!phpcs.xml', '!phpcs.xml.dist', '!phpstan.neon.dist', '!grumphp.yml.dist', // CodeSniffer Configuration.
 					'!docker-compose.override.yml', // Local Docker Development configuration.
 					'!codecov.yml', // Code coverage configuration.
 					'!tools/**', // Local Development/Build tools configuration.
+					'!wp-cli.yml',
+					'!docker-compose.yml',
 				],
 				dest: 'dist/',
 				options: {
@@ -175,6 +193,6 @@ module.exports = function (grunt) {
 	grunt.registerTask('i18n', ['addtextdomain', 'makepot', 'po2mo']);
 	grunt.registerTask('readme', ['wp_readme_to_markdown']);
 	grunt.registerTask('build', ['gitinfo', 'i18n', 'readme']);
-	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'copy']);
+	grunt.registerTask('release', ['checkbranch:HEAD', 'checkrepo', 'gitinfo', 'checktextdomain', 'clean', 'shell:composer', 'copy']);
 
 };

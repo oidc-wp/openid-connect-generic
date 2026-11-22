@@ -8,7 +8,7 @@ There are many ways to contribute to the project!
 - Answering open questions under the GitHub Issue Tracker (https://github.com/oidc-wp/openid-connect-generic/issues).
 - Testing open [issues](https://github.com/oidc-wp/openid-connect-generic/issues) or [pull requests](https://github.com/oidc-wp/openid-connect-generic/pulls) and sharing your findings in a comment.
 - Submitting fixes, improvements, and enhancements.
-- Disclose a security issue to our team.
+- Reporting a security issue privately, as described in [SECURITY.md](../SECURITY.md).
 
 If you wish to contribute code, please read the information in the sections below. Then [fork](https://help.github.com/articles/fork-a-repo/) the plugin, commit your changes, and [submit a pull request](https://help.github.com/articles/using-pull-requests/) 🎉
 

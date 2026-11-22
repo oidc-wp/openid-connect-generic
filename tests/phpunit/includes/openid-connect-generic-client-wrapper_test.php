@@ -62,6 +62,24 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that get_redirect_to() ignores a non-string redirect_to request value
+	 * instead of passing an array to esc_url_raw().
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_get_redirect_to_ignores_array_request_value() {
+
+		$_REQUEST['redirect_to'] = array( '' );
+
+		$redirect_url = $this->client_wrapper->get_redirect_to();
+
+		$this->assertIsString( $redirect_url, 'A non-string redirect_to should not produce a non-string result' );
+
+		unset( $_REQUEST['redirect_to'] );
+
+	}
+
+	/**
 	 * Test if by using the remember-me filter, the user session expiration
 	 * is set to 14 days, which is the default of WordPress
 	 *
@@ -516,6 +534,378 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 		// Verify subject identity is stored with global = true.
 		$stored_subject = get_user_option( 'openid-connect-generic-subject-identity', $user->ID );
 		$this->assertEquals( $subject_identity, $stored_subject, 'Subject identity should be stored as user option' );
+	}
+
+	/**
+	 * Build a client wrapper whose client can be told headers are already sent.
+	 *
+	 * @param bool $headers_sent Whether headers count as already sent.
+	 *
+	 * @return array{0: OpenID_Connect_Generic_Client_Wrapper, 1: OpenID_Connect_Generic_Client}
+	 */
+	private function create_login_start_wrapper( bool $headers_sent, bool $enable_pkce = false ): array {
+		$logger = $this->createMock( OpenID_Connect_Generic_Option_Logger::class );
+		$client = new class( $headers_sent, $logger ) extends OpenID_Connect_Generic_Client {
+			/**
+			 * @var bool
+			 */
+			public $sent;
+
+			/**
+			 * @param bool                                 $headers_sent Whether headers count as already sent.
+			 * @param OpenID_Connect_Generic_Option_Logger $logger       Logger.
+			 */
+			public function __construct( bool $headers_sent, $logger ) {
+				$this->sent = $headers_sent;
+				parent::__construct( 'test_client', 'test_secret', 'openid', 'https://idp.example.com/authorize', '', 'https://idp.example.com/token', 'https://example.com/callback', '', '', '', 3600, 180, false, $logger );
+			}
+
+			protected function headers_sent() {
+				return $this->sent;
+			}
+
+			protected function send_browser_cookie( $browser_id ) {
+			}
+		};
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'endpoint_login'   => 'https://idp.example.com/authorize',
+				'scope'            => 'openid',
+				'client_id'        => 'test_client',
+				'acr_values'       => '',
+				'state_time_limit' => 180,
+				'enable_pkce'      => $enable_pkce ? 1 : 0,
+			)
+		);
+
+		return array( new OpenID_Connect_Generic_Client_Wrapper( $client, $settings, $logger ), $client );
+	}
+
+	/**
+	 * Run handle_login_init() and return where it redirected.
+	 *
+	 * @param OpenID_Connect_Generic_Client_Wrapper $wrapper The client wrapper.
+	 *
+	 * @return string
+	 */
+	private function capture_login_init_redirect( OpenID_Connect_Generic_Client_Wrapper $wrapper ): string {
+		$capture = static function ( $location ) {
+			throw new RuntimeException( $location );
+		};
+		add_filter( 'wp_redirect', $capture );
+
+		try {
+			$wrapper->handle_login_init();
+			return '';
+		} catch ( RuntimeException $redirect ) {
+			return $redirect->getMessage();
+		} finally {
+			remove_filter( 'wp_redirect', $capture );
+		}
+	}
+
+	/**
+	 * Get the state query argument from a URL.
+	 *
+	 * @param string $url The URL.
+	 * @param string $key The query argument.
+	 *
+	 * @return string
+	 */
+	private function get_query_arg( string $url, string $key ): string {
+		parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+
+		return isset( $query[ $key ] ) ? $query[ $key ] : '';
+	}
+
+	/**
+	 * When the cookie can be set, the IDP URL is returned and its state linked to the browser.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_links_state_to_browser() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false );
+
+		$url = $wrapper->get_authentication_url();
+		$state = $this->get_query_arg( $url, 'state' );
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
+		$this->assertTrue( $client->is_state_bound_to_browser( $state ) );
+		$this->assertTrue( $client->validate_id_token_nonce( array( 'nonce' => $this->get_query_arg( $url, 'nonce' ) ), $state ), 'The URL should carry the nonce stored for its state.' );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * With PKCE on, the URL carries the S256 challenge for the stored verifier; with it off, neither exists.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_pkce() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false, true );
+		$url = $wrapper->get_authentication_url();
+		$verifier = $client->get_code_verifier( $this->get_query_arg( $url, 'state' ) );
+		$this->assertNotSame( '', $verifier );
+		$this->assertSame( rtrim( strtr( base64_encode( hash( 'sha256', $verifier, true ) ), '+/', '-_' ), '=' ), $this->get_query_arg( $url, 'code_challenge' ) );
+		$this->assertSame( 'S256', $this->get_query_arg( $url, 'code_challenge_method' ) );
+
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false, false );
+		$url = $wrapper->get_authentication_url();
+		$this->assertSame( '', $this->get_query_arg( $url, 'code_challenge' ) );
+		$this->assertSame( '', $client->get_code_verifier( $this->get_query_arg( $url, 'state' ) ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * An existing cookie links the state even after headers are sent.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_get_authentication_url_uses_existing_cookie_after_headers_sent() {
+		$_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] = str_repeat( 'b', 32 );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( true );
+
+		$url = $wrapper->get_authentication_url();
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $url );
+		$this->assertTrue( $client->is_state_bound_to_browser( $this->get_query_arg( $url, 'state' ) ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * Without a cookie and with headers sent, the login starts through the login page,
+	 * which links the state and continues to the IDP URL built by the filters at render time.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_start_links_state_and_redirects_to_filtered_url() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $render_wrapper ) = $this->create_login_start_wrapper( true );
+
+		$add_hint = static function ( $url ) {
+			return add_query_arg( 'kc_idp_hint', 'render-time', $url );
+		};
+		add_filter( 'openid-connect-generic-auth-url', $add_hint );
+		$start_url = $render_wrapper->get_authentication_url();
+		remove_filter( 'openid-connect-generic-auth-url', $add_hint );
+
+		$this->assertStringStartsWith( wp_login_url(), $start_url );
+		$state = $this->get_query_arg( $start_url, OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR );
+
+		list( $login_wrapper, $login_client ) = $this->create_login_start_wrapper( false );
+		$_GET = array(
+			OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR => $state,
+			'login_hint' => 'user@example.com',
+			'state'      => 'attacker-state',
+			'client_id'  => 'attacker-client',
+		);
+		$redirect = $this->capture_login_init_redirect( $login_wrapper );
+		$_GET = array();
+
+		$this->assertStringStartsWith( 'https://idp.example.com/authorize?', $redirect );
+		$this->assertSame( $state, $this->get_query_arg( $redirect, 'state' ), 'The plugin state must not be overridden.' );
+		$this->assertSame( 'test_client', $this->get_query_arg( $redirect, 'client_id' ), 'The client ID must not be overridden.' );
+		$this->assertSame( 'render-time', $this->get_query_arg( $redirect, 'kc_idp_hint' ), 'Render-time filters should still apply.' );
+		$this->assertSame( 'user@example.com', $this->get_query_arg( $redirect, 'login_hint' ), 'Extra arguments should pass through.' );
+		$this->assertTrue( $login_client->is_state_bound_to_browser( $state ) );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * A login start link already used by another browser is refused.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_start_refuses_state_linked_to_other_browser() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $render_wrapper, $client ) = $this->create_login_start_wrapper( true );
+		$state = $this->get_query_arg( $render_wrapper->get_authentication_url(), OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR );
+		$client->bind_state( $state, str_repeat( 'c', 32 ) );
+
+		list( $login_wrapper ) = $this->create_login_start_wrapper( false );
+		$_GET = array( OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR => $state );
+		$redirect = $this->capture_login_init_redirect( $login_wrapper );
+		$_GET = array();
+
+		$this->assertStringContainsString( 'login-error=invalid-state', $redirect );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * The login page sets the browser cookie and does nothing else without a start argument.
+	 *
+	 * @group ClientWrapperTests
+	 * @group StateTests
+	 */
+	public function test_login_init_sets_browser_cookie() {
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+		list( $wrapper, $client ) = $this->create_login_start_wrapper( false );
+		$_GET = array();
+
+		$this->assertSame( '', $this->capture_login_init_redirect( $wrapper ) );
+		$this->assertNotSame( '', $client->get_browser_id() );
+
+		unset( $_COOKIE[ OpenID_Connect_Generic_Client::BROWSER_COOKIE ] );
+	}
+
+	/**
+	 * Build a client wrapper with existing-user linking enabled.
+	 *
+	 * @param bool $link_unverified_users  Whether linking without a verified email is allowed.
+	 * @param bool $identify_with_username Whether users are matched by user name.
+	 *
+	 * @return OpenID_Connect_Generic_Client_Wrapper
+	 */
+	private function create_linking_client_wrapper( bool $link_unverified_users, bool $identify_with_username = false ): OpenID_Connect_Generic_Client_Wrapper {
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'link_existing_users'      => 1,
+				'link_unverified_users'    => $link_unverified_users ? 1 : 0,
+				'identify_with_username'   => $identify_with_username,
+				'create_if_does_not_exist' => 0,
+				'identity_key'             => 'preferred_username',
+				'nickname_key'             => 'preferred_username',
+				'email_format'             => '{email}',
+				'displayname_format'       => '',
+			)
+		);
+
+		return new OpenID_Connect_Generic_Client_Wrapper(
+			$this->createMock( OpenID_Connect_Generic_Client::class ),
+			$settings,
+			$this->createMock( OpenID_Connect_Generic_Option_Logger::class )
+		);
+	}
+
+	/**
+	 * Scenarios for linking an existing user by email.
+	 *
+	 * @return array<string, array{0: mixed, 1: bool, 2: string|null}>
+	 */
+	public function link_by_email_provider(): array {
+		return array(
+			'verified'                       => array( true, false, null ),
+			'verified as string'             => array( 'true', false, null ),
+			'not verified'                   => array( false, false, 'link-email-not-verified' ),
+			'not verified with opt-in'       => array( false, true, 'link-email-not-verified' ),
+			'not verified as string'         => array( 'false', true, 'link-email-not-verified' ),
+			'claim missing'                  => array( null, false, 'link-requires-verified-email' ),
+			'claim missing with opt-in'      => array( null, true, null ),
+			'claim unrecognized'             => array( 'yes', false, 'link-requires-verified-email' ),
+			'claim unrecognized with opt-in' => array( 'yes', true, null ),
+		);
+	}
+
+	/**
+	 * Linking by email follows the email_verified claim and the opt-in setting.
+	 *
+	 * @dataProvider link_by_email_provider
+	 * @group ClientWrapperTests
+	 *
+	 * @param mixed       $email_verified        The email_verified claim value, or null to omit it.
+	 * @param bool        $link_unverified_users Whether linking without a verified email is allowed.
+	 * @param string|null $expected_error        Expected WP_Error code, or null when the user should be linked.
+	 */
+	public function test_link_existing_user_by_email( $email_verified, bool $link_unverified_users, ?string $expected_error ) {
+		$user_id = self::factory()->user->create( array( 'user_email' => 'linked@example.com' ) );
+		$user_claim = array(
+			'email'              => 'linked@example.com',
+			'preferred_username' => 'idp-user',
+		);
+		if ( null !== $email_verified ) {
+			$user_claim['email_verified'] = $email_verified;
+		}
+
+		$result = $this->create_linking_client_wrapper( $link_unverified_users )->create_new_user( 'new-subject', $user_claim );
+
+		if ( null === $expected_error ) {
+			$this->assertInstanceOf( WP_User::class, $result );
+			$this->assertSame( $user_id, $result->ID );
+			$this->assertSame( 'new-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+		} else {
+			$this->assertWPError( $result );
+			$this->assertSame( $expected_error, $result->get_error_code() );
+			$this->assertFalse( get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+		}
+	}
+
+	/**
+	 * Linking by user name requires the opt-in setting, whatever the email claim says.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_by_username_requires_opt_in() {
+		$user_id = self::factory()->user->create( array( 'user_login' => 'idp-user' ) );
+		$user_claim = array(
+			'email'              => 'someone@example.com',
+			'email_verified'     => true,
+			'preferred_username' => 'idp-user',
+		);
+
+		$refused = $this->create_linking_client_wrapper( false, true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertWPError( $refused );
+		$this->assertSame( 'link-requires-verified-email', $refused->get_error_code() );
+
+		$linked = $this->create_linking_client_wrapper( true, true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertInstanceOf( WP_User::class, $linked );
+		$this->assertSame( $user_id, $linked->ID );
+	}
+
+	/**
+	 * An existing link to another identity is only replaced when the email is verified.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_replaces_identity_only_when_verified() {
+		$user_id = self::factory()->user->create( array( 'user_email' => 'linked@example.com' ) );
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', 'original-subject', true );
+		$user_claim = array(
+			'email'              => 'linked@example.com',
+			'preferred_username' => 'idp-user',
+		);
+
+		$refused = $this->create_linking_client_wrapper( true )->create_new_user( 'new-subject', $user_claim );
+		$this->assertWPError( $refused );
+		$this->assertSame( 'link-identity-mismatch', $refused->get_error_code() );
+		$this->assertSame( 'original-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+
+		$user_claim['email_verified'] = true;
+		$linked = $this->create_linking_client_wrapper( false )->create_new_user( 'new-subject', $user_claim );
+		$this->assertInstanceOf( WP_User::class, $linked );
+		$this->assertSame( 'new-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
+	}
+
+	/**
+	 * Linking by user name never replaces an existing link to another identity.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_link_existing_user_by_username_never_replaces_identity() {
+		$user_id = self::factory()->user->create( array( 'user_login' => 'idp-user' ) );
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', 'original-subject', true );
+		$user_claim = array(
+			'email'              => 'someone@example.com',
+			'email_verified'     => true,
+			'preferred_username' => 'idp-user',
+		);
+
+		$result = $this->create_linking_client_wrapper( true, true )->create_new_user( 'new-subject', $user_claim );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'link-identity-mismatch', $result->get_error_code() );
+		$this->assertSame( 'original-subject', get_user_option( 'openid-connect-generic-subject-identity', $user_id ) );
 	}
 
 	/**

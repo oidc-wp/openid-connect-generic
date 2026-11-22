@@ -123,6 +123,119 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the redirect URI with and without the alternate redirect URI setting.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_plugin_redirect_uri_follows_home_url() {
+		// WordPress in a subdirectory, as on Bedrock installs.
+		update_option( 'siteurl', home_url( '/wp' ) );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings();
+
+		$settings->alternate_redirect_uri = 0;
+		$this->assertSame( admin_url( 'admin-ajax.php?action=openid-connect-authorize' ), $this->oidc_plugin->get_redirect_uri( $settings ) );
+
+		// The alternate route is a rewrite rule, which WordPress matches relative to the home URL.
+		$settings->alternate_redirect_uri = 1;
+		$this->assertSame( home_url( '/openid-connect-authorize' ), $this->oidc_plugin->get_redirect_uri( $settings ) );
+		$this->assertStringNotContainsString( '/wp/', $this->oidc_plugin->get_redirect_uri( $settings ) );
+	}
+
+	/**
+	 * Upgrading a subdirectory install that uses the alternate redirect URI records the old URI.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_records_changed_redirect_uri() {
+		update_option( 'siteurl', home_url( '/wp' ) );
+
+		$this->run_upgrade( array( 'alternate_redirect_uri' => 1 ), '3.11.4' );
+		$this->assertSame( home_url( '/wp/openid-connect-authorize' ), get_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION ) );
+
+		$this->run_upgrade( array( 'alternate_redirect_uri' => 0 ), '3.11.4' );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION ), 'Sites using the admin-ajax redirect URI are unaffected.' );
+
+		$this->run_upgrade( array( 'alternate_redirect_uri' => 1 ), null );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION ), 'New installs have nothing to update.' );
+	}
+
+	/**
+	 * Sites where WordPress is not in a subdirectory keep the same redirect URI and get no notice.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_ignores_unchanged_redirect_uri() {
+		$this->run_upgrade( array( 'alternate_redirect_uri' => 1 ), '3.11.4' );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION ) );
+	}
+
+	/**
+	 * The redirect URI notice shows both URIs, and clears itself once they match.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_redirect_uri_notice() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		if ( is_multisite() ) {
+			grant_super_admin( get_current_user_id() );
+		}
+		update_option( 'siteurl', home_url( '/wp' ) );
+		update_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION, home_url( '/wp/openid-connect-authorize' ) );
+
+		$property = new ReflectionProperty( OpenID_Connect_Generic::class, 'settings' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $this->oidc_plugin );
+		$settings = new OpenID_Connect_Generic_Option_Settings();
+		$property->setValue( $this->oidc_plugin, $settings );
+
+		try {
+			$settings->alternate_redirect_uri = 1;
+			ob_start();
+			$this->oidc_plugin->admin_notice_redirect_uri_changed();
+			$output = ob_get_clean();
+
+			// A filter sending the old URI again means there is nothing left to update.
+			$keep_old = function () {
+				return home_url( '/wp/openid-connect-authorize' );
+			};
+			add_filter( 'openid-connect-generic-redirect-uri', $keep_old );
+			ob_start();
+			$this->oidc_plugin->admin_notice_redirect_uri_changed();
+			$cleared_output = ob_get_clean();
+			remove_filter( 'openid-connect-generic-redirect-uri', $keep_old );
+		} finally {
+			$property->setValue( $this->oidc_plugin, $original );
+		}
+
+		$this->assertStringContainsString( esc_html( home_url( '/wp/openid-connect-authorize' ) ), $output );
+		$this->assertStringContainsString( esc_html( home_url( '/openid-connect-authorize' ) ), $output );
+		$this->assertSame( '', $cleared_output );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION ) );
+	}
+
+	/**
+	 * The redirect URI filter can change the URI sent to the identity provider.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_redirect_uri_filter() {
+		$settings = new OpenID_Connect_Generic_Option_Settings();
+		$settings->alternate_redirect_uri = 1;
+
+		$filter = function ( $redirect_uri, $filter_settings ) use ( $settings ) {
+			$this->assertSame( home_url( '/openid-connect-authorize' ), $redirect_uri );
+			$this->assertSame( $settings, $filter_settings );
+			return 'https://example.com/custom-callback';
+		};
+		add_filter( 'openid-connect-generic-redirect-uri', $filter, 10, 2 );
+		$result = $this->oidc_plugin->get_redirect_uri( $settings );
+		remove_filter( 'openid-connect-generic-redirect-uri', $filter, 10 );
+
+		$this->assertSame( 'https://example.com/custom-callback', $result );
+	}
+
+	/**
 	 * Test plugin instance() method.
 	 *
 	 * @group PluginTests
@@ -145,4 +258,153 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 
 	}
 
+	/**
+	 * Run upgrade() against the given stored settings and previous version.
+	 *
+	 * @param array<string, mixed> $stored_settings Settings saved in the database.
+	 * @param string|null          $last_version    Previously installed version, or null for a new install.
+	 *
+	 * @return OpenID_Connect_Generic_Option_Settings
+	 */
+	private function run_upgrade( array $stored_settings, ?string $last_version ): OpenID_Connect_Generic_Option_Settings {
+		update_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME, $stored_settings );
+		if ( null === $last_version ) {
+			delete_option( 'openid-connect-generic-plugin-version' );
+		} else {
+			update_option( 'openid-connect-generic-plugin-version', $last_version );
+		}
+		delete_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION );
+		delete_option( OpenID_Connect_Generic::NOTICE_REDIRECT_URI_OPTION );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'link_existing_users'   => 0,
+				'link_unverified_users' => 0,
+				'enable_pkce'           => 1,
+			)
+		);
+
+		$property = new ReflectionProperty( OpenID_Connect_Generic::class, 'settings' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $this->oidc_plugin );
+		$property->setValue( $this->oidc_plugin, $settings );
+
+		try {
+			$this->oidc_plugin->upgrade();
+		} finally {
+			$property->setValue( $this->oidc_plugin, $original );
+		}
+
+		return new OpenID_Connect_Generic_Option_Settings();
+	}
+
+	/**
+	 * Upgrading a site that links existing users keeps linking working and flags the notice.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_enables_link_unverified_users_for_sites_linking_users() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 1 ), '3.11.2' );
+
+		$this->assertEquals( 1, $saved->link_unverified_users );
+		$this->assertEquals( 1, get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Upgrading a site that does not link existing users leaves the new setting off.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_leaves_link_unverified_users_off_when_not_linking() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 0 ), '3.11.2' );
+
+		$this->assertEmpty( $saved->link_unverified_users );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * A new install never enables linking without a verified email.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_new_install_leaves_link_unverified_users_off() {
+
+		$saved = $this->run_upgrade( array( 'link_existing_users' => 1 ), null );
+
+		$this->assertEmpty( $saved->link_unverified_users );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Existing sites keep PKCE off after upgrading; new installs get it on.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_upgrade_leaves_pkce_off_for_existing_sites() {
+
+		$this->assertEmpty( $this->run_upgrade( array( 'client_id' => 'existing' ), '3.11.2' )->enable_pkce, 'An upgraded site should not start sending PKCE.' );
+
+		$this->run_upgrade( array(), null );
+		$settings = new OpenID_Connect_Generic_Option_Settings( array( 'enable_pkce' => 1 ) );
+		$this->assertNotEmpty( $settings->enable_pkce, 'A new install should use PKCE by default.' );
+		$this->assertArrayNotHasKey( 'enable_pkce', (array) get_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME ), 'A new install should not store an explicit PKCE value.' );
+
+	}
+
+	/**
+	 * The notice clears itself once the setting is turned off.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_link_unverified_notice_clears_when_setting_off() {
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION, 1 );
+
+		$property = new ReflectionProperty( OpenID_Connect_Generic::class, 'settings' );
+		$property->setAccessible( true );
+		$original = $property->getValue( $this->oidc_plugin );
+		$property->setValue( $this->oidc_plugin, new OpenID_Connect_Generic_Option_Settings( array( 'link_unverified_users' => 0 ) ) );
+
+		try {
+			ob_start();
+			$this->oidc_plugin->admin_notice_link_unverified_users();
+			$output = ob_get_clean();
+		} finally {
+			$property->setValue( $this->oidc_plugin, $original );
+		}
+
+		$this->assertSame( '', $output );
+		$this->assertFalse( get_option( OpenID_Connect_Generic::NOTICE_LINK_UNVERIFIED_OPTION ) );
+
+	}
+
+	/**
+	 * Test the missing dependencies notice is shown only to users who can activate plugins.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_admin_notice_missing_dependencies() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		ob_start();
+		OpenID_Connect_Generic::admin_notice_missing_dependencies();
+		$this->assertSame( '', ob_get_clean() );
+
+		// On multisite, only super admins can activate plugins.
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
+		wp_set_current_user( $admin_id );
+		ob_start();
+		OpenID_Connect_Generic::admin_notice_missing_dependencies();
+		$output = ob_get_clean();
+		$this->assertStringContainsString( 'dependencies are missing', $output );
+		$this->assertStringContainsString( '<code>composer install --no-dev</code>', $output );
+	}
 }

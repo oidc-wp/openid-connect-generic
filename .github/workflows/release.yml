@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 env:
   WP_MULTISITE: 0
   ACTION_VERSION: 3
@@ -14,26 +17,29 @@ jobs:
 
     if: github.repository == 'oidc-wp/openid-connect-generic'
 
+    # Deploys wait for approval and use this environment's SVN credentials.
+    environment: wordpress-org
+
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Setup Node Environment
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       # https://github.com/marketplace/actions/setup-node-js-environment
       with:
-        node-version: 16.x
+        node-version-file: '.nvmrc'
 
     - name: Get NPM Cache Directory
       id: npm-cache
       if: ${{ !env.ACT }}
-      run: echo "::set-output name=dir::$(npm config get cache)"
+      run: echo "dir=$(npm config get cache)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Node Modules
       if: ${{ !env.ACT }}
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       env:
         npm-cache-name: cache-node-modules
       with:
@@ -50,10 +56,10 @@ jobs:
       run: npm run release
 
     - name: WordPress.org Plugin Deploy
-      uses: nk-o/action-wordpress-plugin-deploy@master
-      # https://github.com/marketplace/actions/wordpress-plugin-deploy
+      uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
+      # https://github.com/10up/action-wordpress-plugin-deploy
       env:
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-        SOURCE_DIR: dist/
+        BUILD_DIR: dist/
         SLUG: daggerhart-openid-connect-generic

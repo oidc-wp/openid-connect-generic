@@ -82,6 +82,9 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - Userinfo Endpoint URL: `OIDC_ENDPOINT_USERINFO_URL`
 - Token Validation Endpoint URL: `OIDC_ENDPOINT_TOKEN_URL`
 - End Session Endpoint URL: `OIDC_ENDPOINT_LOGOUT_URL`
+- JWKS URI: `OIDC_ENDPOINT_JWKS_URL`
+- Issuer: `OIDC_ISSUER`
+- ACR Values: `OIDC_ACR_VALUES`
 - OpenID scope: `OIDC_CLIENT_SCOPE` (space separated)
 - OpenID login type: `OIDC_LOGIN_TYPE` ('button' or 'auto')
 - Enforce privacy: `OIDC_ENFORCE_PRIVACY` (boolean)
@@ -182,7 +185,7 @@ do not currently exist within WordPress.
 Provides 2 arguments: the boolean result of the test (default `TRUE`), and the `$user_claim` array from the server.
 
 ```
-add_filter('', function( $result, $user_claim ) {
+add_filter('openid-connect-generic-user-creation-test', function( $result, $user_claim ) {
     // Don't let anyone from example.com create an account.
     $email_array = explode( '@', $user_claim['email'] );
     if ( $email_array[1] == 'example.com' ) {
@@ -377,7 +380,9 @@ add_action('openid-connect-generic-redirect-user-back', function( $redirect_url,
 
 This plugin stores meta data about the user for both practical and debugging purposes.
 
-* `openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
-* `openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
-* `openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
-* `openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.
+Since v3.10.4 the meta is prefixed with the blog database prefix, for example `wp_2_openid-connect-generic-subject-identity`.
+
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-subject-identity` - The identity of the user provided by the IDP server.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-id-token-claim` - The user's most recent `id_token` claim, decoded and stored as an array.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-user-claim` - The user's most recent `user_claim`, stored as an array.
+* `[[BLOG_DB_PREFIX]]openid-connect-generic-last-token-response` - The user's most recent `token_response`, stored as an array.
