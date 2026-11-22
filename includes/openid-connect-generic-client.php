@@ -1056,7 +1056,8 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		// Make sure the id_token sub equals the user_claim sub, according to spec.
-		if ( strval( $id_token_claim['sub'] ) !== strval( $user_claim['sub'] ) ) {
+		$id_token_sub = $this->get_sub_as_string( $id_token_claim );
+		if ( '' === $id_token_sub || $id_token_sub !== $this->get_sub_as_string( $user_claim ) ) {
 			return new WP_Error( 'incorrect-user-claim', __( 'Incorrect user claim.', 'daggerhart-openid-connect-generic' ), func_get_args() );
 		}
 
@@ -1068,6 +1069,28 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get a claim set's sub as a string.
+	 *
+	 * Some IDPs send a numeric sub as an integer in one response and a string
+	 * in another. Any other type counts as missing.
+	 *
+	 * @param mixed $claim The claim set.
+	 *
+	 * @return string The sub, or an empty string if it is missing or not a string or integer.
+	 */
+	private function get_sub_as_string( $claim ) {
+		if ( ! is_array( $claim ) || ! isset( $claim['sub'] ) ) {
+			return '';
+		}
+
+		if ( is_int( $claim['sub'] ) ) {
+			return (string) $claim['sub'];
+		}
+
+		return is_string( $claim['sub'] ) ? $claim['sub'] : '';
 	}
 
 	/**
