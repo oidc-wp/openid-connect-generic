@@ -535,6 +535,7 @@ class OpenID_Connect_Generic {
 
 		if ( ! class_exists( \Firebase\JWT\JWT::class ) ) {
 			add_action( 'admin_notices', array( __CLASS__, 'admin_notice_missing_dependencies' ) );
+			add_action( 'network_admin_notices', array( __CLASS__, 'admin_notice_missing_dependencies' ) );
 			return;
 		}
 
