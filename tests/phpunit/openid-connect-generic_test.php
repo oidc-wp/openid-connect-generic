@@ -123,6 +123,26 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the redirect URI with and without the alternate redirect URI setting.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_plugin_redirect_uri_follows_home_url() {
+		// WordPress in a subdirectory, as on Bedrock installs.
+		update_option( 'siteurl', home_url( '/wp' ) );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings();
+
+		$settings->alternate_redirect_uri = 0;
+		$this->assertSame( admin_url( 'admin-ajax.php?action=openid-connect-authorize' ), $this->oidc_plugin->get_redirect_uri( $settings ) );
+
+		// The alternate route is a rewrite rule, which WordPress matches relative to the home URL.
+		$settings->alternate_redirect_uri = 1;
+		$this->assertSame( home_url( '/openid-connect-authorize' ), $this->oidc_plugin->get_redirect_uri( $settings ) );
+		$this->assertStringNotContainsString( '/wp/', $this->oidc_plugin->get_redirect_uri( $settings ) );
+	}
+
+	/**
 	 * Test plugin instance() method.
 	 *
 	 * @group PluginTests
