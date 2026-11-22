@@ -270,4 +270,22 @@ class OpenID_Connect_Generic_Test extends WP_UnitTestCase {
 
 	}
 
+	/**
+	 * Test the missing dependencies notice is shown only to users who can activate plugins.
+	 *
+	 * @group PluginTests
+	 */
+	public function test_admin_notice_missing_dependencies() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		ob_start();
+		OpenID_Connect_Generic::admin_notice_missing_dependencies();
+		$this->assertSame( '', ob_get_clean() );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		ob_start();
+		OpenID_Connect_Generic::admin_notice_missing_dependencies();
+		$output = ob_get_clean();
+		$this->assertStringContainsString( 'dependencies are missing', $output );
+		$this->assertStringContainsString( '<code>composer install --no-dev</code>', $output );
+	}
 }
