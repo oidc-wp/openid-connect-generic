@@ -330,18 +330,53 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test validate_user_claim accepts an integer userinfo sub equal to the id_token sub.
+	 * Test validate_user_claim compares the userinfo sub with the id_token sub.
 	 *
 	 * @group ClientTests
+	 *
+	 * @dataProvider user_claim_sub_provider
+	 *
+	 * @param array $user_claim     The userinfo claims.
+	 * @param array $id_token_claim The id_token claims.
+	 * @param bool  $valid          Whether the claims should match.
 	 */
-	public function test_validate_user_claim_with_integer_sub() {
+	public function test_validate_user_claim_sub( $user_claim, $id_token_claim, $valid ) {
 		$client = $this->create_client();
+		$result = $client->validate_user_claim( $user_claim, $id_token_claim );
 
-		$this->assertTrue( $client->validate_user_claim( array( 'sub' => 35 ), array( 'sub' => '35' ) ) );
+		if ( $valid ) {
+			$this->assertTrue( $result );
+		} else {
+			$this->assertWPError( $result );
+			$this->assertSame( 'incorrect-user-claim', $result->get_error_code() );
+		}
+	}
 
-		$result = $client->validate_user_claim( array( 'sub' => 36 ), array( 'sub' => '35' ) );
-		$this->assertWPError( $result );
-		$this->assertSame( 'incorrect-user-claim', $result->get_error_code() );
+	/**
+	 * Data provider for test_validate_user_claim_sub.
+	 *
+	 * @return array
+	 */
+	public function user_claim_sub_provider() {
+		return array(
+			'same string'                => array( array( 'sub' => 'abc' ), array( 'sub' => 'abc' ), true ),
+			'integer userinfo sub'       => array( array( 'sub' => 35 ), array( 'sub' => '35' ), true ),
+			'integer id_token sub'       => array( array( 'sub' => '35' ), array( 'sub' => 35 ), true ),
+			'same integer'               => array( array( 'sub' => 35 ), array( 'sub' => 35 ), true ),
+			'different strings'          => array( array( 'sub' => 'abc' ), array( 'sub' => 'xyz' ), false ),
+			'different integers'         => array( array( 'sub' => 36 ), array( 'sub' => '35' ), false ),
+			'leading zero'               => array( array( 'sub' => 35 ), array( 'sub' => '035' ), false ),
+			'different case'             => array( array( 'sub' => 'ABC' ), array( 'sub' => 'abc' ), false ),
+			'userinfo sub missing'       => array( array(), array( 'sub' => 'abc' ), false ),
+			'id_token sub missing'       => array( array( 'sub' => 'abc' ), array(), false ),
+			'both empty strings'         => array( array( 'sub' => '' ), array( 'sub' => '' ), false ),
+			'both null'                  => array( array( 'sub' => null ), array( 'sub' => null ), false ),
+			'boolean true and "1"'       => array( array( 'sub' => true ), array( 'sub' => '1' ), false ),
+			'both false'                 => array( array( 'sub' => false ), array( 'sub' => false ), false ),
+			'float userinfo sub'         => array( array( 'sub' => 35.0 ), array( 'sub' => '35' ), false ),
+			'array userinfo sub'         => array( array( 'sub' => array( 'abc' ) ), array( 'sub' => 'abc' ), false ),
+			'both arrays'                => array( array( 'sub' => array( 'abc' ) ), array( 'sub' => array( 'abc' ) ), false ),
+		);
 	}
 
 	/**
