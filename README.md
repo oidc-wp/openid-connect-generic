@@ -61,7 +61,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 ### 3.12.0 ###
 
-Requires PHP 8.2 and WordPress 6.7 or later. Check your server's PHP version before updating. If Alternate Redirect URI is enabled and WordPress is installed in a subdirectory, the redirect URI changes to your home URL: update it at your identity provider.
+Requires PHP 8.2 and WordPress 6.7 or later. Check your server's PHP version before updating. If Alternate Redirect URI is enabled and WordPress is installed in a subdirectory, the redirect URI changes to your site address. An admin notice shows the old and new URIs: allow the new one at your identity provider.
 
 ### 3.11.5 ###
 
@@ -83,7 +83,8 @@ SECURITY UPDATE: 3.11.x branch - Fixes authentication vulnerabilities including 
 * Fix: Microsoft Entra ID multitenant apps failed issuer validation. Set the Issuer to `https://login.microsoftonline.com/{tenantid}/v2.0`, and `{tenantid}` is replaced with each token's tenant ID (#682).
 * Fix: Logins failed with "Incorrect user claim" when the IDP sent the userinfo `sub` as a number and the ID token `sub` as a string. A missing or empty `sub` is now rejected (#673).
 * Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found.
-* Fix: With Alternate Redirect URI enabled, sites with WordPress in a subdirectory (such as Bedrock) sent a callback URL under the WordPress directory, which returned a 404. The callback URL is now relative to the site's home URL (#666).
+* Fix: With Alternate Redirect URI enabled, sites with WordPress in a subdirectory (such as Bedrock) sent a callback URL under the WordPress directory, which returned a 404. The callback URL is now relative to the site's home URL (#666). Affected sites see an admin notice with the old and new redirect URIs after updating.
+* Feature: New `openid-connect-generic-redirect-uri` filter to change the redirect URI sent to the identity provider.
 
 ### 3.11.5 ###
 
