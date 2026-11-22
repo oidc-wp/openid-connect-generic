@@ -92,6 +92,8 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - Link existing user: `OIDC_LINK_EXISTING_USERS` (boolean)
 - Redirect user back to origin page: `OIDC_REDIRECT_USER_BACK` (boolean)
 - Redirect on logout: `OIDC_REDIRECT_ON_LOGOUT` (boolean)
+- Password login: `OIDC_PASSWORD_LOGIN` ('' for allowed for everyone, 'linked' or 'roles')
+- Roles allowed to use a password: `OIDC_PASSWORD_LOGIN_ROLES` (array of role names, for example `array( 'subscriber', 'customer' )`, plus `'_no_role'` to allow users with no role)
 
 ## Hooks
 

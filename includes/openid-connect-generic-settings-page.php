@@ -192,6 +192,10 @@ class OpenID_Connect_Generic_Settings_Page {
 					$callback = 'do_select';
 					break;
 
+				case 'checkboxes':
+					$callback = 'do_checkboxes';
+					break;
+
 				case 'text':
 				default:
 					$callback = 'do_text_field';
@@ -359,6 +363,28 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_ENFORCE_PRIVACY' ),
 				'section'     => 'authorization_settings',
 			),
+			'password_login'    => array(
+				'title'       => __( 'Password Login', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Block password logins for some users, so they must log in with OpenID Connect. Application Passwords still work.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'select',
+				'options'     => array(
+					''       => __( 'Allowed for everyone', 'daggerhart-openid-connect-generic' ),
+					'linked' => __( 'Blocked for users linked to the identity provider', 'daggerhart-openid-connect-generic' ),
+					'roles'  => __( 'Blocked except for the roles below', 'daggerhart-openid-connect-generic' ),
+				),
+				'disabled'    => defined( 'OIDC_PASSWORD_LOGIN' ),
+				'section'     => 'authorization_settings',
+			),
+			'password_login_roles' => array(
+				'title'       => __( 'Roles Allowed to Use a Password', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Used when Password Login is "Blocked except for the roles below". Roles added later are blocked until ticked here.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'checkboxes',
+				'options'     => array_map( 'translate_user_role', wp_roles()->get_names() ) + array(
+					OpenID_Connect_Generic_Login_Form::NO_ROLE => __( 'Users with no role', 'daggerhart-openid-connect-generic' ),
+				),
+				'disabled'    => defined( 'OIDC_PASSWORD_LOGIN_ROLES' ),
+				'section'     => 'authorization_settings',
+			),
 			'alternate_redirect_uri'   => array(
 				'title'       => __( 'Alternate Redirect URI', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'Provide an alternative redirect route. Useful if your server is causing issues with the default admin-ajax method. You must flush rewrite rules after changing this setting. This can be done by saving the Permalinks settings page.', 'daggerhart-openid-connect-generic' ),
@@ -492,8 +518,13 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		// Loop through settings fields to control what we're saving.
 		foreach ( $this->settings_fields as $key => $field ) {
-			if ( isset( $input[ $key ] ) ) {
+			if ( isset( $input[ $key ] ) && is_array( $input[ $key ] ) ) {
+				// Only keep values offered by the field.
+				$options[ $key ] = array_values( array_intersect( $input[ $key ], array_keys( $field['options'] ?? array() ) ) );
+			} elseif ( isset( $input[ $key ] ) ) {
 				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
+			} elseif ( 'checkboxes' === $field['type'] ) {
+				$options[ $key ] = array();
 			} else {
 				$options[ $key ] = '';
 			}
@@ -623,6 +654,33 @@ class OpenID_Connect_Generic_Settings_Page {
 				<option value="<?php print esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php print esc_html( $text ); ?></option>
 			<?php endforeach; ?>
 		</select>
+		<?php
+		$this->do_field_description( $field );
+	}
+
+	/**
+	 * Output a list of checkboxes, saved as an array of the ticked values.
+	 *
+	 * @param array $field The settings field definition array.
+	 *
+	 * @return void
+	 */
+	public function do_checkboxes( $field ) {
+		$current_values = (array) $this->settings->{ $field['key'] };
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php print esc_html( $field['title'] ); ?></span></legend>
+			<?php foreach ( $field['options'] as $value => $text ) : ?>
+				<label>
+					<input type="checkbox"
+						name="<?php print esc_attr( $field['name'] ); ?>[]"
+						value="<?php print esc_attr( $value ); ?>"
+						<?php checked( in_array( $value, $current_values, true ) ); ?>
+						<?php disabled( ! empty( $field['disabled'] ) ); ?>>
+					<?php print esc_html( $text ); ?>
+				</label><br>
+			<?php endforeach; ?>
+		</fieldset>
 		<?php
 		$this->do_field_description( $field );
 	}

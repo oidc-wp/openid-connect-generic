@@ -20,6 +20,13 @@
 class OpenID_Connect_Generic_Login_Form {
 
 	/**
+	 * The Roles Allowed to Use a Password value for users with no role on the site.
+	 *
+	 * @var string
+	 */
+	const NO_ROLE = '_no_role';
+
+	/**
 	 * Plugin settings object.
 	 *
 	 * @var OpenID_Connect_Generic_Option_Settings
@@ -46,6 +53,13 @@ class OpenID_Connect_Generic_Login_Form {
 	 * @var bool
 	 */
 	private $icon_used = false;
+
+	/**
+	 * The ID of the user the current login authenticated with an Application Password.
+	 *
+	 * @var int
+	 */
+	private $application_password_user_id = 0;
 
 	/**
 	 * The class constructor.
@@ -82,6 +96,14 @@ class OpenID_Connect_Generic_Login_Form {
 		add_action( 'wp_footer', array( $login_form, 'print_icon_styles' ) );
 		add_action( 'login_footer', array( $login_form, 'print_icon_styles' ) );
 
+		// Block password logins and password resets for the users set by the Password Login setting.
+		if ( ! empty( $settings->password_login ) ) {
+			add_filter( 'authenticate', array( $login_form, 'start_password_login_check' ), PHP_INT_MIN );
+			add_action( 'application_password_did_authenticate', array( $login_form, 'record_application_password_login' ) );
+			add_filter( 'authenticate', array( $login_form, 'block_password_login' ), 30 );
+			add_filter( 'allow_password_reset', array( $login_form, 'block_password_reset' ), 10, 2 );
+		}
+
 		$login_form->handle_redirect_login_type_auto();
 	}
 
@@ -107,6 +129,109 @@ class OpenID_Connect_Generic_Login_Form {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
+	}
+
+	/**
+	 * Forget any earlier Application Password login when a new login starts.
+	 *
+	 * A request can log in more than once, for example with XML-RPC system.multicall,
+	 * so an Application Password login must only count for the login it happened in.
+	 *
+	 * @param WP_User|WP_Error|null $user The result of the earlier authentication checks.
+	 *
+	 * @return WP_User|WP_Error|null
+	 */
+	public function start_password_login_check( $user ) {
+		$this->application_password_user_id = 0;
+		return $user;
+	}
+
+	/**
+	 * Record the user the current login authenticated with an Application Password.
+	 *
+	 * @param WP_User $user The user who authenticated.
+	 *
+	 * @return void
+	 */
+	public function record_application_password_login( $user ) {
+		$this->application_password_user_id = $user instanceof WP_User ? $user->ID : 0;
+	}
+
+	/**
+	 * Block password logins for users who must log in with OpenID Connect.
+	 *
+	 * Runs after WordPress has checked the password, so a wrong password still gets the
+	 * normal error and nothing reveals which users must use OpenID Connect. OpenID Connect
+	 * logins don't use this filter, and a user's own Application Passwords are still allowed.
+	 *
+	 * @param WP_User|WP_Error|null $user The result of the earlier authentication checks.
+	 *
+	 * @return WP_User|WP_Error|null
+	 */
+	public function block_password_login( $user ) {
+		if ( ! $user instanceof WP_User || $user->ID === $this->application_password_user_id ) {
+			return $user;
+		}
+
+		if ( ! $this->is_password_login_blocked( $user ) ) {
+			return $user;
+		}
+
+		return new WP_Error( 'password-login-blocked', $this->get_password_login_blocked_message() );
+	}
+
+	/**
+	 * Block password resets for users who must log in with OpenID Connect.
+	 *
+	 * Stops reset emails being sent for a password the user can't log in with.
+	 *
+	 * @param bool|WP_Error $allow   Whether the password can be reset.
+	 * @param int           $user_id The ID of the user resetting their password.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public function block_password_reset( $allow, $user_id ) {
+		$user = get_userdata( $user_id );
+		if ( true !== $allow || ! $user instanceof WP_User || ! $this->is_password_login_blocked( $user ) ) {
+			return $allow;
+		}
+
+		return new WP_Error( 'password-reset-blocked', $this->get_password_login_blocked_message() );
+	}
+
+	/**
+	 * Whether the Password Login setting blocks this user from using a password.
+	 *
+	 * @param WP_User $user The user.
+	 *
+	 * @return bool
+	 */
+	private function is_password_login_blocked( WP_User $user ) {
+		if ( 'linked' === $this->settings->password_login ) {
+			return (bool) get_user_option( 'openid-connect-generic-subject-identity', $user->ID );
+		}
+
+		$allowed_roles = (array) $this->settings->password_login_roles;
+
+		// A user with no role on this site, for example a multisite super admin, is blocked unless ticked.
+		if ( empty( $user->roles ) ) {
+			return ! in_array( self::NO_ROLE, $allowed_roles, true );
+		}
+
+		// Any role not ticked under Roles Allowed to Use a Password.
+		return (bool) array_diff( $user->roles, $allowed_roles );
+	}
+
+	/**
+	 * The message shown to users whose password login or password reset is blocked.
+	 *
+	 * @return string
+	 */
+	private function get_password_login_blocked_message() {
+		$button_text = apply_filters( 'openid-connect-generic-login-button-text', $this->get_login_button_text() );
+
+		// translators: %s is the text of the OpenID Connect login button.
+		return sprintf( __( 'Please log in with the "%s" button.', 'daggerhart-openid-connect-generic' ), esc_html( $button_text ) );
 	}
 
 	/**
@@ -152,6 +277,17 @@ class OpenID_Connect_Generic_Login_Form {
 	}
 
 	/**
+	 * The admin-configured login button text, or the default text.
+	 *
+	 * @return string
+	 */
+	private function get_login_button_text() {
+		return ! empty( trim( $this->settings->login_button_text ?? '' ) )
+			? $this->settings->login_button_text
+			: __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
+	}
+
+	/**
 	 * Create a login button (link).
 	 *
 	 * @param array $atts Array of optional attributes to override login buton
@@ -161,14 +297,9 @@ class OpenID_Connect_Generic_Login_Form {
 	 */
 	public function make_login_button( $atts = array() ) {
 
-		// Use admin-configured button text, or fall back to default.
-		$default_button_text = ! empty( trim( $this->settings->login_button_text ?? '' ) )
-			? $this->settings->login_button_text
-			: __( 'Login with OpenID Connect', 'daggerhart-openid-connect-generic' );
-
 		$atts = shortcode_atts(
 			array(
-				'button_text' => $default_button_text,
+				'button_text' => $this->get_login_button_text(),
 				'endpoint_login' => $this->settings->endpoint_login,
 				'scope' => $this->settings->scope,
 				'client_id' => $this->settings->client_id,

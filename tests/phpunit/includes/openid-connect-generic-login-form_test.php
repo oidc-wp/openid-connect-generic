@@ -63,6 +63,10 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 			public function __set( $key, $value ) {
 				$this->values[ $key ] = $value;
 			}
+
+			public function __isset( $key ) {
+				return isset( $this->values[ $key ] );
+			}
 		};
 	}
 
@@ -452,6 +456,304 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 			'button'    => array( 'button', true ),
 			'shortcode' => array( 'shortcode', false ),
 		);
+	}
+
+	/**
+	 * Create a login form instance for testing its methods directly.
+	 *
+	 * @param array $values Settings values to set.
+	 * @return OpenID_Connect_Generic_Login_Form
+	 */
+	private function create_login_form( $values = array() ) {
+		return new OpenID_Connect_Generic_Login_Form(
+			$this->create_settings_stub( $values ),
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+	}
+
+	/**
+	 * Test that password logins are not filtered by default.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_allowed_by_default() {
+		OpenID_Connect_Generic_Login_Form::register(
+			$this->create_settings_stub(),
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+
+		$callbacks = $GLOBALS['wp_filter']['authenticate']->callbacks[30] ?? array();
+		$this->assertStringNotContainsString( 'block_password_login', implode( ',', array_keys( $callbacks ) ) );
+	}
+
+	/**
+	 * Test that roles not allowed a password are blocked, using the button text.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_blocked_for_roles() {
+		$login_form = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array( 'subscriber', 'customer' ),
+				'login_button_text'    => 'Log in with SSO',
+			)
+		);
+		$editor     = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
+		$subscriber = self::factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+
+		$result = $login_form->block_password_login( $editor );
+		$this->assertWPError( $result );
+		$this->assertSame( 'password-login-blocked', $result->get_error_code() );
+		$this->assertStringContainsString( '"Log in with SSO"', $result->get_error_message() );
+
+		$this->assertSame( $subscriber, $login_form->block_password_login( $subscriber ) );
+	}
+
+	/**
+	 * Test that only users linked to the identity provider are blocked.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_blocked_for_linked_users() {
+		$login_form = $this->create_login_form( array( 'password_login' => 'linked' ) );
+		$linked     = self::factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+		$unlinked   = self::factory()->user->create_and_get( array( 'role' => 'administrator' ) );
+		update_user_option( $linked->ID, 'openid-connect-generic-subject-identity', 'idp-user-1', true );
+
+		$this->assertWPError( $login_form->block_password_login( $linked ) );
+		$this->assertSame( $unlinked, $login_form->block_password_login( $unlinked ) );
+	}
+
+	/**
+	 * Test that failed logins are passed through unchanged.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_passes_through_errors() {
+		$login_form = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array( 'subscriber' ),
+			)
+		);
+		$error      = new WP_Error( 'incorrect_password', 'Wrong password.' );
+
+		$this->assertSame( $error, $login_form->block_password_login( $error ) );
+		$this->assertNull( $login_form->block_password_login( null ) );
+	}
+
+	/**
+	 * Register the login form with password logins blocked for every role but subscriber,
+	 * and allow Application Passwords on this request as if it were an API request.
+	 *
+	 * @return void
+	 */
+	private function register_password_login_with_application_passwords() {
+		add_filter( 'wp_is_application_passwords_available', '__return_true' );
+		add_filter( 'application_password_is_api_request', '__return_true' );
+
+		OpenID_Connect_Generic_Login_Form::register(
+			$this->create_settings_stub(
+				array(
+					'password_login'       => 'roles',
+					'password_login_roles' => array( 'subscriber' ),
+				)
+			),
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+	}
+
+	/**
+	 * Create a user with a known password and an Application Password.
+	 *
+	 * @param string $role The user's role.
+	 *
+	 * @return array The user, and their Application Password.
+	 */
+	private function create_user_with_application_password( $role ) {
+		$user = self::factory()->user->create_and_get(
+			array(
+				'role'      => $role,
+				'user_pass' => 'real-password',
+			)
+		);
+
+		list( $application_password ) = WP_Application_Passwords::create_new_application_password( $user->ID, array( 'name' => 'Test' ) );
+
+		return array( $user, $application_password );
+	}
+
+	/**
+	 * Test that a blocked user can still use their own Application Password.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_allows_application_passwords() {
+		$this->register_password_login_with_application_passwords();
+		list( $admin, $application_password ) = $this->create_user_with_application_password( 'administrator' );
+
+		$this->assertWPError( wp_authenticate( $admin->user_login, 'real-password' ) );
+
+		$result = wp_authenticate( $admin->user_login, $application_password );
+		$this->assertInstanceOf( WP_User::class, $result );
+		$this->assertSame( $admin->ID, $result->ID );
+	}
+
+	/**
+	 * Test that one user's Application Password login doesn't let a later password login
+	 * in the same request skip the block, as with XML-RPC system.multicall.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_application_password_exemption_is_per_login() {
+		$this->register_password_login_with_application_passwords();
+		list( $subscriber, $subscriber_application_password ) = $this->create_user_with_application_password( 'subscriber' );
+		list( $admin, $admin_application_password )           = $this->create_user_with_application_password( 'administrator' );
+
+		// Another user's Application Password login first.
+		$this->assertInstanceOf( WP_User::class, wp_authenticate( $subscriber->user_login, $subscriber_application_password ) );
+		$result = wp_authenticate( $admin->user_login, 'real-password' );
+		$this->assertWPError( $result );
+		$this->assertSame( 'password-login-blocked', $result->get_error_code() );
+
+		// The blocked user's own Application Password login first.
+		$this->assertInstanceOf( WP_User::class, wp_authenticate( $admin->user_login, $admin_application_password ) );
+		$this->assertWPError( wp_authenticate( $admin->user_login, 'real-password' ) );
+	}
+
+	/**
+	 * Test that ticking a role allows it to use a password, and no ticked roles blocks everyone.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_allowed_roles_are_configurable() {
+		$editor = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
+
+		$allow_editors = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array( 'subscriber', 'editor' ),
+			)
+		);
+		$this->assertSame( $editor, $allow_editors->block_password_login( $editor ) );
+
+		$allow_none = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array(),
+			)
+		);
+		$this->assertWPError( $allow_none->block_password_login( $editor ) );
+	}
+
+	/**
+	 * Test that users with no role are blocked unless "Users with no role" is ticked.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_login_users_with_no_role() {
+		$no_role = self::factory()->user->create_and_get( array( 'role' => '' ) );
+		$this->assertSame( array(), $no_role->roles );
+
+		$block_no_role = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array( 'subscriber' ),
+			)
+		);
+		$this->assertWPError( $block_no_role->block_password_login( $no_role ) );
+		$this->assertWPError( $block_no_role->block_password_reset( true, $no_role->ID ) );
+
+		$allow_no_role = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array( 'subscriber', OpenID_Connect_Generic_Login_Form::NO_ROLE ),
+			)
+		);
+		$this->assertSame( $no_role, $allow_no_role->block_password_login( $no_role ) );
+	}
+
+	/**
+	 * Test that password resets are left alone by default.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_reset_allowed_by_default() {
+		OpenID_Connect_Generic_Login_Form::register(
+			$this->create_settings_stub(),
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+		$editor = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
+
+		$this->assertIsString( get_password_reset_key( $editor ) );
+	}
+
+	/**
+	 * Test that users who can't log in with a password can't reset it either.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_reset_blocked_for_roles() {
+		OpenID_Connect_Generic_Login_Form::register(
+			$this->create_settings_stub(
+				array(
+					'password_login'       => 'roles',
+					'password_login_roles' => array( 'subscriber' ),
+					'login_button_text'    => 'Log in with SSO',
+				)
+			),
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+		$editor     = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
+		$subscriber = self::factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+
+		$result = get_password_reset_key( $editor );
+		$this->assertWPError( $result );
+		$this->assertSame( 'password-reset-blocked', $result->get_error_code() );
+		$this->assertStringContainsString( '"Log in with SSO"', $result->get_error_message() );
+
+		$this->assertIsString( get_password_reset_key( $subscriber ) );
+	}
+
+	/**
+	 * Test that only users linked to the identity provider can't reset their password.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_reset_blocked_for_linked_users() {
+		$login_form = $this->create_login_form( array( 'password_login' => 'linked' ) );
+		$linked     = self::factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+		$unlinked   = self::factory()->user->create_and_get( array( 'role' => 'administrator' ) );
+		update_user_option( $linked->ID, 'openid-connect-generic-subject-identity', 'idp-user-1', true );
+
+		$this->assertWPError( $login_form->block_password_reset( true, $linked->ID ) );
+		$this->assertTrue( $login_form->block_password_reset( true, $unlinked->ID ) );
+	}
+
+	/**
+	 * Test that a password reset already refused by WordPress or another plugin stays refused.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_password_reset_passes_through_earlier_refusals() {
+		$login_form = $this->create_login_form(
+			array(
+				'password_login'       => 'roles',
+				'password_login_roles' => array(),
+			)
+		);
+		$editor     = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
+		$error      = new WP_Error( 'no_password_reset', 'Not allowed.' );
+
+		$this->assertFalse( $login_form->block_password_reset( false, $editor->ID ) );
+		$this->assertSame( $error, $login_form->block_password_reset( $error, $editor->ID ) );
+		$this->assertTrue( $login_form->block_password_reset( true, 0 ) );
 	}
 
 }
