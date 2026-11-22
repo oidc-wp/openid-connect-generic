@@ -16,9 +16,9 @@
  * Plugin Name:       OpenID Connect Generic
  * Plugin URI:        https://github.com/oidc-wp/openid-connect-generic
  * Description:       Connect to an OpenID Connect identity provider using Authorization Code Flow.
- * Version:           3.11.3
- * Requires at least: 5.0
- * Requires PHP:      7.4
+ * Version:           3.11.5
+ * Requires at least: 6.7
+ * Requires PHP:      8.2
  * Author:            daggerhart
  * Author URI:        https://www.daggerhartlab.com
  * Text Domain:       daggerhart-openid-connect-generic
@@ -93,7 +93,14 @@ class OpenID_Connect_Generic {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.11.3';
+	const VERSION = '3.11.5';
+
+	/**
+	 * Option flagging the admin notice about linking users without a verified email.
+	 *
+	 * @var string
+	 */
+	const NOTICE_LINK_UNVERIFIED_OPTION = 'openid-connect-generic-notice-link-unverified';
 
 	/**
 	 * Plugin settings.
@@ -184,6 +191,8 @@ class OpenID_Connect_Generic {
 		if ( is_admin() ) {
 			OpenID_Connect_Generic_Settings_Page::register( $this->settings, $this->logger );
 			add_action( 'admin_notices', array( $this, 'admin_notice_jwks_required' ) );
+			add_action( 'admin_notices', array( $this, 'admin_notice_link_unverified_users' ) );
+			add_action( 'admin_init', array( $this, 'dismiss_admin_notice_link_unverified_users' ) );
 		}
 	}
 
@@ -255,6 +264,30 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
+	 * Display admin notice when the plugin's dependencies are missing.
+	 *
+	 * @return void
+	 */
+	public static function admin_notice_missing_dependencies() {
+		if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+		?>
+		<div class="notice notice-error">
+			<p>
+				<?php
+				printf(
+					/* translators: %s: the composer install command */
+					esc_html__( 'OpenID Connect Generic is not running because its dependencies are missing. Install the plugin from WordPress.org, or run %s in the plugin folder.', 'daggerhart-openid-connect-generic' ),
+					'<code>composer install --no-dev</code>'
+				);
+				?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Display admin notice when JWKS endpoint is not configured.
 	 *
 	 * @return void
@@ -308,6 +341,68 @@ class OpenID_Connect_Generic {
 	}
 
 	/**
+	 * Display admin notice after an upgrade enabled linking users without a verified email.
+	 *
+	 * @return void
+	 */
+	public function admin_notice_link_unverified_users() {
+		if ( ! current_user_can( 'manage_options' ) || ! get_option( self::NOTICE_LINK_UNVERIFIED_OPTION ) ) {
+			return;
+		}
+
+		// Nothing to review once the setting is off.
+		if ( empty( $this->settings->link_unverified_users ) ) {
+			delete_option( self::NOTICE_LINK_UNVERIFIED_OPTION );
+			return;
+		}
+
+		$settings_url = admin_url( 'options-general.php?page=openid-connect-generic-settings' );
+		$dismiss_url = wp_nonce_url( add_query_arg( 'openid-connect-generic-dismiss', 'link-unverified' ), 'openid-connect-generic-dismiss-link-unverified' );
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong><?php esc_html_e( 'OpenID Connect Generic - Please review a new security setting', 'daggerhart-openid-connect-generic' ); ?></strong>
+			</p>
+			<p>
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* translators: %s is a link to the settings page */
+						__( 'This update added the <strong>Link Users Without Verified Email</strong> setting. It was turned on so existing users can keep logging in as before. Leave it on only if your identity provider stops people from using an email address or user name that belongs to someone else. Otherwise, turn it off in the <a href="%s">plugin settings</a>.', 'daggerhart-openid-connect-generic' ),
+						esc_url( $settings_url )
+					)
+				);
+				?>
+			</p>
+			<p>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'I have reviewed this setting', 'daggerhart-openid-connect-generic' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Dismiss the notice about linking users without a verified email.
+	 *
+	 * @return void
+	 */
+	public function dismiss_admin_notice_link_unverified_users() {
+		if ( ! isset( $_GET['openid-connect-generic-dismiss'] ) || 'link-unverified' !== sanitize_key( wp_unslash( $_GET['openid-connect-generic-dismiss'] ) ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'openid-connect-generic-dismiss-link-unverified' );
+		delete_option( self::NOTICE_LINK_UNVERIFIED_OPTION );
+
+		wp_safe_redirect( remove_query_arg( array( 'openid-connect-generic-dismiss', '_wpnonce' ) ) );
+		exit;
+	}
+
+	/**
 	 * Handle plugin upgrades
 	 *
 	 * @return void
@@ -327,6 +422,21 @@ class OpenID_Connect_Generic {
 				$settings->endpoint_userinfo = $settings->ep_userinfo;
 
 				unset( $settings->ep_login, $settings->ep_token, $settings->ep_userinfo );
+				$settings->save();
+			}
+
+			if ( ! empty( $last_version ) && version_compare( $last_version, '3.11.4', '<' ) ) {
+				// Existing sites keep their current authorization request; PKCE is opt-in for them.
+				if ( ! defined( 'OIDC_ENABLE_PKCE' ) ) {
+					$settings->enable_pkce = false;
+				}
+
+				// Keep existing sites that link users working, and ask the admin to review the new setting.
+				if ( ! empty( $settings->link_existing_users ) ) {
+					$settings->link_unverified_users = true;
+					update_option( self::NOTICE_LINK_UNVERIFIED_OPTION, 1 );
+				}
+
 				$settings->save();
 			}
 
@@ -418,7 +528,15 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	public static function bootstrap() {
-		require_once __DIR__ . '/vendor/autoload.php';
+		// Composer installs load dependencies through the project's autoloader instead.
+		if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+			require_once __DIR__ . '/vendor/autoload.php';
+		}
+
+		if ( ! class_exists( \Firebase\JWT\JWT::class ) ) {
+			add_action( 'admin_notices', array( __CLASS__, 'admin_notice_missing_dependencies' ) );
+			return;
+		}
 
 		$settings = new OpenID_Connect_Generic_Option_Settings(
 			// Default settings values.
@@ -449,12 +567,14 @@ class OpenID_Connect_Generic {
 				'displayname_format'     => '',
 				'identify_with_username' => false,
 				'state_time_limit'       => 180,
+				'enable_pkce'            => defined( 'OIDC_ENABLE_PKCE' ) ? intval( OIDC_ENABLE_PKCE ) : 1,
 
 				// Plugin settings.
 				'enforce_privacy'          => defined( 'OIDC_ENFORCE_PRIVACY' ) ? intval( OIDC_ENFORCE_PRIVACY ) : 0,
 				'alternate_redirect_uri'   => 0,
 				'token_refresh_enable'     => 1,
 				'link_existing_users'      => defined( 'OIDC_LINK_EXISTING_USERS' ) ? intval( OIDC_LINK_EXISTING_USERS ) : 0,
+				'link_unverified_users'    => defined( 'OIDC_LINK_UNVERIFIED_USERS' ) ? intval( OIDC_LINK_UNVERIFIED_USERS ) : 0,
 				'create_if_does_not_exist' => defined( 'OIDC_CREATE_IF_DOES_NOT_EXIST' ) ? intval( OIDC_CREATE_IF_DOES_NOT_EXIST ) : 1,
 				'redirect_user_back'       => defined( 'OIDC_REDIRECT_USER_BACK' ) ? intval( OIDC_REDIRECT_USER_BACK ) : 0,
 				'redirect_on_logout'       => defined( 'OIDC_REDIRECT_ON_LOGOUT' ) ? intval( OIDC_REDIRECT_ON_LOGOUT ) : 1,
@@ -479,7 +599,7 @@ class OpenID_Connect_Generic {
 	/**
 	 * Create (if needed) and return a singleton of self.
 	 *
-	 * @return OpenID_Connect_Generic
+	 * @return OpenID_Connect_Generic|null Null if the plugin's dependencies are missing.
 	 */
 	public static function instance() {
 		if ( null === self::$_instance ) {

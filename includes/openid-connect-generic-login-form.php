@@ -96,6 +96,8 @@ class OpenID_Connect_Generic_Login_Form {
 			&& ( 'auto' == $this->settings->login_type || ! empty( $_GET['force_redirect'] ) )
 			// Don't send users to the IDP on logout or post password protected authentication.
 			&& ( ! isset( $_GET['action'] ) || ! in_array( $_GET['action'], array( 'logout', 'postpass' ) ) )
+			// Let a login started from a stored state continue to the IDP.
+			&& ! isset( $_GET[ OpenID_Connect_Generic_Client_Wrapper::LOGIN_START_QUERY_VAR ] )
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WP Login Form doesn't have a nonce.
 			&& ! isset( $_POST['wp-submit'] ) ) {
 			if ( ! isset( $_GET['login-error'] ) ) {

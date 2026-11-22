@@ -128,10 +128,11 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 	 *
 	 * @param array  $jwks The JWKS to return.
 	 * @param string $jwks_uri The JWKS URI.
+	 * @param string $issuer The expected issuer.
 	 *
 	 * @return OpenID_Connect_Generic_JWT_Validator
 	 */
-	private function create_validator_with_mocked_jwks( $jwks, $jwks_uri = 'https://example.com/jwks' ) {
+	private function create_validator_with_mocked_jwks( $jwks, $jwks_uri = 'https://example.com/jwks', $issuer = 'https://example.com' ) {
 		// Mock the JWKS fetch by setting a transient.
 		$cache_key = 'openid_connect_jwks_' . md5( $jwks_uri );
 		set_transient( $cache_key, $jwks, 3600 );
@@ -139,7 +140,7 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 		return new OpenID_Connect_Generic_JWT_Validator(
 			$jwks_uri,
 			'test-client-id',
-			'https://example.com',
+			$issuer,
 			3600,
 			false,
 			$this->logger
@@ -270,5 +271,76 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 
 		$this->assertInstanceOf( WP_Error::class, $result, 'Should fail with wrong issuer' );
 		$this->assertEquals( 'invalid-iss', $result->get_error_code() );
+	}
+
+	/**
+	 * Test issuer matching, including the Entra {tenantid} placeholder.
+	 *
+	 * @dataProvider issuer_matches_provider
+	 *
+	 * @param mixed  $iss      The token's iss claim.
+	 * @param string $expected The expected issuer.
+	 * @param mixed  $tid      The token's tid claim.
+	 * @param bool   $matches  Whether the issuer should match.
+	 */
+	public function test_issuer_matches( $iss, $expected, $tid, $matches ) {
+		$this->assertSame( $matches, OpenID_Connect_Generic_JWT_Validator::issuer_matches( $iss, $expected, $tid ) );
+	}
+
+	/**
+	 * Data provider for test_issuer_matches.
+	 *
+	 * @return array
+	 */
+	public function issuer_matches_provider() {
+		$tenant = '72f988bf-86f1-41af-91ab-2d7cd011db47';
+		$other = '9188040d-6c67-4c5b-b112-36a304b66dad';
+		$template = 'https://login.microsoftonline.com/{tenantid}/v2.0';
+
+		return array(
+			'exact match'                   => array( 'https://example.com', 'https://example.com', null, true ),
+			'trailing slash'                => array( 'https://example.com/', 'https://example.com', null, true ),
+			'different issuer'              => array( 'https://evil.com', 'https://example.com', null, false ),
+			'non-string iss'                => array( array( 'https://example.com' ), 'https://example.com', null, false ),
+			'template, tid matches iss'     => array( "https://login.microsoftonline.com/$tenant/v2.0", $template, $tenant, true ),
+			'template, uppercase tid'       => array( 'https://login.microsoftonline.com/' . strtoupper( $tenant ) . '/v2.0', $template, strtoupper( $tenant ), true ),
+			'template, v1 issuer'           => array( "https://sts.windows.net/$tenant/", 'https://sts.windows.net/{tenantid}/', $tenant, true ),
+			'template, tid differs'         => array( "https://login.microsoftonline.com/$tenant/v2.0", $template, $other, false ),
+			'template, tid missing'         => array( "https://login.microsoftonline.com/$tenant/v2.0", $template, null, false ),
+			'template, tid not a GUID'      => array( 'https://login.microsoftonline.com/evil/v2.0', $template, 'evil', false ),
+			'template, tid with path'       => array( 'https://login.microsoftonline.com/x/y/v2.0', $template, 'x/y', false ),
+			'template, tid not a string'    => array( "https://login.microsoftonline.com/$tenant/v2.0", $template, array( $tenant ), false ),
+			'template, other host'          => array( "https://evil.com/$tenant/v2.0", $template, $tenant, false ),
+			'template, literal placeholder' => array( $template, $template, null, false ),
+			'no template ignores tid'       => array( "https://login.microsoftonline.com/$tenant/v2.0", "https://login.microsoftonline.com/$other/v2.0", $tenant, false ),
+		);
+	}
+
+	/**
+	 * Test that a signed token from any tenant passes with the {tenantid} issuer.
+	 */
+	public function test_jwt_validation_with_tenantid_issuer() {
+		$now = time();
+		$jwks = $this->create_jwks( false );
+		$validator = $this->create_validator_with_mocked_jwks( $jwks, 'https://example.com/jwks', 'https://login.microsoftonline.com/{tenantid}/v2.0' );
+
+		foreach ( array( '72f988bf-86f1-41af-91ab-2d7cd011db47', 'b5c2e8a4-1f3d-4e6a-9c7b-0d8e2f1a3b4c' ) as $tid ) {
+			$payload = array(
+				'iss' => "https://login.microsoftonline.com/$tid/v2.0",
+				'tid' => $tid,
+				'sub' => 'user123',
+				'aud' => 'test-client-id',
+				'exp' => $now + 3600,
+				'iat' => $now,
+			);
+
+			$result = $validator->validate_id_token( $this->create_jwt_token( $payload ) );
+			$this->assertIsArray( $result, "Token from tenant $tid should pass" );
+		}
+
+		$payload['tid'] = '72f988bf-86f1-41af-91ab-2d7cd011db47';
+		$result = $validator->validate_id_token( $this->create_jwt_token( $payload ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'invalid-iss', $result->get_error_code() );
 	}
 }

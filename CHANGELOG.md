@@ -1,5 +1,27 @@
 # OpenId Connect Generic Changelog
 
+**3.12.0**
+
+* Requirements: Minimum PHP raised to 8.2 and minimum WordPress to 6.7. Tested up to WordPress 7.1.
+* Fix: Microsoft Entra ID multitenant apps failed issuer validation. Set the Issuer to `https://login.microsoftonline.com/{tenantid}/v2.0`, and `{tenantid}` is replaced with each token's tenant ID (#682).
+* Fix: Logins failed with "Incorrect user claim" when the IDP sent the userinfo `sub` as a number and the ID token `sub` as a string. A missing or empty `sub` is now rejected (#673).
+* Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found.
+
+**3.11.5**
+
+* Fix: Logins failed with "Invalid state" on hosts that only pass WordPress-style cookie names to PHP, such as Pantheon. The login cookie is now named `wp-openid_connect_generic_browser`, and the new `openid-connect-generic-browser-cookie-name` filter can change it.
+* Improvement: When logging is enabled, a failed state check logs which part of the check failed.
+
+**3.11.4**
+
+* Security: Login state is now tied to the browser that started the login and can only be used once.
+* Security: Authorization requests now include a nonce that is checked against the ID token.
+* Security: Added a "Use PKCE" setting. It is on for new installs and off for existing sites until enabled.
+* Security: Link Existing Users now requires the identity provider to confirm the email address is verified. Added a "Link Users Without Verified Email" setting for identity providers that don't send this (such as Microsoft Entra ID) and for linking by user name. Sites already linking users have it turned on during the update and see an admin notice asking them to review it.
+* Security: Updated firebase/php-jwt to 7.0.
+* Fix: Avoid a fatal error when the redirect_to request value is not a string.
+* Requirements: Corrected Requires PHP to 8.0. The plugin has required PHP 8.0 since 3.10.5.
+
 **3.11.3**
 
 * Feature/improvement: Added configurable issuer setting for JWT validation.
@@ -17,7 +39,7 @@
 **SECURITY RELEASE**
 
 * Security: Added JWT signature verification using JWKS to prevent token forgery
-* Security: Enhanced token claim validation (exp, aud, iss, iat, nonce)
+* Security: Enhanced token claim validation (exp, aud, iss, iat)
 * Security: Replaced weak state generation with cryptographically secure random_bytes()
 * Security: Fixed open redirect vulnerability in authentication flow
 * Security: Restricted SSL verification bypass to local development environments only
