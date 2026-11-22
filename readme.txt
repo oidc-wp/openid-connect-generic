@@ -61,7 +61,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 = 3.12.0 =
 
-Requires PHP 8.2 and WordPress 6.7. Check your PHP version before updating. If you use Alternate Redirect URI with WordPress in a subdirectory, the redirect URI changes: an admin notice shows the new one to allow at your identity provider.
+Requires PHP 8.2 and WordPress 6.7. Refresh tokens are used again: if your identity provider rejects them, users are logged out, so turn off Enable Refresh Token. With Alternate Redirect URI and WordPress in a subdirectory, the redirect URI changes; see the admin notice.
 
 = 3.11.5 =
 
