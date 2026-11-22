@@ -6,10 +6,11 @@
 * Fix: Microsoft Entra ID multitenant apps failed issuer validation. Set the Issuer to `https://login.microsoftonline.com/{tenantid}/v2.0`, and `{tenantid}` is replaced with each token's tenant ID (#682).
 * Fix: Logins failed with "Incorrect user claim" when the IDP sent the userinfo `sub` as a number and the ID token `sub` as a string. A missing or empty `sub` is now rejected (#673).
 * Fix: The token request no longer sends `scope`, which some identity providers, such as OpenIddict, reject. Providers that need it can add it back with the `openid-connect-generic-alter-request` filter (#497).
-* Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found.
+* Fix: Sites that install the plugin with Composer had a fatal error on load since 3.11.0, because the plugin required its own `vendor/autoload.php`. It now uses the project's autoloader when its own `vendor/` folder is missing, and shows an admin notice instead of a fatal error if its dependencies can't be found (#655).
 * Fix: With Alternate Redirect URI enabled, sites with WordPress in a subdirectory (such as Bedrock) sent a callback URL under the WordPress directory, which returned a 404. The callback URL is now relative to the site's home URL (#666). Affected sites see an admin notice with the old and new redirect URIs after updating.
 * Feature: New `openid-connect-generic-redirect-uri` filter to change the redirect URI sent to the identity provider.
 * Feature: New Shortcode Only login type, which leaves the login button off the login page while the `[openid_connect_generic_login_button]` shortcode still works (#621).
+* Feature: New Login Button Icon setting, an optional icon shown before the button text and drawn in the button's text colour (#683).
 
 **3.11.5**
 
