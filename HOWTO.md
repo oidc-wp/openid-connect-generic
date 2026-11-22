@@ -92,6 +92,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - Link existing user: `OIDC_LINK_EXISTING_USERS` (boolean)
 - Redirect user back to origin page: `OIDC_REDIRECT_USER_BACK` (boolean)
 - Redirect on logout: `OIDC_REDIRECT_ON_LOGOUT` (boolean)
+- Back-channel logout: `OIDC_BACKCHANNEL_LOGOUT` (boolean)
 
 ## Hooks
 

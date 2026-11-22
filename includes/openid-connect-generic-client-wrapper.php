@@ -43,6 +43,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	const COOKIE_TOKEN_REFRESH_KEY = 'openid-connect-generic-refresh';
 
 	/**
+	 * The session key for the identity provider's session ID (sid), used by back-channel logout.
+	 *
+	 * @var string
+	 */
+	const SESSION_ID_KEY = 'openid-connect-generic-sid';
+
+	/**
 	 * The client object instance.
 	 *
 	 * @var OpenID_Connect_Generic_Client
@@ -120,6 +127,12 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			 */
 			add_action( 'wp_ajax_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
 			add_action( 'wp_ajax_nopriv_openid-connect-authorize', array( $client_wrapper, 'authentication_request_callback' ) );
+
+			// Back-channel logout requests sent server to server by the identity provider.
+			if ( $settings->backchannel_logout ) {
+				add_action( 'wp_ajax_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
+				add_action( 'wp_ajax_nopriv_openid-connect-backchannel-logout', array( $client_wrapper, 'backchannel_logout_request_callback' ) );
+			}
 		}
 
 		add_action( 'login_init', array( $client_wrapper, 'handle_login_init' ), 1 );
@@ -829,6 +842,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		// Save the refresh token in the session.
 		$this->save_refresh_token( $manager, $token, $token_response );
 
+		// Save the identity provider's session ID, so back-channel logout can end this session.
+		if ( ! empty( $id_token_claim['sid'] ) ) {
+			$session = $manager->get( $token );
+			$session[ self::SESSION_ID_KEY ] = $id_token_claim['sid'];
+			$manager->update( $token, $session );
+		}
+
 		// you did great, have a cookie!
 		wp_set_auth_cookie( $user->ID, $remember_me, '', $token );
 		do_action( 'wp_login', $user->user_login, $user );
@@ -854,6 +874,149 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		$manager->update( $token, $session );
 		return;
+	}
+
+	/**
+	 * Handle a back-channel logout request from the identity provider.
+	 *
+	 * Replies 200 when the logout token is valid and 400 when it isn't.
+	 *
+	 * @see https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRequest
+	 *
+	 * @return void
+	 */
+	public function backchannel_logout_request_callback() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The logout token is a signed JWT, verified before use.
+		$logout_token = isset( $_POST['logout_token'] ) && is_string( $_POST['logout_token'] ) ? sanitize_text_field( wp_unslash( $_POST['logout_token'] ) ) : '';
+
+		$result = $this->backchannel_logout( $logout_token );
+
+		nocache_headers();
+		if ( is_wp_error( $result ) ) {
+			$this->logger->log( $result, 'backchannel-logout' );
+			wp_send_json(
+				array(
+					'error'             => 'invalid_request',
+					'error_description' => $result->get_error_message(),
+				),
+				400
+			);
+		}
+		wp_send_json( array(), 200 );
+	}
+
+	/**
+	 * End the WordPress sessions named by a back-channel logout token.
+	 *
+	 * With a sid, only the matching session is ended. With only a sub, or a sid
+	 * that matches no session, all of that user's sessions are ended.
+	 *
+	 * @param string $logout_token The JWT logout token.
+	 *
+	 * @return true|WP_Error True when the token is valid, WP_Error otherwise.
+	 */
+	public function backchannel_logout( $logout_token ) {
+		$claims = $this->client->validate_logout_token( $logout_token );
+		if ( is_wp_error( $claims ) ) {
+			return $claims;
+		}
+
+		// Reject a logout token that has already been used.
+		$replay_key = 'openid-connect-generic-logout-' . md5( $claims['jti'] );
+		if ( get_transient( $replay_key ) ) {
+			return new WP_Error( 'logout-token-replayed', __( 'Logout token has already been used.', 'daggerhart-openid-connect-generic' ) );
+		}
+		set_transient( $replay_key, 1, max( MINUTE_IN_SECONDS, intval( $claims['exp'] ?? 0 ) - time() ) );
+
+		$sid  = $claims['sid'] ?? '';
+		$user = ! empty( $claims['sub'] ) ? $this->get_user_by_identity( (string) $claims['sub'] ) : $this->get_user_by_session_id( $sid );
+
+		// A user who isn't on this site has nothing to log out of.
+		if ( ! $user ) {
+			return true;
+		}
+
+		if ( ! $sid || ! $this->destroy_session_by_id( $user->ID, $sid ) ) {
+			// A token with only a sid names one session, so never end the rest.
+			if ( empty( $claims['sub'] ) ) {
+				return true;
+			}
+			WP_Session_Tokens::get_instance( $user->ID )->destroy_all();
+		}
+
+		$this->logger->log( "Back-channel logout for: {$user->user_login} (ID: {$user->ID})", 'backchannel-logout-success' );
+
+		/**
+		 * Fires after a back-channel logout has ended a user's sessions.
+		 *
+		 * @param WP_User $user   The user who was logged out.
+		 * @param array   $claims The logout token claims.
+		 */
+		do_action( 'openid-connect-generic-backchannel-logout', $user, $claims );
+
+		return true;
+	}
+
+	/**
+	 * Find the user with a session started by the given identity provider session ID.
+	 *
+	 * @param string $sid The identity provider's session ID.
+	 *
+	 * @return false|WP_User
+	 */
+	private function get_user_by_session_id( $sid ) {
+		if ( empty( $sid ) ) {
+			return false;
+		}
+
+		$users = get_users(
+			array(
+				'number'     => 1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Only runs for logout tokens without a sub.
+				'meta_query' => array(
+					array(
+						'key'     => 'session_tokens',
+						'value'   => '"' . $sid . '"',
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+
+		return $users[0] ?? false;
+	}
+
+	/**
+	 * End only the user's sessions that were started by the given identity provider session ID.
+	 *
+	 * @param int    $user_id The user ID.
+	 * @param string $sid     The identity provider's session ID.
+	 *
+	 * @return bool Whether a matching session was found and ended.
+	 */
+	private function destroy_session_by_id( $user_id, $sid ) {
+		// Sessions can only be searched in WordPress's default user meta storage.
+		if ( ! WP_Session_Tokens::get_instance( $user_id ) instanceof WP_User_Meta_Session_Tokens ) {
+			return false;
+		}
+
+		$sessions = get_user_meta( $user_id, 'session_tokens', true );
+		if ( ! is_array( $sessions ) ) {
+			return false;
+		}
+
+		$remaining = array_filter(
+			$sessions,
+			function ( $session ) use ( $sid ) {
+				return ( $session[ self::SESSION_ID_KEY ] ?? '' ) !== $sid;
+			}
+		);
+		if ( count( $remaining ) === count( $sessions ) ) {
+			return false;
+		}
+
+		update_user_meta( $user_id, 'session_tokens', $remaining );
+		return true;
 	}
 
 	/**

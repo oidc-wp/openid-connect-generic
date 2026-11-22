@@ -975,4 +975,201 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 		$this->assertEquals( 'refreshed@example.com', $stored_user_claim['email'], 'Refreshed user claim should be stored with user_option' );
 	}
 
+	/**
+	 * Create a client wrapper whose client returns the given logout token claims.
+	 *
+	 * @param array|WP_Error $claims The claims, or error, the logout token validates to.
+	 *
+	 * @return OpenID_Connect_Generic_Client_Wrapper
+	 */
+	private function create_backchannel_wrapper( $claims ) {
+		$client = $this->createMock( OpenID_Connect_Generic_Client::class );
+		$client->method( 'validate_logout_token' )->willReturn( $claims );
+
+		return new OpenID_Connect_Generic_Client_Wrapper(
+			$client,
+			new OpenID_Connect_Generic_Option_Settings( array( 'backchannel_logout' => 1 ) ),
+			new OpenID_Connect_Generic_Option_Logger( 'error', false, 10 )
+		);
+	}
+
+	/**
+	 * Create a user linked to the identity provider, with two sessions from different IDP sessions.
+	 *
+	 * @return array The user ID and the session manager.
+	 */
+	private function create_linked_user_with_sessions() {
+		$user_id = self::factory()->user->create();
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', 'idp-user-1', true );
+
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		foreach ( array( 'sid-one', 'sid-two' ) as $sid ) {
+			$token   = $manager->create( time() + HOUR_IN_SECONDS );
+			$session = $manager->get( $token );
+			$session[ OpenID_Connect_Generic_Client_Wrapper::SESSION_ID_KEY ] = $sid;
+			$manager->update( $token, $session );
+		}
+
+		return array( $user_id, $manager );
+	}
+
+	/**
+	 * Test that a logout token with a sid ends only that session.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_with_sid_ends_only_that_session() {
+		list( $user_id, $manager ) = $this->create_linked_user_with_sessions();
+		$claims = array(
+			'jti' => 'jti-sid',
+			'exp' => time() + 300,
+			'sub' => 'idp-user-1',
+			'sid' => 'sid-one',
+		);
+
+		$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+
+		$remaining = array_column( $manager->get_all(), OpenID_Connect_Generic_Client_Wrapper::SESSION_ID_KEY );
+		$this->assertSame( array( 'sid-two' ), $remaining );
+	}
+
+	/**
+	 * Test that a logout token with only a sub ends all the user's sessions, and fires the action.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_with_sub_ends_all_sessions() {
+		list( $user_id, $manager ) = $this->create_linked_user_with_sessions();
+		$claims = array(
+			'jti' => 'jti-sub',
+			'exp' => time() + 300,
+			'sub' => 'idp-user-1',
+		);
+
+		$logged_out = 0;
+		add_action(
+			'openid-connect-generic-backchannel-logout',
+			function ( $user ) use ( &$logged_out ) {
+				$logged_out = $user->ID;
+			}
+		);
+
+		$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+		$this->assertSame( array(), $manager->get_all() );
+		$this->assertSame( $user_id, $logged_out );
+	}
+
+	/**
+	 * Test that an integer sub in a logout token matches the user, like an ID token's sub.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_with_integer_sub() {
+		$user_id = self::factory()->user->create();
+		update_user_option( $user_id, 'openid-connect-generic-subject-identity', '12345', true );
+		$manager = WP_Session_Tokens::get_instance( $user_id );
+		$manager->create( time() + HOUR_IN_SECONDS );
+		$claims = array(
+			'jti' => 'jti-int-sub',
+			'exp' => time() + 300,
+			'sub' => 12345,
+		);
+
+		$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+		$this->assertSame( array(), $manager->get_all() );
+	}
+
+	/**
+	 * Test that a logout token with only a sid finds the user by their session.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_with_only_sid_finds_the_user() {
+		list( $user_id, $manager ) = $this->create_linked_user_with_sessions();
+		$claims = array(
+			'jti' => 'jti-sid-only',
+			'exp' => time() + 300,
+			'sid' => 'sid-two',
+		);
+
+		$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+
+		$remaining = array_column( $manager->get_all(), OpenID_Connect_Generic_Client_Wrapper::SESSION_ID_KEY );
+		$this->assertSame( array( 'sid-one' ), $remaining );
+	}
+
+	/**
+	 * Test that a sid only token which matches no session exactly ends nothing.
+	 *
+	 * The user is found with a text search of their sessions, so the sid could match
+	 * other text in them, like the "login" key every session has.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_with_only_sid_never_ends_other_sessions() {
+		list( $user_id, $manager ) = $this->create_linked_user_with_sessions();
+		$claims = array(
+			'jti' => 'jti-sid-partial',
+			'exp' => time() + 300,
+			'sid' => 'login',
+		);
+
+		$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+		$this->assertCount( 2, $manager->get_all() );
+	}
+
+	/**
+	 * Test that a reused logout token and an invalid token are rejected.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_rejects_replayed_and_invalid_tokens() {
+		$claims  = array(
+			'jti' => 'jti-replay',
+			'exp' => time() + 300,
+			'sub' => 'nobody-here',
+		);
+		$wrapper = $this->create_backchannel_wrapper( $claims );
+
+		// An unknown user is still a valid logout, with nothing to end.
+		$this->assertTrue( $wrapper->backchannel_logout( 'token' ) );
+		$this->assertSame( 'logout-token-replayed', $wrapper->backchannel_logout( 'token' )->get_error_code() );
+
+		$invalid = $this->create_backchannel_wrapper( new WP_Error( 'jwt-verification-failed', 'Bad signature.' ) );
+		$this->assertSame( 'jwt-verification-failed', $invalid->backchannel_logout( 'token' )->get_error_code() );
+	}
+
+	/**
+	 * Test that the sid from the ID token is saved in the WordPress session at login.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_login_user_saves_the_identity_provider_session_id() {
+		$user = self::factory()->user->create_and_get();
+
+		$this->client_wrapper->login_user( $user, array( 'expires_in' => 3600 ), array( 'sid' => 'sid-at-login' ), array(), 'idp-user-2' );
+
+		$sessions = WP_Session_Tokens::get_instance( $user->ID )->get_all();
+		$this->assertSame( 'sid-at-login', end( $sessions )[ OpenID_Connect_Generic_Client_Wrapper::SESSION_ID_KEY ] );
+	}
+
+	/**
+	 * Test that a sid with database wildcards can't match another user's sessions.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_backchannel_logout_sid_wildcards_match_nobody() {
+		list( $user_id, $manager ) = $this->create_linked_user_with_sessions();
+
+		foreach ( array( '%', 'sid-%', 'sid-___', '_' ) as $i => $sid ) {
+			$claims = array(
+				'jti' => 'jti-wildcard-' . $i,
+				'exp' => time() + 300,
+				'sid' => $sid,
+			);
+			$this->assertTrue( $this->create_backchannel_wrapper( $claims )->backchannel_logout( 'token' ) );
+		}
+
+		$this->assertCount( 2, $manager->get_all(), 'No session should be ended by a wildcard sid' );
+	}
 }
