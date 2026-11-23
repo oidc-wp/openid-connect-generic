@@ -975,4 +975,61 @@ class OpenID_Connect_Generic_Client_Wrapper_Test extends WP_UnitTestCase {
 		$this->assertEquals( 'refreshed@example.com', $stored_user_claim['email'], 'Refreshed user claim should be stored with user_option' );
 	}
 
+	/**
+	 * Register a client wrapper with an end session endpoint, on its own hooks.
+	 *
+	 * @return void
+	 */
+	private function register_wrapper_with_end_session() {
+		remove_all_actions( 'wp_logout' );
+		remove_all_filters( 'woocommerce_logout_default_redirect_url' );
+		remove_all_filters( 'logout_redirect' );
+
+		OpenID_Connect_Generic_Client_Wrapper::register(
+			$this->createMock( OpenID_Connect_Generic_Client::class ),
+			new OpenID_Connect_Generic_Option_Settings( array( 'endpoint_end_session' => 'https://idp.example.com/logout' ) ),
+			$this->createMock( OpenID_Connect_Generic_Option_Logger::class )
+		);
+	}
+
+	/**
+	 * Test that a WooCommerce logout sends the user to the end session endpoint.
+	 *
+	 * WooCommerce logs out with wp_logout() and redirects itself, so the logout_redirect
+	 * filter never runs.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_woocommerce_logout_redirects_to_end_session() {
+		$this->register_wrapper_with_end_session();
+		$user_id = self::factory()->user->create();
+		update_user_option( $user_id, 'openid-connect-generic-last-token-response', array( 'id_token' => 'id-token-1' ) );
+		$account = home_url( '/my-account/' );
+
+		// Logout links built before logging out are left alone.
+		$this->assertSame( $account, apply_filters( 'woocommerce_logout_default_redirect_url', $account ) );
+
+		do_action( 'wp_logout', $user_id );
+
+		$this->assertSame(
+			'https://idp.example.com/logout?id_token_hint=id-token-1&post_logout_redirect_uri=' . rawurlencode( $account ),
+			apply_filters( 'woocommerce_logout_default_redirect_url', $account )
+		);
+	}
+
+	/**
+	 * Test that a WooCommerce logout by a user who didn't log in with OpenID Connect is left alone.
+	 *
+	 * @group ClientWrapperTests
+	 */
+	public function test_woocommerce_logout_without_openid_connect_login_is_unchanged() {
+		$this->register_wrapper_with_end_session();
+		$user_id = self::factory()->user->create();
+		$account = home_url( '/my-account/' );
+
+		do_action( 'wp_logout', $user_id );
+
+		$this->assertSame( $account, apply_filters( 'woocommerce_logout_default_redirect_url', $account ) );
+	}
+
 }
