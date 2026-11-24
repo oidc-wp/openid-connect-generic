@@ -283,6 +283,32 @@ class OpenID_Connect_Generic_JWT_Validator {
 	 * @return string|null The algorithm from JWT header or null if not found.
 	 */
 	private function get_jwt_header_alg( $id_token ) {
+		$header = $this->get_jwt_header( $id_token );
+
+		return isset( $header['alg'] ) ? $header['alg'] : null;
+	}
+
+	/**
+	 * Extract the key ID from JWT header.
+	 *
+	 * @param string $id_token The JWT ID token.
+	 *
+	 * @return string|null The key ID from JWT header or null if not found.
+	 */
+	private function get_jwt_header_kid( $id_token ) {
+		$header = $this->get_jwt_header( $id_token );
+
+		return isset( $header['kid'] ) ? $header['kid'] : null;
+	}
+
+	/**
+	 * Decode the JWT header.
+	 *
+	 * @param string $id_token The JWT ID token.
+	 *
+	 * @return array|null The decoded JWT header or null if it could not be decoded.
+	 */
+	private function get_jwt_header( $id_token ) {
 		$token_parts = explode( '.', $id_token );
 		if ( count( $token_parts ) < 2 ) {
 			return null;
@@ -292,7 +318,7 @@ class OpenID_Connect_Generic_JWT_Validator {
 		$header_json = JWT::urlsafeB64Decode( $header_base64 );
 		$header = json_decode( $header_json, true );
 
-		return isset( $header['alg'] ) ? $header['alg'] : null;
+		return is_array( $header ) ? $header : null;
 	}
 
 	/**
@@ -362,6 +388,13 @@ class OpenID_Connect_Generic_JWT_Validator {
 		try {
 			// Parse JWKS into Key objects.
 			$keys = JWK::parseKeySet( $jwks );
+
+			// OpenID Connect Core 1.0 section 10.1 only requires a "kid" in the
+			// JWT header when the JWKS holds more than one key, so verify a token
+			// without one against the only key.
+			if ( 1 === count( $keys ) && null === $this->get_jwt_header_kid( $id_token ) ) {
+				$keys = reset( $keys );
+			}
 
 			// Decode and verify JWT signature.
 			// The JWT library will automatically validate exp, nbf, and signature.
