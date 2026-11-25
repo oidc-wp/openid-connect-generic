@@ -339,4 +339,31 @@ class OpenID_Connect_Generic_Settings_Page_Test extends WP_UnitTestCase {
 		return new OpenID_Connect_Generic_Settings_Page( $settings, $logger );
 	}
 
+	/**
+	 * Test that WooCommerce Login is locked and shows the constant's value when OIDC_WOOCOMMERCE_LOGIN is set.
+	 *
+	 * @group SettingsPageTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_login_field_locked_by_constant() {
+		update_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME, array( 'woocommerce_login' => 'end' ) );
+		define( 'OIDC_WOOCOMMERCE_LOGIN', 'auto' );
+
+		$settings_page = $this->create_settings_page();
+		$fields        = $this->call_private_method( $settings_page, 'get_settings_fields' );
+		$field         = $fields['woocommerce_login'];
+		$field['key']  = 'woocommerce_login';
+		$field['name'] = 'openid_connect_generic_settings[woocommerce_login]';
+		$this->assertTrue( $field['disabled'] );
+
+		ob_start();
+		$settings_page->do_select( $field );
+		$output = ob_get_clean();
+
+		$this->assertMatchesRegularExpression( '/<select\s[^>]*name="openid_connect_generic_settings\[woocommerce_login\]"\s+disabled\s*>/', $output );
+		$this->assertMatchesRegularExpression( '/<option value="auto"\s+selected=\'selected\'>/', $output );
+	}
+
 }

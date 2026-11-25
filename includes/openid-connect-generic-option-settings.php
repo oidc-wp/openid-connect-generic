@@ -105,6 +105,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'endpoint_jwks'             => 'OIDC_ENDPOINT_JWKS_URL',
 		'issuer'                    => 'OIDC_ISSUER',
 		'login_type'                => 'OIDC_LOGIN_TYPE',
+		'woocommerce_login'         => 'OIDC_WOOCOMMERCE_LOGIN',
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
 		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',

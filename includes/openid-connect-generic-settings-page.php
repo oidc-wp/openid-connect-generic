@@ -263,6 +263,7 @@ class OpenID_Connect_Generic_Settings_Page {
 					'end'   => __( 'Bottom of the login form', 'daggerhart-openid-connect-generic' ),
 					'auto'  => __( 'Auto Login - SSO', 'daggerhart-openid-connect-generic' ),
 				),
+				'disabled'    => defined( 'OIDC_WOOCOMMERCE_LOGIN' ),
 				'section'     => 'client_settings',
 			),
 			'client_id'         => array(

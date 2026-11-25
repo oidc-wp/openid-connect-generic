@@ -87,6 +87,7 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 - ACR Values: `OIDC_ACR_VALUES`
 - OpenID scope: `OIDC_CLIENT_SCOPE` (space separated)
 - OpenID login type: `OIDC_LOGIN_TYPE` ('button' or 'auto')
+- WooCommerce login: `OIDC_WOOCOMMERCE_LOGIN` ('' to not add the button, 'start', 'end' or 'auto')
 - Enforce privacy: `OIDC_ENFORCE_PRIVACY` (boolean)
 - Create user if they do not exist: `OIDC_CREATE_IF_DOES_NOT_EXIST` (boolean)
 - Link existing user: `OIDC_LINK_EXISTING_USERS` (boolean)
