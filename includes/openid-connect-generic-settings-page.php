@@ -524,7 +524,7 @@ class OpenID_Connect_Generic_Settings_Page {
 					? array_values( array_intersect( $input[ $key ], array_keys( $field['options'] ?? array() ) ) )
 					: array();
 			} elseif ( isset( $input[ $key ] ) && is_scalar( $input[ $key ] ) ) {
-				$options[ $key ] = sanitize_text_field( trim( (string) $input[ $key ] ) );
+				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
 			} else {
 				$options[ $key ] = '';
 			}

@@ -779,6 +779,9 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
 			$this->createMock( OpenID_Connect_Generic_Client::class )
 		);
+		$callbacks = $GLOBALS['wp_filter']['authenticate']->callbacks[30] ?? array();
+		$this->assertStringNotContainsString( 'block_password_login', implode( ',', array_keys( $callbacks ) ) );
+
 		$editor = self::factory()->user->create_and_get(
 			array(
 				'role'      => 'editor',
