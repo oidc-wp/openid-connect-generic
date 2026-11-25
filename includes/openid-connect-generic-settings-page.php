@@ -365,7 +365,7 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'password_login'    => array(
 				'title'       => __( 'Password Login', 'daggerhart-openid-connect-generic' ),
-				'description' => __( 'Block password logins for some users, so they must log in with OpenID Connect. Application Passwords still work.', 'daggerhart-openid-connect-generic' ),
+				'description' => __( 'Block password logins for some users, so they must log in with OpenID Connect. Application Passwords still work. Blocked users also can\'t reset their password, so new blocked users don\'t get the WordPress "set your password" email.', 'daggerhart-openid-connect-generic' ),
 				'type'        => 'select',
 				'options'     => array(
 					''       => __( 'Allowed for everyone', 'daggerhart-openid-connect-generic' ),
@@ -518,13 +518,13 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		// Loop through settings fields to control what we're saving.
 		foreach ( $this->settings_fields as $key => $field ) {
-			if ( isset( $input[ $key ] ) && is_array( $input[ $key ] ) ) {
-				// Only keep values offered by the field.
-				$options[ $key ] = array_values( array_intersect( $input[ $key ], array_keys( $field['options'] ?? array() ) ) );
-			} elseif ( isset( $input[ $key ] ) ) {
-				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
-			} elseif ( 'checkboxes' === $field['type'] ) {
-				$options[ $key ] = array();
+			if ( 'checkboxes' === $field['type'] ) {
+				// Only keep values offered by the field. Unticked checkboxes are not submitted.
+				$options[ $key ] = isset( $input[ $key ] ) && is_array( $input[ $key ] )
+					? array_values( array_intersect( $input[ $key ], array_keys( $field['options'] ?? array() ) ) )
+					: array();
+			} elseif ( isset( $input[ $key ] ) && is_scalar( $input[ $key ] ) ) {
+				$options[ $key ] = sanitize_text_field( trim( (string) $input[ $key ] ) );
 			} else {
 				$options[ $key ] = '';
 			}

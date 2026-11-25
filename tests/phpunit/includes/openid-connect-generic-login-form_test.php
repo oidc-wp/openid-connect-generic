@@ -756,4 +756,48 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		$this->assertTrue( $login_form->block_password_reset( true, 0 ) );
 	}
 
+	/**
+	 * Test that an unknown Password Login value, such as a typo in OIDC_PASSWORD_LOGIN, blocks nobody.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_password_login_unknown_value_blocks_nobody() {
+		define( 'OIDC_PASSWORD_LOGIN', 'Roles' );
+		$settings = new OpenID_Connect_Generic_Option_Settings(
+			array(
+				'password_login'       => '',
+				'password_login_roles' => array( 'subscriber' ),
+			)
+		);
+		$this->assertSame( 'Roles', $settings->password_login );
+
+		OpenID_Connect_Generic_Login_Form::register(
+			$settings,
+			$this->createMock( OpenID_Connect_Generic_Client_Wrapper::class ),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+		$editor = self::factory()->user->create_and_get(
+			array(
+				'role'      => 'editor',
+				'user_pass' => 'real-password',
+			)
+		);
+
+		$this->assertInstanceOf( WP_User::class, wp_authenticate( $editor->user_login, 'real-password' ) );
+		$this->assertIsString( get_password_reset_key( $editor ) );
+
+		// Calling the checks directly with an unknown value blocks nobody either.
+		$login_form = $this->create_login_form(
+			array(
+				'password_login'       => 'Roles',
+				'password_login_roles' => array(),
+			)
+		);
+		$this->assertSame( $editor, $login_form->block_password_login( $editor ) );
+		$this->assertTrue( $login_form->block_password_reset( true, $editor->ID ) );
+	}
+
 }
