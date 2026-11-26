@@ -454,4 +454,316 @@ class OpenID_Connect_Generic_Login_Form_Test extends WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Test that the login button is added to the top of the WooCommerce login form.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_login_at_start() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'start',
+		) );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $this->create_woocommerce_client_wrapper(), $this->createMock( OpenID_Connect_Generic_Client::class ) );
+
+		ob_start();
+		do_action( 'woocommerce_login_form_start' );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'openid-connect-login-button', $output );
+		$this->assertMatchesRegularExpression( '/openid-connect-login-button.*openid-connect-login-divider/s', $output, 'Divider should be under the button' );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
+	/**
+	 * Test that the login button is added to the bottom of the WooCommerce login form.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_login_at_end() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'end',
+		) );
+
+		// Only the plugin's footer output is under test; core's wp_footer callbacks emit deprecation notices.
+		remove_all_actions( 'wp_footer' );
+		OpenID_Connect_Generic_Login_Form::register( $settings, $this->create_woocommerce_client_wrapper(), $this->createMock( OpenID_Connect_Generic_Client::class ) );
+
+		ob_start();
+		do_action( 'woocommerce_login_form_end' );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'openid-connect-login-button', $output );
+		$this->assertMatchesRegularExpression( '/openid-connect-login-divider.*openid-connect-login-button/s', $output, 'Divider should be above the button' );
+
+		ob_start();
+		do_action( 'wp_footer' );
+		$this->assertStringContainsString( '.openid-connect-login-divider', ob_get_clean() );
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+	}
+
+	/**
+	 * Test that WooCommerce auto login redirects My Account instead of adding the button.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_woocommerce_auto_login_registers_redirect_instead_of_button() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => 'auto',
+		) );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $this->create_woocommerce_client_wrapper(), $this->createMock( OpenID_Connect_Generic_Client::class ) );
+
+		$this->assertNotFalse( has_action( 'template_redirect' ) );
+		$this->assertNotFalse( has_filter( 'woocommerce_logout_default_redirect_url' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
+	/**
+	 * Test that the login button is not added to the WooCommerce login form by default.
+	 *
+	 * @group LoginFormTests
+	 */
+	public function test_no_woocommerce_login_by_default() {
+		$settings = $this->create_settings_stub( array(
+			'woocommerce_login' => '',
+		) );
+
+		OpenID_Connect_Generic_Login_Form::register( $settings, $this->create_woocommerce_client_wrapper(), $this->createMock( OpenID_Connect_Generic_Client::class ) );
+
+		$this->assertFalse( has_action( 'woocommerce_login_form_start' ) );
+		$this->assertFalse( has_action( 'woocommerce_login_form_end' ) );
+	}
+
+	/**
+	 * Define test versions of the WooCommerce functions the plugin uses.
+	 *
+	 * WooCommerce isn't loaded in the tests, so tests that call this run in a separate
+	 * process. Each function reads its answer from $GLOBALS['oidc_test_woocommerce'].
+	 *
+	 * @param array $values The page the test is on: 'account_page' (bool) and 'endpoint' (string).
+	 *
+	 * @return void
+	 */
+	private function define_woocommerce_functions( $values = array() ) {
+		$GLOBALS['oidc_test_woocommerce'] = array_merge(
+			array(
+				'account_page' => true,
+				'endpoint'     => '',
+			),
+			$values
+		);
+
+		if ( ! function_exists( 'is_account_page' ) ) {
+			/**
+			 * Test version of WooCommerce's is_account_page().
+			 *
+			 * @return bool
+			 */
+			function is_account_page() {
+				return $GLOBALS['oidc_test_woocommerce']['account_page'];
+			}
+		}
+
+		if ( ! function_exists( 'is_wc_endpoint_url' ) ) {
+			/**
+			 * Test version of WooCommerce's is_wc_endpoint_url().
+			 *
+			 * @param string|false $endpoint The endpoint to check.
+			 *
+			 * @return bool
+			 */
+			function is_wc_endpoint_url( $endpoint = false ) {
+				return $endpoint === $GLOBALS['oidc_test_woocommerce']['endpoint'];
+			}
+		}
+
+		if ( ! function_exists( 'wc_get_page_permalink' ) ) {
+			/**
+			 * Test version of WooCommerce's wc_get_page_permalink().
+			 *
+			 * @param string $page The page slug.
+			 *
+			 * @return string
+			 */
+			function wc_get_page_permalink( $page ) {
+				return 'myaccount' === $page ? home_url( '/my-account/' ) : home_url( '/' );
+			}
+		}
+
+		if ( ! function_exists( 'wc_get_checkout_url' ) ) {
+			/**
+			 * Test version of WooCommerce's wc_get_checkout_url().
+			 *
+			 * @return string
+			 */
+			function wc_get_checkout_url() {
+				return home_url( '/checkout/' );
+			}
+		}
+	}
+
+	/**
+	 * Create a client wrapper whose login URL shows the page the user returns to.
+	 *
+	 * @return OpenID_Connect_Generic_Client_Wrapper
+	 */
+	private function create_woocommerce_client_wrapper() {
+		$client_wrapper = $this->createMock( OpenID_Connect_Generic_Client_Wrapper::class );
+		$client_wrapper->method( 'get_redirect_to' )->willReturn( '' );
+		$client_wrapper->method( 'get_authentication_url' )->willReturnCallback(
+			function ( $atts = array() ) {
+				return 'https://idp.example.com/authorize?redirect_to=' . rawurlencode( $atts['redirect_to'] ?? '' );
+			}
+		);
+		return $client_wrapper;
+	}
+
+	/**
+	 * Create a login form with WooCommerce Auto Login.
+	 *
+	 * @return OpenID_Connect_Generic_Login_Form
+	 */
+	private function create_woocommerce_auto_login_form() {
+		return new OpenID_Connect_Generic_Login_Form(
+			$this->create_settings_stub( array( 'woocommerce_login' => 'auto' ) ),
+			$this->create_woocommerce_client_wrapper(),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+	}
+
+	/**
+	 * Run the WooCommerce Auto Login redirect and return where it redirected to, or null.
+	 *
+	 * @param OpenID_Connect_Generic_Login_Form $login_form The login form.
+	 *
+	 * @return string|null
+	 */
+	private function get_woocommerce_auto_redirect( $login_form ) {
+		// Stop at the redirect, before the exit.
+		$stop = function ( $location ) {
+			throw new RuntimeException( $location );
+		};
+		add_filter( 'wp_redirect', $stop );
+
+		try {
+			$login_form->handle_redirect_woocommerce_auto();
+			return null;
+		} catch ( RuntimeException $redirect ) {
+			return $redirect->getMessage();
+		} finally {
+			remove_filter( 'wp_redirect', $stop );
+		}
+	}
+
+	/**
+	 * Test that a logged out visit to My Account goes to the identity provider and back to My Account.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_auto_login_redirects_my_account() {
+		$this->define_woocommerce_functions();
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		$this->assertSame(
+			'https://idp.example.com/authorize?redirect_to=' . rawurlencode( home_url( '/my-account/' ) ),
+			$this->get_woocommerce_auto_redirect( $this->create_woocommerce_auto_login_form() )
+		);
+	}
+
+	/**
+	 * Test that WooCommerce Auto Login leaves other pages, lost password, form posts and logged in users alone.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_auto_login_does_not_redirect() {
+		$this->define_woocommerce_functions();
+		$login_form = $this->create_woocommerce_auto_login_form();
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		$GLOBALS['oidc_test_woocommerce']['account_page'] = false;
+		$this->assertNull( $this->get_woocommerce_auto_redirect( $login_form ), 'Other pages' );
+		$GLOBALS['oidc_test_woocommerce']['account_page'] = true;
+
+		$GLOBALS['oidc_test_woocommerce']['endpoint'] = 'lost-password';
+		$this->assertNull( $this->get_woocommerce_auto_redirect( $login_form ), 'Lost password' );
+		$GLOBALS['oidc_test_woocommerce']['endpoint'] = '';
+
+		$_SERVER['REQUEST_METHOD'] = 'POST';
+		$this->assertNull( $this->get_woocommerce_auto_redirect( $login_form ), 'Form posts' );
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+
+		wp_set_current_user( self::factory()->user->create() );
+		$this->assertNull( $this->get_woocommerce_auto_redirect( $login_form ), 'Logged in users' );
+	}
+
+	/**
+	 * Test that logging out of My Account with WooCommerce Auto Login goes to the home page.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_auto_login_logout_goes_home() {
+		$this->define_woocommerce_functions();
+		$login_form = $this->create_woocommerce_auto_login_form();
+
+		$this->assertSame( home_url( '/' ), $login_form->woocommerce_logout_redirect_url( home_url( '/my-account/' ) ) );
+		$this->assertSame( home_url( '/shop/' ), $login_form->woocommerce_logout_redirect_url( home_url( '/shop/' ) ), 'Other logout redirects are left alone' );
+	}
+
+	/**
+	 * Test that WooCommerce Auto Login shows only the login button on checkout, returning to checkout.
+	 *
+	 * @group LoginFormTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_auto_login_checkout_shows_button_only() {
+		$this->define_woocommerce_functions();
+		update_option( 'woocommerce_enable_checkout_login_reminder', 'yes' );
+		OpenID_Connect_Generic_Login_Form::register(
+			$this->create_settings_stub( array( 'woocommerce_login' => 'auto' ) ),
+			$this->create_woocommerce_client_wrapper(),
+			$this->createMock( OpenID_Connect_Generic_Client::class )
+		);
+
+		// WooCommerce's checkout login form, which the button replaces.
+		add_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_login_form', 10 );
+		if ( ! function_exists( 'woocommerce_checkout_login_form' ) ) {
+			/**
+			 * Test version of WooCommerce's checkout login form.
+			 *
+			 * @return void
+			 */
+			function woocommerce_checkout_login_form() {
+				echo '<form class="woocommerce-form-login">';
+			}
+		}
+
+		ob_start();
+		do_action( 'woocommerce_before_checkout_form' );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'openid-connect-login-button', $output );
+		$this->assertStringContainsString( rawurlencode( home_url( '/checkout/' ) ), $output, 'Returns to checkout' );
+		$this->assertStringNotContainsString( 'woocommerce-form-login', $output, 'No username or password fields' );
+
+		// Without WooCommerce's checkout login reminder, neither the form nor the button is shown.
+		update_option( 'woocommerce_enable_checkout_login_reminder', 'no' );
+		add_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_login_form', 10 );
+		ob_start();
+		do_action( 'woocommerce_before_checkout_form' );
+		$this->assertSame( '', ob_get_clean() );
+	}
+
 }

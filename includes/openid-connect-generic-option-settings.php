@@ -28,6 +28,7 @@
  * @property string $login_type           How the client (login form) should provide login options.
  * @property string $login_button_text    Customizable text for the OpenID Connect login button.
  * @property string $login_button_icon    URL of an image shown on the OpenID Connect login button.
+ * @property string $woocommerce_login    Where to add the login button on WooCommerce login forms, or auto login.
  * @property string $client_id            The ID the client will be recognized as when connecting the to Identity provider server.
  * @property string $client_secret        The secret key the IDP server expects from the client.
  * @property string $scope                The list of scopes this client should access.
@@ -104,6 +105,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'endpoint_jwks'             => 'OIDC_ENDPOINT_JWKS_URL',
 		'issuer'                    => 'OIDC_ISSUER',
 		'login_type'                => 'OIDC_LOGIN_TYPE',
+		'woocommerce_login'         => 'OIDC_WOOCOMMERCE_LOGIN',
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
 		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',

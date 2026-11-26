@@ -43,4 +43,23 @@ class OpenID_Connect_Generic_Option_Settings_Test extends WP_UnitTestCase {
 
 	}
 
+	/**
+	 * Test that OIDC_WOOCOMMERCE_LOGIN overrides the saved WooCommerce Login value and isn't saved.
+	 *
+	 * @group OptionSettingsTests
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_woocommerce_login_constant_overrides_saved_value() {
+		update_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME, array( 'woocommerce_login' => 'end' ) );
+		define( 'OIDC_WOOCOMMERCE_LOGIN', 'auto' );
+
+		$settings = new OpenID_Connect_Generic_Option_Settings( array( 'woocommerce_login' => '' ) );
+		$this->assertSame( 'auto', $settings->woocommerce_login );
+
+		$settings->save();
+		$this->assertArrayNotHasKey( 'woocommerce_login', get_option( OpenID_Connect_Generic_Option_Settings::OPTION_NAME ) );
+	}
+
 }

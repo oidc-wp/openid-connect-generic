@@ -43,6 +43,13 @@ class OpenID_Connect_Generic_Client_Wrapper {
 	const COOKIE_TOKEN_REFRESH_KEY = 'openid-connect-generic-refresh';
 
 	/**
+	 * The ID of the user who logged out in this request, for the WooCommerce logout redirect.
+	 *
+	 * @var int
+	 */
+	private $logged_out_user_id = 0;
+
+	/**
 	 * The client object instance.
 	 *
 	 * @var OpenID_Connect_Generic_Client
@@ -101,6 +108,10 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $settings->endpoint_end_session ) {
 			add_filter( 'allowed_redirect_hosts', array( $client_wrapper, 'update_allowed_redirect_hosts' ), 99, 1 );
 			add_filter( 'logout_redirect', array( $client_wrapper, 'get_end_session_logout_redirect_url' ), 99, 3 );
+
+			// WooCommerce logs out with wp_logout() and its own redirect, which skips logout_redirect.
+			add_action( 'wp_logout', array( $client_wrapper, 'remember_logged_out_user' ) );
+			add_filter( 'woocommerce_logout_default_redirect_url', array( $client_wrapper, 'get_woocommerce_end_session_logout_redirect_url' ), 99 );
 		}
 
 		// Alter the requests according to settings.
@@ -447,6 +458,37 @@ class OpenID_Connect_Generic_Client_Wrapper {
 
 		$allowed[] = $host;
 		return $allowed;
+	}
+
+	/**
+	 * Remember the user who logged out, so the WooCommerce logout redirect can end their session.
+	 *
+	 * @param int $user_id The ID of the user who logged out.
+	 *
+	 * @return void
+	 */
+	public function remember_logged_out_user( $user_id ) {
+		$this->logged_out_user_id = (int) $user_id;
+	}
+
+	/**
+	 * Implements filter woocommerce_logout_default_redirect_url.
+	 *
+	 * After a WooCommerce logout, sends the user to the identity provider's end session
+	 * endpoint, like a WordPress logout. WooCommerce also uses this filter to build its
+	 * logout links, so the URL is only changed once a user has logged out.
+	 *
+	 * @param string $redirect_url The URL WooCommerce redirects to after logging out.
+	 *
+	 * @return string
+	 */
+	public function get_woocommerce_end_session_logout_redirect_url( $redirect_url ) {
+		$user = get_userdata( $this->logged_out_user_id );
+		if ( ! $user ) {
+			return $redirect_url;
+		}
+
+		return $this->get_end_session_logout_redirect_url( $redirect_url, $redirect_url, $user );
 	}
 
 	/**

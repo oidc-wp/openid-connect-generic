@@ -48,6 +48,13 @@ class OpenID_Connect_Generic_Login_Form {
 	private $icon_used = false;
 
 	/**
+	 * Whether the "or" divider has been printed on this page.
+	 *
+	 * @var bool
+	 */
+	private $divider_used = false;
+
+	/**
 	 * The class constructor.
 	 *
 	 * @param OpenID_Connect_Generic_Option_Settings $settings       A plugin settings object instance.
@@ -82,6 +89,16 @@ class OpenID_Connect_Generic_Login_Form {
 		add_action( 'wp_footer', array( $login_form, 'print_icon_styles' ) );
 		add_action( 'login_footer', array( $login_form, 'print_icon_styles' ) );
 
+		// Add the login button to the WooCommerce login forms, or skip My Account's form with auto login.
+		if ( 'auto' === $settings->woocommerce_login ) {
+			add_action( 'template_redirect', array( $login_form, 'handle_redirect_woocommerce_auto' ) );
+			add_filter( 'woocommerce_logout_default_redirect_url', array( $login_form, 'woocommerce_logout_redirect_url' ) );
+			add_action( 'woocommerce_before_checkout_form', array( $login_form, 'replace_checkout_login_form' ), 9 );
+		} elseif ( in_array( $settings->woocommerce_login, array( 'start', 'end' ), true ) ) {
+			add_action( 'woocommerce_login_form_' . $settings->woocommerce_login, array( $login_form, 'print_login_button' ) );
+			add_action( 'wp_footer', array( $login_form, 'print_divider_styles' ) );
+		}
+
 		$login_form->handle_redirect_login_type_auto();
 	}
 
@@ -107,6 +124,67 @@ class OpenID_Connect_Generic_Login_Form {
 				add_action( 'login_footer', array( $this, 'remove_login_form' ), 99 );
 			}
 		}
+	}
+
+	/**
+	 * WooCommerce Auto Login redirect.
+	 *
+	 * Sends logged out visitors on the WooCommerce My Account page straight to the
+	 * identity provider instead of showing the WooCommerce login form.
+	 *
+	 * @return void
+	 */
+	public function handle_redirect_woocommerce_auto() {
+		if ( is_user_logged_in()
+			|| ! function_exists( 'is_account_page' ) || ! is_account_page()
+			// Keep the WooCommerce lost password and reset password forms.
+			|| is_wc_endpoint_url( 'lost-password' )
+			// Don't redirect form submissions.
+			|| ! isset( $_SERVER['REQUEST_METHOD'] ) || 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
+
+		wp_redirect( $this->client_wrapper->get_authentication_url( array( 'redirect_to' => wc_get_page_permalink( 'myaccount' ) ) ) );
+		exit;
+	}
+
+	/**
+	 * Show only the login button on the WooCommerce checkout page with Auto Login.
+	 *
+	 * Checkout can't send visitors straight to the identity provider, because guests must
+	 * still be able to check out, so the checkout login form is replaced by the login button.
+	 * Like the form, it is only shown when WooCommerce's checkout login reminder is on.
+	 *
+	 * @return void
+	 */
+	public function replace_checkout_login_form() {
+		remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_login_form', 10 );
+
+		if ( is_user_logged_in() || 'yes' !== get_option( 'woocommerce_enable_checkout_login_reminder' ) ) {
+			return;
+		}
+
+		$message = '<p>' . esc_html__( 'Returning customer?', 'daggerhart-openid-connect-generic' ) . '</p>';
+		$button  = $this->make_login_button( array( 'redirect_to' => wc_get_checkout_url() ) );
+
+		echo wp_kses_post( '<div class="openid-connect-checkout-login">' . $message . $button . '</div>' );
+	}
+
+	/**
+	 * Send users to the home page after logging out of WooCommerce.
+	 *
+	 * WooCommerce returns to My Account by default, which would send them straight back to
+	 * the identity provider. Other logout redirects are left alone.
+	 *
+	 * @param string $redirect_url The URL WooCommerce redirects to after logging out.
+	 *
+	 * @return string
+	 */
+	public function woocommerce_logout_redirect_url( $redirect_url ) {
+		if ( wc_get_page_permalink( 'myaccount' ) === $redirect_url ) {
+			return home_url( '/' );
+		}
+		return $redirect_url;
 	}
 
 	/**
@@ -225,6 +303,38 @@ HTML;
 		}
 		$mask = 'url("' . $icon_url . '") center/contain no-repeat';
 		echo '<style id="openid-connect-login-button-icon">.openid-connect-login-button-icon{display:inline-block;width:1.6em;height:1.6em;margin-right:0.5em;vertical-align:middle;background-color:currentColor;-webkit-mask:' . $mask . ';mask:' . $mask . '}</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Print the login button with an "or" divider between it and the login form.
+	 *
+	 * Used on the WooCommerce My Account and checkout login forms, and returns the user to
+	 * the page they logged in from.
+	 *
+	 * @return void
+	 */
+	public function print_login_button() {
+		$this->divider_used = true;
+
+		$divider = '<div class="openid-connect-login-divider"><span>' . esc_html__( 'or', 'daggerhart-openid-connect-generic' ) . '</span></div>';
+		$button  = $this->make_login_button( array( 'redirect_to' => get_permalink() ) );
+
+		// At the top of the form the divider goes under the button, at the bottom it goes above.
+		$output = 'woocommerce_login_form_start' === current_action() ? $button . $divider : $divider . $button;
+
+		echo wp_kses_post( $output );
+	}
+
+	/**
+	 * Print the CSS for the "or" divider.
+	 *
+	 * @return void
+	 */
+	public function print_divider_styles() {
+		if ( ! $this->divider_used ) {
+			return;
+		}
+		echo '<style id="openid-connect-login-divider">.openid-connect-login-divider{display:flex;align-items:center;gap:0.75em;margin:1.25em 0;color:#767676;font-size:0.9em}.openid-connect-login-divider::before,.openid-connect-login-divider::after{content:"";flex:1;border-top:1px solid #ddd}</style>';
 	}
 
 	/**

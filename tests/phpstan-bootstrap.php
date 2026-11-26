@@ -36,3 +36,42 @@ defined( 'OIDC_REDIRECT_ON_LOGOUT' ) || define( 'OIDC_REDIRECT_ON_LOGOUT', 1 );
 defined( 'OIDC_ACR_VALUES' ) || define( 'OIDC_ACR_VALUES', '' );
 defined( 'OIDC_ENABLE_LOGGING' ) || define( 'OIDC_ENABLE_LOGGING', 0 );
 defined( 'OIDC_LOG_LIMIT' ) || define( 'OIDC_LOG_LIMIT', 1000 );
+
+// WooCommerce functions used when WooCommerce is active.
+if ( ! function_exists( 'is_wc_endpoint_url' ) ) {
+	/**
+	 * Whether the current page is a WooCommerce endpoint.
+	 *
+	 * @param string|false $endpoint The endpoint to check, or false for any endpoint.
+	 *
+	 * @return bool
+	 */
+	function is_wc_endpoint_url( $endpoint = false ) {
+		return false;
+	}
+}
+
+if ( ! function_exists( 'wc_get_page_permalink' ) ) {
+	/**
+	 * The permalink of a WooCommerce page.
+	 *
+	 * @param string      $page     The page slug, for example 'myaccount'.
+	 * @param string|null $fallback The URL to use if the page isn't set.
+	 *
+	 * @return string
+	 */
+	function wc_get_page_permalink( $page, $fallback = null ) {
+		return '';
+	}
+}
+
+if ( ! function_exists( 'wc_get_checkout_url' ) ) {
+	/**
+	 * The URL of the WooCommerce checkout page.
+	 *
+	 * @return string
+	 */
+	function wc_get_checkout_url() {
+		return '';
+	}
+}
