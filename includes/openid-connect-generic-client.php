@@ -320,10 +320,6 @@ class OpenID_Connect_Generic_Client {
 	 */
 	public function request_authentication_token( $code, $code_verifier = '' ) {
 
-		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
-		$parsed_url = parse_url( $this->endpoint_token );
-		$host = $parsed_url['host'];
-
 		$request = array(
 			'body' => array(
 				'code'          => $code,
@@ -332,7 +328,8 @@ class OpenID_Connect_Generic_Client {
 				'redirect_uri'  => $this->redirect_uri,
 				'grant_type'    => 'authorization_code',
 			),
-			'headers' => array( 'Host' => $host ),
+			// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
+			'headers' => array( 'Host' => $this->get_host_header( $this->endpoint_token ) ),
 		);
 
 		if ( ! empty( $this->acr_values ) ) {
@@ -446,14 +443,7 @@ class OpenID_Connect_Generic_Client {
 		$request['headers']['Authorization'] = 'Bearer ' . $access_token;
 
 		// Add Host header - required for when the openid-connect endpoint is behind a reverse-proxy.
-		$parsed_url = parse_url( $this->endpoint_userinfo );
-		$host = $parsed_url['host'];
-
-		if ( ! empty( $parsed_url['port'] ) ) {
-			$host .= ":{$parsed_url['port']}";
-		}
-
-		$request['headers']['Host'] = $host;
+		$request['headers']['Host'] = $this->get_host_header( $this->endpoint_userinfo );
 
 		// Attempt the request including the access token in the query string for backwards compatibility.
 		$start_time = microtime( true );
@@ -474,6 +464,40 @@ class OpenID_Connect_Generic_Client {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Build the Host header value for a request to an endpoint.
+	 *
+	 * The port is included when the URL has a non-default one, as RFC 9110 section 7.2 requires.
+	 * Identity providers such as Authentik build the token issuer from this header.
+	 *
+	 * @param string $endpoint_url The endpoint URL.
+	 *
+	 * @return string The host, with ":port" when the port isn't the scheme's default.
+	 */
+	private function get_host_header( $endpoint_url ) {
+		$parsed_url = wp_parse_url( $endpoint_url );
+
+		if ( empty( $parsed_url['host'] ) ) {
+			return '';
+		}
+
+		$host = $parsed_url['host'];
+
+		if ( ! empty( $parsed_url['port'] ) ) {
+			$default_ports = array(
+				'http'  => 80,
+				'https' => 443,
+			);
+			$scheme = isset( $parsed_url['scheme'] ) ? strtolower( $parsed_url['scheme'] ) : '';
+
+			if ( ! isset( $default_ports[ $scheme ] ) || $default_ports[ $scheme ] !== $parsed_url['port'] ) {
+				$host .= ':' . $parsed_url['port'];
+			}
+		}
+
+		return $host;
 	}
 
 	/**
