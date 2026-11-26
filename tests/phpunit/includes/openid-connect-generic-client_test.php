@@ -845,4 +845,92 @@ class OpenID_Connect_Generic_Client_Test extends WP_UnitTestCase {
 		$this->assertSame( '', $client->get_code_verifier( $state ) );
 	}
 
+	/**
+	 * The token and userinfo requests send a Host header with the port when the endpoint has a non-default one.
+	 *
+	 * @group ClientTests
+	 * @dataProvider host_header_provider
+	 *
+	 * @param string $endpoint      The endpoint URL used for both requests.
+	 * @param string $expected_host The expected Host header.
+	 */
+	public function test_requests_send_host_header_with_port( $endpoint, $expected_host ) {
+		$client = $this->create_client(
+			array(
+				'endpoint_token'    => $endpoint,
+				'endpoint_userinfo' => $endpoint,
+			)
+		);
+
+		$sent_hosts = array();
+		$respond = static function ( $preempt, $args ) use ( &$sent_hosts ) {
+			$sent_hosts[] = $args['headers']['Host'];
+			return array(
+				'headers'  => array(),
+				'body'     => '{}',
+				'response' => array( 'code' => 200, 'message' => 'OK' ),
+				'cookies'  => array(),
+			);
+		};
+		add_filter( 'pre_http_request', $respond, 10, 2 );
+
+		$client->request_authentication_token( 'auth-code' );
+		$client->request_userinfo( 'access-token' );
+
+		remove_filter( 'pre_http_request', $respond, 10 );
+
+		$this->assertSame( array( $expected_host, $expected_host ), $sent_hosts );
+	}
+
+	/**
+	 * A filter can still replace the token request's Host header.
+	 *
+	 * @group ClientTests
+	 */
+	public function test_token_request_host_header_can_be_filtered() {
+		$client = $this->create_client( array( 'endpoint_token' => 'http://idp.internal:9000/token' ) );
+
+		$set_host = static function ( $request, $operation ) {
+			if ( 'get-authentication-token' === $operation ) {
+				$request['headers']['Host'] = 'idp.example.com';
+			}
+			return $request;
+		};
+		$sent_host = null;
+		$respond = static function ( $preempt, $args ) use ( &$sent_host ) {
+			$sent_host = $args['headers']['Host'];
+			return array(
+				'headers'  => array(),
+				'body'     => '{}',
+				'response' => array( 'code' => 200, 'message' => 'OK' ),
+				'cookies'  => array(),
+			);
+		};
+		add_filter( 'openid-connect-generic-alter-request', $set_host, 10, 2 );
+		add_filter( 'pre_http_request', $respond, 10, 2 );
+
+		$client->request_authentication_token( 'auth-code' );
+
+		remove_filter( 'openid-connect-generic-alter-request', $set_host, 10 );
+		remove_filter( 'pre_http_request', $respond, 10 );
+
+		$this->assertSame( 'idp.example.com', $sent_host );
+	}
+
+	/**
+	 * Data provider for Host header tests.
+	 *
+	 * @return array Test cases with endpoint URLs and expected Host headers.
+	 */
+	public function host_header_provider() {
+		return array(
+			'no_port'                  => array( 'https://idp.example.com/token', 'idp.example.com' ),
+			'non_standard_http_port'   => array( 'http://host.docker.internal:9000/application/o/token/', 'host.docker.internal:9000' ),
+			'non_standard_https_port'  => array( 'https://idp.example.com:8443/token', 'idp.example.com:8443' ),
+			'standard_https_port'      => array( 'https://idp.example.com:443/token', 'idp.example.com' ),
+			'standard_http_port'       => array( 'http://idp.example.com:80/token', 'idp.example.com' ),
+			'https_on_http_port'       => array( 'https://idp.example.com:80/token', 'idp.example.com:80' ),
+		);
+	}
+
 }
