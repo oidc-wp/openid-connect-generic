@@ -183,7 +183,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 				$redirect_url = home_url( '?' . $wp->query_string );
 			}
 			if ( ! empty( $wp->request ) ) {
-				$redirect_url = home_url( add_query_arg( null, null ) );
+				$redirect_url = home_url( add_query_arg( array() ) );
 				// @phpstan-ignore-next-line
 				if ( $wp->did_permalink ) {
 					$redirect_url = home_url( add_query_arg( $_GET, trailingslashit( $wp->request ) ) );
