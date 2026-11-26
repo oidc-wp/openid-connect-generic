@@ -93,6 +93,7 @@ class OpenID_Connect_Generic_Login_Form {
 		if ( 'auto' === $settings->woocommerce_login ) {
 			add_action( 'template_redirect', array( $login_form, 'handle_redirect_woocommerce_auto' ) );
 			add_filter( 'woocommerce_logout_default_redirect_url', array( $login_form, 'woocommerce_logout_redirect_url' ) );
+			add_action( 'woocommerce_before_checkout_form', array( $login_form, 'replace_checkout_login_form' ), 9 );
 		} elseif ( in_array( $settings->woocommerce_login, array( 'start', 'end' ), true ) ) {
 			add_action( 'woocommerce_login_form_' . $settings->woocommerce_login, array( $login_form, 'print_login_button' ) );
 			add_action( 'wp_footer', array( $login_form, 'print_divider_styles' ) );
@@ -145,6 +146,28 @@ class OpenID_Connect_Generic_Login_Form {
 
 		wp_redirect( $this->client_wrapper->get_authentication_url( array( 'redirect_to' => wc_get_page_permalink( 'myaccount' ) ) ) );
 		exit;
+	}
+
+	/**
+	 * Show only the login button on the WooCommerce checkout page with Auto Login.
+	 *
+	 * Checkout can't send visitors straight to the identity provider, because guests must
+	 * still be able to check out, so the checkout login form is replaced by the login button.
+	 * Like the form, it is only shown when WooCommerce's checkout login reminder is on.
+	 *
+	 * @return void
+	 */
+	public function replace_checkout_login_form() {
+		remove_action( 'woocommerce_before_checkout_form', 'woocommerce_checkout_login_form', 10 );
+
+		if ( is_user_logged_in() || 'yes' !== get_option( 'woocommerce_enable_checkout_login_reminder' ) ) {
+			return;
+		}
+
+		$message = '<p>' . esc_html__( 'Returning customer?', 'daggerhart-openid-connect-generic' ) . '</p>';
+		$button  = $this->make_login_button( array( 'redirect_to' => wc_get_checkout_url() ) );
+
+		echo wp_kses_post( '<div class="openid-connect-checkout-login">' . $message . $button . '</div>' );
 	}
 
 	/**
