@@ -5,6 +5,7 @@
  * @package OpenID_Connect_Generic
  */
 
+use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -342,5 +343,210 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 		$result = $validator->validate_id_token( $this->create_jwt_token( $payload ) );
 		$this->assertWPError( $result );
 		$this->assertSame( 'invalid-iss', $result->get_error_code() );
+	}
+
+	/**
+	 * Create a back-channel logout token payload, merging in the given claims.
+	 *
+	 * @param array $claims Claims to add or override. A null value removes the claim.
+	 *
+	 * @return array
+	 */
+	private function logout_token_payload( $claims = array() ) {
+		$now     = time();
+		$payload = array_merge(
+			array(
+				'iss'    => 'https://example.com',
+				'aud'    => 'test-client-id',
+				'iat'    => $now,
+				'exp'    => $now + 300,
+				'jti'    => 'logout-token-1',
+				'sub'    => 'user123',
+				'sid'    => 'session-abc',
+				'events' => array( 'http://schemas.openid.net/event/backchannel-logout' => new stdClass() ),
+			),
+			$claims
+		);
+		return array_filter(
+			$payload,
+			function ( $value ) {
+				return null !== $value;
+			}
+		);
+	}
+
+	/**
+	 * Test that a valid logout token passes, including one with only a sid.
+	 *
+	 * @group JWTValidatorTests
+	 */
+	public function test_logout_token_validation_succeeds() {
+		$validator = $this->create_validator_with_mocked_jwks( $this->create_jwks( true ) );
+
+		$result = $validator->validate_logout_token( $this->create_jwt_token( $this->logout_token_payload() ) );
+		$this->assertIsArray( $result );
+		$this->assertSame( 'user123', $result['sub'] );
+		$this->assertSame( 'session-abc', $result['sid'] );
+
+		$sid_only = $validator->validate_logout_token( $this->create_jwt_token( $this->logout_token_payload( array( 'sub' => null ) ) ) );
+		$this->assertIsArray( $sid_only );
+
+		$int_sub = $validator->validate_logout_token( $this->create_jwt_token( $this->logout_token_payload( array( 'sub' => 12345 ) ) ) );
+		$this->assertIsArray( $int_sub );
+		$this->assertSame( 12345, $int_sub['sub'] );
+	}
+
+	/**
+	 * Test that logout tokens breaking the back-channel logout rules are rejected.
+	 *
+	 * @group JWTValidatorTests
+	 */
+	public function test_logout_token_validation_rejects_invalid_tokens() {
+		$validator = $this->create_validator_with_mocked_jwks( $this->create_jwks( true ) );
+
+		$cases = array(
+			'missing-logout-event' => array( 'events' => null ),
+			'missing-sub-and-sid'  => array(
+				'sub' => null,
+				'sid' => null,
+			),
+			'unexpected-nonce'     => array( 'nonce' => 'abc' ),
+			'missing-jti'          => array( 'jti' => null ),
+			'invalid-sub'          => array( 'sub' => array( 'user123' ) ),
+			'invalid-sid'          => array( 'sid' => 12345 ),
+			'invalid-aud'          => array( 'aud' => 'another-client' ),
+		);
+
+		foreach ( $cases as $error_code => $claims ) {
+			$result = $validator->validate_logout_token( $this->create_jwt_token( $this->logout_token_payload( $claims ) ) );
+			$this->assertWPError( $result, $error_code );
+			$this->assertSame( $error_code, $result->get_error_code() );
+		}
+
+		$jti_not_string = $validator->validate_logout_token( $this->create_jwt_token( $this->logout_token_payload( array( 'jti' => 12345 ) ) ) );
+		$this->assertSame( 'missing-jti', $jti_not_string->get_error_code() );
+
+		$this->assertWPError( $validator->validate_logout_token( '' ), 'an empty token must be rejected' );
+	}
+
+	/**
+	 * Test that EC and OKP keys without an "alg" can't be used as an HMAC secret.
+	 *
+	 * Their public key material is a string, so an HS256 token signed with it would
+	 * verify if the token's own algorithm were trusted.
+	 *
+	 * @group JWTValidatorTests
+	 */
+	public function test_jwks_without_alg_rejects_hmac_with_ec_and_okp_keys() {
+		$b64 = function ( $value ) {
+			return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
+		};
+		$body   = $b64( wp_json_encode( $this->logout_token_payload() ) );
+		$header = $b64( wp_json_encode( array( 'alg' => 'HS256', 'typ' => 'JWT', 'kid' => 'test-key-id' ) ) );
+
+		$ec_key     = openssl_pkey_new(
+			array(
+				'private_key_type' => OPENSSL_KEYTYPE_EC,
+				'curve_name'       => 'prime256v1',
+			)
+		);
+		$ec_details = openssl_pkey_get_details( $ec_key )['ec'];
+		$ec_jwk     = array(
+			'kty' => 'EC',
+			'crv' => 'P-256',
+			'kid' => 'test-key-id',
+			'x'   => $b64( $ec_details['x'] ),
+			'y'   => $b64( $ec_details['y'] ),
+		);
+
+		$okp_jwk = array(
+			'kty' => 'OKP',
+			'crv' => 'Ed25519',
+			'kid' => 'test-key-id',
+			'x'   => $b64( sodium_crypto_sign_publickey( sodium_crypto_sign_keypair() ) ),
+		);
+
+		foreach ( array( 'EC' => $ec_jwk, 'OKP' => $okp_jwk ) as $type => $jwk ) {
+			// The key material php-jwt would use as the HMAC secret.
+			$secret    = JWK::parseKey( $jwk + array( 'alg' => 'HS256' ) )->getKeyMaterial();
+			$forged    = $header . '.' . $body . '.' . $b64( hash_hmac( 'sha256', $header . '.' . $body, $secret, true ) );
+			$validator = $this->create_validator_with_mocked_jwks( array( 'keys' => array( $jwk ) ) );
+			$this->assertWPError( $validator->validate_logout_token( $forged ), "HS256 with an $type public key must be rejected" );
+		}
+
+		// A real ES256 token still verifies against the EC key without an "alg".
+		$validator = $this->create_validator_with_mocked_jwks( array( 'keys' => array( $ec_jwk ) ) );
+		$es256     = JWT::encode( $this->logout_token_payload(), $ec_key, 'ES256', 'test-key-id' );
+		$this->assertIsArray( $validator->validate_logout_token( $es256 ) );
+	}
+
+	/**
+	 * Test that a logout token with a bad signature is rejected.
+	 *
+	 * @group JWTValidatorTests
+	 */
+	public function test_logout_token_validation_rejects_bad_signature() {
+		$validator = $this->create_validator_with_mocked_jwks( $this->create_jwks( true ) );
+		$token     = $this->create_jwt_token( $this->logout_token_payload() );
+
+		// Swap in a different payload, keeping the original signature.
+		$parts    = explode( '.', $token );
+		$parts[1] = rtrim( strtr( base64_encode( wp_json_encode( $this->logout_token_payload( array( 'sub' => 'someone-else' ) ) ) ), '+/', '-_' ), '=' );
+
+		$result = $validator->validate_logout_token( implode( '.', $parts ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'jwt-verification-failed', $result->get_error_code() );
+	}
+
+	/**
+	 * Test that forged logout tokens are rejected: unsigned, wrongly signed, expired or from another issuer.
+	 *
+	 * @group JWTValidatorTests
+	 */
+	public function test_logout_token_validation_rejects_forged_tokens() {
+		$b64 = function ( $value ) {
+			return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
+		};
+		$body = $b64( wp_json_encode( $this->logout_token_payload() ) );
+
+		foreach ( array( true, false ) as $jwks_has_alg ) {
+			$validator = $this->create_validator_with_mocked_jwks( $this->create_jwks( $jwks_has_alg ) );
+
+			// Unsigned token (alg none).
+			$unsigned = $b64( wp_json_encode( array( 'alg' => 'none', 'typ' => 'JWT', 'kid' => 'test-key-id' ) ) ) . '.' . $body . '.';
+			$this->assertWPError( $validator->validate_logout_token( $unsigned ), 'alg none must be rejected' );
+
+			// Algorithm confusion: HS256 signed with the public RSA key as the secret.
+			$public_pem = openssl_pkey_get_details( $this->public_key )['key'];
+			$header     = $b64( wp_json_encode( array( 'alg' => 'HS256', 'typ' => 'JWT', 'kid' => 'test-key-id' ) ) );
+			$confused   = $header . '.' . $body . '.' . $b64( hash_hmac( 'sha256', $header . '.' . $body, $public_pem, true ) );
+			$this->assertWPError( $validator->validate_logout_token( $confused ), 'HS256 with the public key must be rejected' );
+		}
+
+		$validator = $this->create_validator_with_mocked_jwks( $this->create_jwks( true ) );
+
+		// Correctly signed, but with someone else's key under the same key ID.
+		$other_key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		$other     = JWT::encode( $this->logout_token_payload(), $other_key, 'RS256', 'test-key-id' );
+		$this->assertWPError( $validator->validate_logout_token( $other ), 'a token from another key must be rejected' );
+
+		// Expired, and from another issuer.
+		$expired = $this->create_jwt_token(
+			$this->logout_token_payload(
+				array(
+					'iat' => time() - 600,
+					'exp' => time() - 300,
+				)
+			)
+		);
+		$this->assertWPError( $validator->validate_logout_token( $expired ), 'an expired token must be rejected' );
+
+		$wrong_issuer = $this->create_jwt_token( $this->logout_token_payload( array( 'iss' => 'https://attacker.example.com' ) ) );
+		$this->assertSame( 'invalid-iss', $validator->validate_logout_token( $wrong_issuer )->get_error_code() );
 	}
 }

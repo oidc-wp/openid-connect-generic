@@ -454,6 +454,17 @@ class OpenID_Connect_Generic_Settings_Page {
 				'disabled'    => defined( 'OIDC_REDIRECT_USER_BACK' ),
 				'section'     => 'user_settings',
 			),
+			'backchannel_logout'   => array(
+				'title'       => __( 'Back-Channel Logout', 'daggerhart-openid-connect-generic' ),
+				'description' => sprintf(
+					// translators: %s is the back-channel logout URL.
+					__( 'Log users out of WordPress when the identity provider ends their session, for example when they log out elsewhere or their account is disabled. Give the identity provider this back-channel logout URL: %s', 'daggerhart-openid-connect-generic' ),
+					'<code>' . esc_html( admin_url( 'admin-ajax.php?action=openid-connect-backchannel-logout' ) ) . '</code>'
+				),
+				'type'        => 'checkbox',
+				'disabled'    => defined( 'OIDC_BACKCHANNEL_LOGOUT' ),
+				'section'     => 'user_settings',
+			),
 			'redirect_on_logout'   => array(
 				'title'       => __( 'Redirect to the login screen when session is expired', 'daggerhart-openid-connect-generic' ),
 				'description' => __( 'When enabled, this will automatically redirect the user back to the WordPress login page if their access token has expired.', 'daggerhart-openid-connect-generic' ),

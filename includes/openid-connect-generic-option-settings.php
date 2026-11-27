@@ -63,6 +63,7 @@
  * @property bool $create_if_does_not_exist The flag to indicate whether to create new users or not.
  * @property bool $redirect_user_back       The flag to indicate whether to redirect the user back to the page on which they started.
  * @property bool $redirect_on_logout       The flag to indicate whether to redirect to the login screen on session expiration.
+ * @property bool $backchannel_logout       The flag to enable back-channel logout requests from the IDP.
  * @property bool $enable_logging           The flag to enable/disable logging.
  * @property int  $log_limit                The maximum number of log entries to keep.
  */
@@ -111,6 +112,7 @@ class OpenID_Connect_Generic_Option_Settings {
 		'link_unverified_users'     => 'OIDC_LINK_UNVERIFIED_USERS',
 		'enable_pkce'               => 'OIDC_ENABLE_PKCE',
 		'redirect_on_logout'        => 'OIDC_REDIRECT_ON_LOGOUT',
+		'backchannel_logout'        => 'OIDC_BACKCHANNEL_LOGOUT',
 		'redirect_user_back'        => 'OIDC_REDIRECT_USER_BACK',
 		'acr_values'                => 'OIDC_ACR_VALUES',
 		'enable_logging'            => 'OIDC_ENABLE_LOGGING',

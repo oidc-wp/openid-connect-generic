@@ -845,23 +845,8 @@ class OpenID_Connect_Generic_Client {
 
 		// Check if JWKS endpoint is configured for JWT signature verification.
 		if ( ! empty( $this->endpoint_jwks ) ) {
-			// Use configured issuer if provided, otherwise derive from endpoint_login.
-			$issuer = ! empty( $this->issuer )
-				? $this->issuer
-				: $this->get_issuer_from_endpoint( $this->endpoint_login );
-
-			// Use JWT validator for secure signature verification.
-			$jwt_validator = new OpenID_Connect_Generic_JWT_Validator(
-				$this->endpoint_jwks,
-				$this->client_id,
-				$issuer,
-				$this->jwks_cache_ttl,
-				$this->allow_internal_idp,
-				$this->logger
-			);
-
 			// Validate JWT signature and claims.
-			$id_token_claim = $jwt_validator->validate_id_token( $token_response['id_token'] );
+			$id_token_claim = $this->get_jwt_validator()->validate_id_token( $token_response['id_token'] );
 
 			if ( is_wp_error( $id_token_claim ) ) {
 				$this->logger->log( $id_token_claim, 'jwt-validation-failed' );
@@ -896,6 +881,41 @@ class OpenID_Connect_Generic_Client {
 		);
 
 		return $id_token_claim;
+	}
+
+	/**
+	 * Get a JWT validator for the configured identity provider.
+	 *
+	 * @return OpenID_Connect_Generic_JWT_Validator
+	 */
+	private function get_jwt_validator() {
+		// Use configured issuer if provided, otherwise derive from endpoint_login.
+		$issuer = ! empty( $this->issuer )
+			? $this->issuer
+			: $this->get_issuer_from_endpoint( $this->endpoint_login );
+
+		return new OpenID_Connect_Generic_JWT_Validator(
+			$this->endpoint_jwks,
+			$this->client_id,
+			$issuer,
+			$this->jwks_cache_ttl,
+			$this->allow_internal_idp,
+			$this->logger
+		);
+	}
+
+	/**
+	 * Validate a back-channel logout token from the identity provider.
+	 *
+	 * Unlike ID tokens there is no fallback without signature verification,
+	 * so the JWKS endpoint must be configured.
+	 *
+	 * @param string $logout_token The JWT logout token.
+	 *
+	 * @return array|WP_Error The logout token claims, WP_Error on failure.
+	 */
+	public function validate_logout_token( $logout_token ) {
+		return $this->get_jwt_validator()->validate_logout_token( $logout_token );
 	}
 
 	/**
