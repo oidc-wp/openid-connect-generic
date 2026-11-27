@@ -1,5 +1,9 @@
 # OpenId Connect Generic Changelog
 
+**3.9.2**
+
+- Security fix for client secret and debug data disclosure in the settings page.
+
 **3.9.1**
 
 - Improvement: @timnolte - Refactors Composer setup and GitHub Actions.

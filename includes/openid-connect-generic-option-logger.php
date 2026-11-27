@@ -245,14 +245,11 @@ class OpenID_Connect_Generic_Option_Logger {
 		}
 		$logs = array_reverse( $logs );
 
-		ini_set( 'xdebug.var_display_max_depth', '-1' );
-
 		ob_start();
 		?>
 		<table id="logger-table" class="wp-list-table widefat fixed striped posts">
 			<thead>
 			<th class="col-details">Details</th>
-			<th class="col-data">Data</th>
 			</thead>
 			<tbody>
 			<?php foreach ( $logs as $log ) { ?>
@@ -271,12 +268,10 @@ class OpenID_Connect_Generic_Option_Logger {
 							<?php print esc_html( ( get_userdata( $log['user_ID'] ) ) ? get_userdata( $log['user_ID'] )->user_login : '0' ); ?>
 						</div>
 						<div>
-							<label><?php esc_html_e( 'URI ', 'daggerhart-openid-connect-generic' ); ?>: </label>
-							<?php print esc_url( $log['uri'] ); ?>
+							<label><?php esc_html_e( 'Request path', 'daggerhart-openid-connect-generic' ); ?>: </label>
+							<?php print esc_html( (string) wp_parse_url( $log['uri'], PHP_URL_PATH ) ); ?>
 						</div>
 					</td>
-
-					<td class="col-data"><pre><?php var_dump( $log['data'] ); ?></pre></td>
 				</tr>
 			<?php } ?>
 			</tbody>

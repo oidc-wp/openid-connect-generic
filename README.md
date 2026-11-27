@@ -4,7 +4,7 @@
 **Tags:** security, login, oauth2, openidconnect, apps, authentication, autologin, sso  
 **Requires at least:** 4.9  
 **Tested up to:** 6.0.1  
-**Stable tag:** 3.9.1  
+**Stable tag:** 3.9.2\
 **Requires PHP:** 7.2  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -50,6 +50,10 @@ On the settings page for this plugin (Dashboard > Settings > OpenID Connect Gene
 
 
 ## Changelog ##
+
+### 3.9.2 ###
+
+* Security fix for client secret and debug data disclosure in the settings page.
 
 ### 3.9.1 ###
 

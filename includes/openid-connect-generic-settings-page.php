@@ -229,8 +229,8 @@ class OpenID_Connect_Generic_Settings_Page {
 			),
 			'client_secret'     => array(
 				'title'       => __( 'Client Secret Key', 'daggerhart-openid-connect-generic' ),
-				'description' => __( 'Arbitrary secret key the server expects from this client. Can be anything, but should be very unique.', 'daggerhart-openid-connect-generic' ),
-				'type'        => 'text',
+				'description' => __( 'Enter a new client secret or leave this field blank to keep the saved secret.', 'daggerhart-openid-connect-generic' ),
+				'type'        => 'password',
 				'disabled'    => defined( 'OIDC_CLIENT_SECRET' ),
 				'section'     => 'client_settings',
 			),
@@ -419,10 +419,18 @@ class OpenID_Connect_Generic_Settings_Page {
 
 		// Loop through settings fields to control what we're saving.
 		foreach ( $this->settings_fields as $key => $field ) {
-			if ( isset( $input[ $key ] ) ) {
+			if ( isset( $input[ $key ] ) && ( 'client_secret' !== $key || is_string( $input[ $key ] ) ) ) {
 				$options[ $key ] = sanitize_text_field( trim( $input[ $key ] ) );
 			} else {
 				$options[ $key ] = '';
+			}
+		}
+
+		if ( array_key_exists( 'client_secret', $options ) && ( defined( 'OIDC_CLIENT_SECRET' ) || '' === $options['client_secret'] ) ) {
+			// Preserve the database value without copying a configuration constant into the option.
+			if ( defined( 'OIDC_CLIENT_SECRET' ) || '1' !== ( $input['clear_client_secret'] ?? '' ) ) {
+				$saved_settings = (array) get_option( $this->settings->get_option_name(), array() );
+				$options['client_secret'] = $saved_settings['client_secret'] ?? '';
 			}
 		}
 
@@ -435,6 +443,10 @@ class OpenID_Connect_Generic_Settings_Page {
 	 * @return void
 	 */
 	public function settings_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'daggerhart-openid-connect-generic' ), '', 403 );
+		}
+
 		wp_enqueue_style( 'daggerhart-openid-connect-generic-admin', plugin_dir_url( __DIR__ ) . 'css/styles-admin.css', array(), OpenID_Connect_Generic::VERSION, 'all' );
 
 		$redirect_uri = admin_url( 'admin-ajax.php?action=openid-connect-authorize' );
@@ -451,11 +463,6 @@ class OpenID_Connect_Generic_Settings_Page {
 				settings_fields( $this->settings_field_group );
 				do_settings_sections( $this->options_page_name );
 				submit_button();
-
-				// Simple debug to view settings array.
-				if ( isset( $_GET['debug'] ) ) {
-					var_dump( $this->settings->get_values() );
-				}
 				?>
 			</form>
 
@@ -499,7 +506,17 @@ class OpenID_Connect_Generic_Settings_Page {
 			  id="<?php print esc_attr( $field['key'] ); ?>"
 			  class="large-text<?php echo ( ! empty( $field['disabled'] ) && boolval( $field['disabled'] ) === true ) ? ' disabled' : ''; ?>"
 			  name="<?php print esc_attr( $field['name'] ); ?>"
-			  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>">
+			  <?php if ( 'client_secret' === $field['key'] ) { ?>
+				  autocomplete="new-password"
+			  <?php } else { ?>
+				  value="<?php print esc_attr( $this->settings->{ $field['key'] } ); ?>"
+			  <?php } ?>>
+		<?php if ( 'client_secret' === $field['key'] && empty( $field['disabled'] ) ) { ?>
+			<label>
+				<input type="checkbox" name="<?php print esc_attr( $this->settings->get_option_name() . '[clear_client_secret]' ); ?>" value="1">
+				<?php esc_html_e( 'Clear saved secret', 'daggerhart-openid-connect-generic' ); ?>
+			</label>
+		<?php } ?>
 		<?php
 		$this->do_field_description( $field );
 	}

@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: OpenID Connect Generic 3.9.1\n"
+"Project-Id-Version: OpenID Connect Generic 3.9.2\n"
 "Report-Msgid-Bugs-To: "
 "https://github.com/daggerhart/openid-connect-generic/issues\n"
 "POT-Creation-Date: 2022-08-19 04:06:16+00:00\n"
@@ -164,8 +164,8 @@ msgstr ""
 msgid "User"
 msgstr ""
 
-#: includes/openid-connect-generic-option-logger.php:274
-msgid "URI "
+#: includes/openid-connect-generic-option-logger.php:271
+msgid "Request path"
 msgstr ""
 
 #: includes/openid-connect-generic-settings-page.php:108
@@ -224,8 +224,15 @@ msgstr ""
 
 #: includes/openid-connect-generic-settings-page.php:232
 msgid ""
-"Arbitrary secret key the server expects from this client. Can be anything, "
-"but should be very unique."
+"Enter a new client secret or leave this field blank to keep the saved secret."
+msgstr ""
+
+#: includes/openid-connect-generic-settings-page.php:447
+msgid "Sorry, you are not allowed to access this page."
+msgstr ""
+
+#: includes/openid-connect-generic-settings-page.php:517
+msgid "Clear saved secret"
 msgstr ""
 
 #: includes/openid-connect-generic-settings-page.php:238
