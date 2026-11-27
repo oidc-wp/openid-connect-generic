@@ -99,10 +99,11 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 	 * Helper method to create a JWKS array from the public key.
 	 *
 	 * @param bool $include_alg Whether to include the "alg" parameter.
+	 * @param bool $include_kid Whether to include the "kid" parameter.
 	 *
 	 * @return array The JWKS array.
 	 */
-	private function create_jwks( $include_alg = true ) {
+	private function create_jwks( $include_alg = true, $include_kid = true ) {
 		$key_details = openssl_pkey_get_details( $this->public_key );
 
 		$jwk = array(
@@ -116,6 +117,11 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 		// Conditionally include the "alg" parameter.
 		if ( $include_alg ) {
 			$jwk['alg'] = 'RS256';
+		}
+
+		// Conditionally leave out the "kid" parameter.
+		if ( ! $include_kid ) {
+			unset( $jwk['kid'] );
 		}
 
 		return array(
@@ -203,6 +209,111 @@ class OpenID_Connect_Generic_JWT_Validator_Test extends WP_UnitTestCase {
 		$this->assertIsArray( $result );
 		$this->assertEquals( 'user123', $result['sub'] );
 		$this->assertEquals( 'test-client-id', $result['aud'] );
+	}
+
+	/**
+	 * Test that a token without "kid" validates against a JWKS with a single key without "kid".
+	 */
+	public function test_jwt_validation_without_kid_with_single_key() {
+		$now = time();
+		$payload = array(
+			'iss' => 'https://example.com',
+			'sub' => 'user123',
+			'aud' => 'test-client-id',
+			'exp' => $now + 3600,
+			'iat' => $now,
+		);
+
+		$id_token = $this->create_jwt_token( $payload, 'RS256', null );
+		$jwks = $this->create_jwks( true, false );
+
+		$validator = $this->create_validator_with_mocked_jwks( $jwks );
+		$result = $validator->validate_id_token( $id_token );
+
+		if ( is_wp_error( $result ) ) {
+			$this->fail( 'Validation should succeed without kid and a single key. Error: ' . $result->get_error_message() );
+		}
+
+		$this->assertSame( 'user123', $result['sub'] );
+	}
+
+	/**
+	 * Test that a token without "kid" validates against a JWKS with a single key that has a "kid".
+	 */
+	public function test_jwt_validation_without_kid_in_token_with_single_key() {
+		$now = time();
+		$payload = array(
+			'iss' => 'https://example.com',
+			'sub' => 'user123',
+			'aud' => 'test-client-id',
+			'exp' => $now + 3600,
+			'iat' => $now,
+		);
+
+		$id_token = $this->create_jwt_token( $payload, 'RS256', null );
+		$jwks = $this->create_jwks( false );
+
+		$validator = $this->create_validator_with_mocked_jwks( $jwks );
+		$result = $validator->validate_id_token( $id_token );
+
+		if ( is_wp_error( $result ) ) {
+			$this->fail( 'Validation should succeed without kid in the token and a single key. Error: ' . $result->get_error_message() );
+		}
+
+		$this->assertSame( 'user123', $result['sub'] );
+	}
+
+	/**
+	 * Test that a token without "kid" signed by another key fails against a JWKS with a single key.
+	 */
+	public function test_jwt_validation_without_kid_fails_with_wrong_signature() {
+		$now = time();
+		$payload = array(
+			'iss' => 'https://example.com',
+			'sub' => 'user123',
+			'aud' => 'test-client-id',
+			'exp' => $now + 3600,
+			'iat' => $now,
+		);
+
+		$other_key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		$id_token = JWT::encode( $payload, $other_key, 'RS256' );
+		$jwks = $this->create_jwks( true, false );
+
+		$validator = $this->create_validator_with_mocked_jwks( $jwks );
+		$result = $validator->validate_id_token( $id_token );
+
+		$this->assertInstanceOf( WP_Error::class, $result, 'Should fail with a signature from another key' );
+		$this->assertSame( 'jwt-verification-failed', $result->get_error_code() );
+	}
+
+	/**
+	 * Test that a token without "kid" fails against a JWKS with more than one key.
+	 */
+	public function test_jwt_validation_without_kid_fails_with_multiple_keys() {
+		$now = time();
+		$payload = array(
+			'iss' => 'https://example.com',
+			'sub' => 'user123',
+			'aud' => 'test-client-id',
+			'exp' => $now + 3600,
+			'iat' => $now,
+		);
+
+		$id_token = $this->create_jwt_token( $payload, 'RS256', null );
+		$jwks = $this->create_jwks( true );
+		$jwks['keys'][] = array_merge( $jwks['keys'][0], array( 'kid' => 'other-key-id' ) );
+
+		$validator = $this->create_validator_with_mocked_jwks( $jwks );
+		$result = $validator->validate_id_token( $id_token );
+
+		$this->assertInstanceOf( WP_Error::class, $result, 'Should fail without kid when the JWKS has more than one key' );
+		$this->assertSame( 'jwt-verification-failed', $result->get_error_code() );
 	}
 
 	/**
