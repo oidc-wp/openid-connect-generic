@@ -55,6 +55,8 @@
  * Plugin Settings:
  *
  * @property bool $enforce_privacy          The flag to indicates whether a user us required to be authenticated to access the site.
+ * @property string $password_login         Which users must log in with OpenID Connect instead of a password.
+ * @property array  $password_login_roles   The roles still allowed to log in with a password.
  * @property bool $alternate_redirect_uri   The flag to indicate whether to use the alternative redirect URI.
  * @property bool $token_refresh_enable     The flag whether to support refresh tokens by IDPs.
  * @property bool $link_existing_users      The flag to indicate whether to link to existing WordPress-only accounts or greturn an error.
@@ -107,6 +109,8 @@ class OpenID_Connect_Generic_Option_Settings {
 		'scope'                     => 'OIDC_CLIENT_SCOPE',
 		'create_if_does_not_exist'  => 'OIDC_CREATE_IF_DOES_NOT_EXIST',
 		'enforce_privacy'           => 'OIDC_ENFORCE_PRIVACY',
+		'password_login'            => 'OIDC_PASSWORD_LOGIN',
+		'password_login_roles'      => 'OIDC_PASSWORD_LOGIN_ROLES',
 		'link_existing_users'       => 'OIDC_LINK_EXISTING_USERS',
 		'link_unverified_users'     => 'OIDC_LINK_UNVERIFIED_USERS',
 		'enable_pkce'               => 'OIDC_ENABLE_PKCE',
@@ -137,7 +141,8 @@ class OpenID_Connect_Generic_Option_Settings {
 		}
 
 		if ( $granular_defaults ) {
-			$this->values = array_replace_recursive( $this->default_settings, $this->values );
+			// A saved list replaces its default list rather than being merged into it by position.
+			$this->values = array_replace( $this->default_settings, $this->values );
 		}
 	}
 
